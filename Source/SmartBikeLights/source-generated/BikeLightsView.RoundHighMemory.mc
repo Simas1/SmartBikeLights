@@ -62,7 +62,7 @@ class BikeLightsView extends  WatchUi.DataField  {
     // 6. Fit field
     // 7. Next light mode
     // 8. Next title
-    // 9. Compute setMode timeout
+    // 9. Remaining confirmation cycles (one retry halfway through)
     // 10. Current filter group index
     // 11. Current filter group deactivation delay
     // 12. Next filter group index
@@ -530,11 +530,13 @@ class BikeLightsView extends  WatchUi.DataField  {
         for (var i = 0; i < initializedLights; i++) {
             var lightData = getLightData(initializedLights == 1 ? null : i * 2);
             if (lightData[7] != null) {
+                lightData[9]--;
                 if (lightData[9] <= 0) {
                     lightData[7] = null;
-                } else {
-                    lightData[9]--; /* Timeout */
-                    continue;
+                    lightData[8] = null;
+                } else if (lightData[9] == 2 && lightData[2] != lightData[7]) {
+                    // Retry only the latest target, and only if it has not converged.
+                    lightData[0].setMode(lightData[7]);
                 }
             }
 
@@ -719,11 +721,19 @@ class BikeLightsView extends  WatchUi.DataField  {
         }
 
         //System.println("updateLight light=" + light.type + " mode=" + mode + " currMode=" + lightData[2] + " nextMode=" + nextMode + " timer=" + System.getTimer());
+        // Delayed reports still update actual state/FIT data, but must not
+        // change control mode or discard the latest requested selection.
+        if (nextMode != null && nextMode != mode && mode >= 0) {
+            updateLightTextAndMode(lightData, mode);
+            return;
+        }
+
         var controlMode = lightData[4];
-        if (nextMode == mode) {
+        if (nextMode == mode || mode < 0) {
             lightData[5] = lightData[8]; // Update title
             lightData[7] = null;
             lightData[8] = null;
+            lightData[9] = 0;
         } else if (controlMode != 1 /* NETWORK */) {
             lightData[5] = null;
         }
@@ -854,7 +864,7 @@ class BikeLightsView extends  WatchUi.DataField  {
         var controlModeIndex = controlModes.indexOf(controlMode);
         var lightModes = getLightModes(light, lightData[17]);
         var allowedLightModes = tapBehavior[1] != null ? tapBehavior[1] : lightModes;
-        var lightModeIndex = allowedLightModes.indexOf(lightData[2]);
+        var lightModeIndex = allowedLightModes.indexOf(lightData[7] != null ? lightData[7] : lightData[2]);
         var newLightModeIndex = lightModeIndex + 1;
         if (controlMode == 2 /* MANUAL */ && controlModeIndex >= 0 && lightModeIndex >= 0 && newLightModeIndex < allowedLightModes.size()) {
             newMode = allowedLightModes[newLightModeIndex];
@@ -1028,7 +1038,12 @@ class BikeLightsView extends  WatchUi.DataField  {
     }
 
     protected function setLightMode(lightData, mode, title, force) {
-        if (lightData[2] == mode) {
+        if (lightData[7] == mode && !force) {
+            lightData[8] = title;
+            return;
+        }
+
+        if (lightData[2] == mode && lightData[7] == null) {
             lightData[5] = title; // updateLight may not be called when setting the same mode
             if (!force) {
                 return;
@@ -1038,8 +1053,9 @@ class BikeLightsView extends  WatchUi.DataField  {
         //System.println("setLightMode=" + mode + " light=" + lightData[0].type + " force=" + force + " timer=" + System.getTimer());
         lightData[7] = mode; // Next mode
         lightData[8] = title; // Next title
-        // Do not set a timeout in case we force setting the same mode, as we won't get a light update
-        lightData[9] = lightData[2] == mode ? 0 : 5; // Timeout for compute method
+        // Keep the target even when it matches the last report: an older
+        // command may still be in flight. New requests always replace it.
+        lightData[9] = 4;
         lightData[0].setMode(mode);
     }
 
@@ -1417,6 +1433,9 @@ class BikeLightsView extends  WatchUi.DataField  {
     }
 
     private function setNetworkMode(lightData, networkMode) {
+        lightData[7] = null;
+        lightData[8] = null;
+        lightData[9] = 0;
         lightData[5] = networkMode != null && networkMode < $.networkModes.size()
             ? $.networkModes[networkMode]
             : null;
