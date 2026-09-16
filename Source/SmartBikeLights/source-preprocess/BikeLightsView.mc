@@ -167,7 +167,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
 // #endif
 
     private var _lastUpdateTime = 0;
-    private var _lastOnShowCallTime = 0;
+    private var _lastComputeTime = null;
     private var _lastLightNetworkFormedTime = 0;
 
     // Used as an out parameter for getting the group filter data
@@ -492,7 +492,6 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
     function onShow() {
         //System.println("onShow=" + _lastUpdateTime  + " timer=" + System.getTimer());
         var timer = System.getTimer();
-        _lastOnShowCallTime = timer;
 // #if highMemory
         if (_lightNetwork instanceof AntLightNetwork.IndividualLightNetwork) {
             // We don't need to recreate IndividualLightNetwork as the network mode does not change
@@ -540,8 +539,30 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
 // #endif
 
 // #if dataField
+    // compute() continues on hidden data pages; onUpdate() only runs while visible.
+    // Use a gap in calculations to detect a resume, retaining the existing 2s
+    // heuristic because Garmin does not provide a data-field sleep callback.
+    protected function restoreControlAfterSleep(timer) {
+        var lastComputeTime = _lastComputeTime;
+        _lastComputeTime = timer;
+        if (lastComputeTime == null || (timer - lastComputeTime) <= 2000) {
+            return;
+        }
+
+        // Sleep can turn lights off and be interpreted as an external/manual
+        // change. Restore each saved control mode before refreshing the network.
+        for (var i = 0; i < 3; i += 2) {
+            var prevControlMode = getLightProperty("PCM", i, null);
+            if (prevControlMode != null) {
+                setLightProperty("CM", i, prevControlMode);
+            }
+        }
+        onShow();
+    }
+
     // Overrides DataField.compute
     function compute(activityInfo) {
+        restoreControlAfterSleep(System.getTimer());
         //System.println("usedMemory=" + System.getSystemStats().usedMemory);
   // #if highMemory || ANT_NETWORK == "TestNetwork.TestLightNetwork"
         // Needed for TestLightNetwork and IndividualLightNetwork
@@ -676,30 +697,6 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
 
     function onUpdate(dc) {
         var timer = System.getTimer();
-// #if dataField
-        var lastUpdateTime = _lastUpdateTime;
-        // In case the device woke up from a sleep, set the control mode that was used before it went to sleep. When
-        // a device goes to sleep, it turns off the lights which triggers onExternalLightModeChange method in case
-        // the light are turned on and sets the control mode to manual. In such case, we store the control mode that
-        // was used before the external change so that we can restore it when the device wakes up. Idealy we would not
-        // change the control mode before a sleep, but as there is no way to detect when the device goes to sleep we
-        // cannot do that. We are able to detect only when the device woke up by checking whether onShow method was called
-        // prior calling onUpdate method. This will work only if the device went to sleep on the data screen were this
-        // data field is displayed, otherwise it will not work as onUpdate will not be called.
-        if (lastUpdateTime > 0 && (timer - lastUpdateTime) > 2000 && (timer - _lastOnShowCallTime) > 2000) {
-            //System.println("WAKE UP lastOnShowCallTime=" + _lastOnShowCallTime  + " timer=" + System.getTimer());
-            for (var i = 0; i < 3; i += 2) {
-                var prevControlMode = getLightProperty("PCM", i, null);
-                if (prevControlMode != null) {
-                    //System.println("Update CM=" + getLightData(i)[4] + " to PCM=" + prevControlMode + " LT=" + i + " timer=" + System.getTimer());
-                    setLightProperty("CM", i, prevControlMode);
-                }
-            }
-
-            onShow();
-        }
-// #endif
-
 // #if highMemory
         if (_updateSettings) {
             _updateSettings = false;
