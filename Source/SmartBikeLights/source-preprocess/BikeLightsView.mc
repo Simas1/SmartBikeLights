@@ -2011,18 +2011,29 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
                 var isSelected = lightMode == mode;
                 var isNext = nextLightMode == mode && !isSelected;
 
-                setTextColor(dc, isSelected ? panelData[2] : isNext ? fgColor : bgColor);
+                // Keep the bevel inside the existing touch bounds. Selected modes
+                // sit below the rim; other buttons have a raised face and lower lip.
+                var depth = buttonHeight >= 24 && buttonWidth >= 24 ? 3 : 1;
+                var faceY = buttonY + (isSelected ? depth : 0);
+                var faceHeight = buttonHeight - depth;
+                var contentOffsetY = isSelected ? depth / 2.0 : -depth / 2.0;
+                dc.setPenWidth(1);
+                setTextColor(dc, isSelected ? 0x444444 : 0xAAAAAA);
                 dc.fillRoundedRectangle(buttonX, buttonY, buttonWidth, buttonHeight, 8);
+                setTextColor(dc, isSelected ? 0xAAAAAA : 0x444444);
+                dc.fillRoundedRectangle(buttonX, buttonY + depth, buttonWidth, faceHeight, 8);
+                setTextColor(dc, isSelected ? panelData[2] : isNext ? fgColor : bgColor);
+                dc.fillRoundedRectangle(buttonX + 1, faceY + 1, buttonWidth - 2, faceHeight - 2, 7);
                 setTextColor(dc, isNext ? bgColor : fgColor);
                 dc.drawRoundedRectangle(buttonX, buttonY, buttonWidth, buttonHeight, 8);
                 setTextColor(dc, isSelected ? panelData[3] : isNext ? bgColor : fgColor);
                 if (mode == -3) {
-                    drawButtonBattery(dc, fgColor, bgColor, buttonX, buttonY, buttonWidth, buttonHeight, batteryStatus);
+                    drawButtonBattery(dc, fgColor, bgColor, buttonX, faceY, buttonWidth, faceHeight, batteryStatus);
                 } else if (mode == -1) {
-                    dc.drawText(titleX, titleParts[1], titleFont, $.controlModes[controlMode], 1 /* TEXT_JUSTIFY_CENTER */);
+                    dc.drawText(titleX, titleParts[1] + contentOffsetY, titleFont, $.controlModes[controlMode], 1 /* TEXT_JUSTIFY_CENTER */);
                 } else {
                     for (var k = 0; k < titleParts.size(); k += 2) {
-                        dc.drawText(titleX, titleParts[k + 1], titleFont, titleParts[k], 1 /* TEXT_JUSTIFY_CENTER */);
+                        dc.drawText(titleX, titleParts[k + 1] + contentOffsetY, titleFont, titleParts[k], 1 /* TEXT_JUSTIFY_CENTER */);
                     }
                 }
             }
