@@ -34,6 +34,10 @@ class TestBikeLightsView extends BikeLightsView {
     function setupLightSensors() {
     }
 
+    function requestMode(lightData, mode, title, force) {
+        setLightMode(lightData, mode, title, force);
+    }
+
     function getErrorCode() {
         return _errorCode;
     }
@@ -329,5 +333,50 @@ function parseWithMissingSeparators(logger) {
 function parseWithMissingLightFilters(logger) {
     var view = new TestBikeLightsView("#4587520,196641");
 
+    return true;
+}
+
+// Records commands without requiring a live ANT+ light.
+(:test)
+class ModeCommandRecorder {
+    var modes;
+    function initialize() {
+        modes = [];
+    }
+    function setMode(mode) {
+        modes.add(mode);
+    }
+}
+
+(:test)
+function newestLightModeRequestWins(logger) {
+    var view = new TestBikeLightsView(null);
+    var light = new ModeCommandRecorder();
+    var data = [light, null, 1, null, 2, null, null, null, null, 0];
+    view.requestMode(data, 2, "First", false);
+    // Returning to the reported mode must cancel the in-flight target.
+    view.requestMode(data, 1, "Latest", false);
+    Test.assert(light.modes.size() == 2);
+    Test.assert(light.modes[1] == 1);
+    Test.assert(data[7] == 1);
+    Test.assert(data[8].equals("Latest"));
+    Test.assert(data[2] == 1); // Actual state is kept separate from selection.
+    return true;
+}
+
+(:test)
+function pendingLightModeDoesNotRestartConfirmation(logger) {
+    var view = new TestBikeLightsView(null);
+    var light = new ModeCommandRecorder();
+    var data = [light, null, 1, null, 0, null, null, null, null, 0];
+    view.requestMode(data, 2, "First", false);
+    data[9] = 2;
+    view.requestMode(data, 2, "Updated", false);
+    Test.assert(light.modes.size() == 1);
+    Test.assert(data[9] == 2);
+    Test.assert(data[8].equals("Updated"));
+    view.requestMode(data, 2, null, true);
+    Test.assert(light.modes.size() == 2);
+    Test.assert(data[9] == 4);
     return true;
 }
