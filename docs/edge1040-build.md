@@ -55,5 +55,24 @@ Other generated sources are already committed. If you edit files under
 `source-preprocess`, regenerate and commit their outputs before running this
 workflow; this workflow does not rerun the general preprocessor.
 
+## Verify recovery after sleep
+
+Sleep recovery now runs from the data field's calculation callback, including
+when another data page is visible. It restores the saved control modes and
+refreshes the light network before evaluating the automatic rules. It retains
+the existing heuristic of a pause longer than two seconds; this is not an
+explicit sleep notification from Garmin, so other calculation interruptions
+can also trigger recovery.
+
+After installing the updated build, select Smart mode for both lights and use
+conditions where your configuration requests Off. Switch to another data page,
+put the Edge to sleep, then wake it without visiting Smart Bike Lights. Both
+lights should return to Off after calculations resume and the network reconnects.
+Repeat while the Smart Bike Lights page is visible, and check that ordinary
+page changes do not reset a deliberately selected Manual or Network mode.
+
+This change addresses waking an already running data field. It cannot control
+lights before Garmin starts the data field after a full power-on.
+
 GitHub Free supports this workflow: standard runners are free for public
 repositories; private repositories consume your included Actions allowance.
