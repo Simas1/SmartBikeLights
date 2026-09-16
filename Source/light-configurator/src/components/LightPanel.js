@@ -6,16 +6,14 @@ import LightButtonGroup from '../models/LightButtonGroup';
 import LightButton from '../models/LightButton';
 import ButtonGroup from './ButtonGroup';
 import AddButton from './AddButton';
-import { createMenuItemColorTemplateFunc } from './Templates';
-import { controlMode, currentConfiguration, battery, getButtonColors, getButtonTextColors, groupNameVisibility } from '../constants';
+import { controlMode, currentConfiguration, battery, groupNameVisibility } from '../constants';
 import AppTextInput from '../inputs/AppTextInput';
 import AppSelect from '../inputs/AppSelect';
+import Typography from '@mui/material/Typography';
 
 const getModes = (lightModes) => {
   return [controlMode, currentConfiguration, battery].concat(lightModes);
 };
-const buttonColorTemplate = createMenuItemColorTemplateFunc();
-const buttonTextColorTemplate = createMenuItemColorTemplateFunc(true);
 
 export default observer(({ lightPanel, lightModes }) => {
   const [modes, setModes] = React.useState(getModes(lightModes));
@@ -51,14 +49,16 @@ export default observer(({ lightPanel, lightModes }) => {
         <Grid item xs={12} sm={4}>
           <AppTextInput label="Short light name" setter={lightPanel.setLightName} value={lightPanel.lightName} />
         </Grid>
-        <Grid item xs={12} sm={4}>
-          <AppSelect required items={getButtonColors()} label="Active button backgound color" setter={lightPanel.setButtonColor} value={lightPanel.buttonColor} itemTemplateFunc={buttonColorTemplate} />
+        <Grid item xs={12} sm={8}>
+          <Typography variant="body2">
+            Bold Blue uses icons for Control mode and Off. The footer switches configurations;
+            Current configuration buttons are omitted from the grid. Set brightness and runtime
+            on each mode to show graphical details.
+          </Typography>
         </Grid>
         <Grid item xs={12} sm={4}>
-          <AppSelect required items={getButtonTextColors()} label="Active button text color" setter={lightPanel.setButtonTextColor} value={lightPanel.buttonTextColor} itemTemplateFunc={buttonTextColorTemplate} />
-        </Grid>
-        <Grid item xs={12} sm={4}>
-          <AppSelect required items={groupNameVisibility} label="Group name visiblity" setter={lightPanel.setGroupNameVisibility} value={lightPanel.groupNameVisibility} />
+          <AppSelect required items={groupNameVisibility} label="Group name visibility"
+            setter={lightPanel.setGroupNameVisibility} value={lightPanel.groupNameVisibility} />
         </Grid>
       </Grid>
       <div>

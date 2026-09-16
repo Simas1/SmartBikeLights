@@ -10,6 +10,7 @@ import RemoveIcon from '@mui/icons-material/Remove';
 import AppTextInput from '../inputs/AppTextInput';
 import AppSelect from '../inputs/AppSelect';
 import LightButtonGroup from '../models/LightButtonGroup';
+import { buttonIcons } from '../models/lightButtonGraphics';
 
 const Root = styled('div')(({ theme }) => ({
   flexGrow: 1,
@@ -101,6 +102,18 @@ export default observer(({ buttonGroup, lightModes, index, moveGroup, addButton,
               : <AppTextInput label="Button name" value="Smart / Manual / Network" />
               }
             </Grid>
+            {isGroup && button.mode > 0 && <>
+              <Grid item xs={12} sm={6}>
+                <AppTextInput type="number" label="Brightness (lumens)" value={button.lumens} setter={button.setLumens}
+                  help="Optional. Set both brightness and runtime to show brightness steps and estimated time. Steps scale to this light's brightest configured mode." />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <AppTextInput type="number" label="Full-charge runtime (hours)" value={button.runtimeHours} setter={button.setRuntimeHours} />
+              </Grid>
+              <Grid item xs={12}>
+                <AppSelect required items={buttonIcons} label="Mode icon" value={button.icon} setter={button.setIcon} />
+              </Grid>
+            </>}
           </Grid>
         </Paper>
       </Grid>);

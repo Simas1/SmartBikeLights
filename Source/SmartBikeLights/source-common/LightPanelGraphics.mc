@@ -1,0 +1,250 @@
+using Toybox.Math;
+using Toybox.Graphics;
+
+// Kept out of non-touch builds. Metadata lives in the existing title field so
+// old configurations and the configuration parser retain their wire format.
+(:touchScreen)
+module LightPanelGraphics {
+    const BLUE = 0x056ABD;
+    const WHITE = 0xFFFFFF;
+    const RED = 0xCC2222;
+
+    // [display name, lumens, full-charge hours, explicit icon]
+    function parseTitle(title) {
+        if (title == null) { return null; }
+        var lines = [];
+        var index = title.find("\\n");
+        while (index != null) {
+            lines.add(title.substring(0, index));
+            title = title.substring(index + 2, title.length());
+            index = title.find("\\n");
+        }
+        lines.add(title);
+        var icon = "none";
+        var last = lines[lines.size() - 1];
+        if (last.equals("@sun") || last.equals("@moon") || last.equals("@lightning") || last.equals("@none")) {
+            icon = last.substring(1, last.length());
+            lines = lines.slice(0, lines.size() - 1);
+        }
+        if (lines.size() == 0) { return null; }
+        var lumens = null;
+        var hours = null;
+        last = lines[lines.size() - 1];
+        var separator = last.find("lm-");
+        var end = last.find("h");
+        if (lines.size() > 1 && separator != null && end != null && end > separator + 3) {
+            lumens = positiveNumber(last.substring(0, separator));
+            hours = positiveNumber(last.substring(separator + 3, end));
+            if (lumens != null && hours != null && blank(last.substring(end + 1, last.length()))) {
+                lines = lines.slice(0, lines.size() - 1);
+            } else {
+                lumens = null;
+                hours = null;
+            }
+        }
+        if (lumens == null && icon.equals("none")) { return null; }
+        var name = lines[0];
+        for (var i = 1; i < lines.size(); i++) { name += " " + lines[i]; }
+        return [name, lumens, hours, icon];
+    }
+
+    function blank(text) {
+        var chars = text.toCharArray();
+        for (var i = 0; i < chars.size(); i++) {
+            if (chars[i] != ' ') { return false; }
+        }
+        return true;
+    }
+
+    function positiveNumber(text) {
+        var chars = text.toCharArray();
+        var value = "";
+        var dots = 0;
+        var trailingSpace = false;
+        for (var i = 0; i < chars.size(); i++) {
+            var c = chars[i];
+            if (c == ' ') {
+                if (value.length() > 0) { trailingSpace = true; }
+                continue;
+            }
+            if (trailingSpace) { return null; }
+            if (c == '.') { dots++; }
+            else if (c < '0' || c > '9') { return null; }
+            if (dots > 1) { return null; }
+            value += c.toString();
+        }
+        if (value.length() == 0) { return null; }
+        var number = value.toFloat();
+        return number != null && number > 0 ? number : null;
+    }
+
+    // Approximate assumptions, not ANT-reported percentages. Charging, invalid
+    // and disconnected readings must never be interpreted as a full battery.
+    function batteryPercent(status) {
+        if (status == 1) { return 100; }
+        if (status == 2) { return 75; }
+        if (status == 3) { return 50; }
+        if (status == 4) { return 25; }
+        if (status == 5) { return 5; }
+        return null;
+    }
+
+    function remainingMinutes(hours, status) {
+        var percent = batteryPercent(status);
+        return hours == null || percent == null ? null : hours * 60 * percent / 100;
+    }
+
+    function runtimeText(minutes) {
+        if (minutes == null) { return "--"; }
+        if (minutes < 1) { return "~<1m"; }
+        var total = Math.floor(minutes).toNumber();
+        if (total < 60) { return "~" + total + "m"; }
+        return "~" + (total / 60) + "h" + (total % 60 == 0 ? "" : (total % 60).format("%02d"));
+    }
+
+    function brightnessSteps(lumens, maxLumens) {
+        if (lumens == null || maxLumens <= 0) { return 0; }
+        var steps = Math.round(lumens * 6.0 / maxLumens).toNumber();
+        return steps < 1 ? 1 : steps > 6 ? 6 : steps;
+    }
+
+    // Move configuration switching out of the mode grid. Leave configured Off,
+    // control and battery buttons in place, including mixed button groups.
+    function panelSettings(settings) {
+        var result = settings.slice(0, 6);
+        result[0] = 0;
+        result[1] = 0;
+        var index = 6;
+        for (var i = 0; i < settings[1]; i++) {
+            var count = settings[index];
+            var group = [0];
+            for (var j = 0; j < count; j++) {
+                var k = index + 1 + j * 2;
+                if (settings[k] != -2) {
+                    group[0]++;
+                    group.add(settings[k]);
+                    group.add(settings[k + 1]);
+                }
+            }
+            if (group[0] > 0) {
+                result[0] += group[0];
+                result[1]++;
+                result.addAll(group);
+            }
+            index += 1 + count * 2;
+        }
+        return result;
+    }
+
+    function groupWeight(settings, index) {
+        for (var i = 0; i < settings[index]; i++) {
+            var mode = settings[index + 1 + i * 2];
+            if (mode != -1 && mode != 0) { return 1.0; }
+        }
+        return 0.5;
+    }
+
+    function fitFont(dc, text, width, height, maximum) {
+        var font = maximum;
+        while (font > 0 && (dc.getTextWidthInPixels(text, font) > width || dc.getFontHeight(font) > height)) { font--; }
+        return font;
+    }
+
+    // Integer primitives avoid bitmap/font dependencies and scale on both Edge
+    // display resolutions. Callers provide the face color for cut-outs.
+    function drawIcon(dc, icon, x, y, size, background) {
+        var r = size / 2;
+        dc.setPenWidth(size >= 28 ? 3 : size >= 20 ? 2 : 1);
+        if (icon.equals("clock")) {
+            dc.drawCircle(x, y, r);
+            dc.drawLine(x, y, x, y - r * 0.6);
+            dc.drawLine(x, y, x + r * 0.5, y + r * 0.25);
+        } else if (icon.equals("power")) {
+            // Open ring formed from line segments: no background-color changes.
+            var points = [[x-r*0.6,y-r*0.8],[x-r,y-r*0.25],[x-r,y+r*0.4],[x-r*0.5,y+r],[x+r*0.5,y+r],[x+r,y+r*0.4],[x+r,y-r*0.25],[x+r*0.6,y-r*0.8]];
+            for (var i = 1; i < points.size(); i++) { dc.drawLine(points[i-1][0],points[i-1][1],points[i][0],points[i][1]); }
+            dc.drawLine(x, y-r, x, y);
+        } else if (icon.equals("smart")) {
+            // A solid four-point sparkle remains distinct from the mode's sun.
+            dc.fillPolygon([[x,y-r],[x+r*0.3,y-r*0.3],[x+r,y],[x+r*0.3,y+r*0.3],[x,y+r],[x-r*0.3,y+r*0.3],[x-r,y],[x-r*0.3,y-r*0.3]]);
+        } else if (icon.equals("sun")) {
+            dc.drawCircle(x,y,r*0.45);
+            dc.drawLine(x-r,y,x-r*0.65,y); dc.drawLine(x+r*0.65,y,x+r,y);
+            dc.drawLine(x,y-r,x,y-r*0.65); dc.drawLine(x,y+r*0.65,x,y+r);
+            dc.drawLine(x-r*0.75,y-r*0.75,x-r*0.5,y-r*0.5);
+            dc.drawLine(x+r*0.5,y+r*0.5,x+r*0.75,y+r*0.75);
+            dc.drawLine(x+r*0.75,y-r*0.75,x+r*0.5,y-r*0.5);
+            dc.drawLine(x-r*0.5,y+r*0.5,x-r*0.75,y+r*0.75);
+        } else if (icon.equals("moon")) {
+            // Crescent polygon, with no dependency on an arc API level.
+            dc.fillPolygon([[x+r*0.4,y-r],[x-r*0.5,y-r*0.8],[x-r,y],[x-r*0.5,y+r*0.8],[x+r*0.4,y+r],[x+r,y+r*0.4],[x,y+r*0.3],[x-r*0.2,y-r*0.3]]);
+        } else if (icon.equals("lightning")) {
+            dc.fillPolygon([[x+r*0.3,y-r],[x-r,y+r*0.2],[x,y+r*0.2],[x-r*0.3,y+r],[x+r,y-r*0.2],[x,y-r*0.2]]);
+        } else if (icon.equals("network")) {
+            dc.drawLine(x,y-r*0.3,x,y+r*0.3);
+            dc.drawLine(x-r*0.7,y+r*0.3,x+r*0.7,y+r*0.3);
+            dc.drawRectangle(x-r*0.3,y-r,r*0.6,r*0.6);
+            dc.drawRectangle(x-r,y+r*0.3,r*0.6,r*0.6);
+            dc.drawRectangle(x+r*0.4,y+r*0.3,r*0.6,r*0.6);
+        } else if (icon.equals("manual")) {
+            // Continuous open-hand silhouette with four distinct finger tips.
+            var hand = [[x-r*0.45,y+r],[x-r,y+r*0.15],[x-r*0.75,y-r*0.05],[x-r*0.45,y+r*0.3],
+                [x-r*0.45,y-r*0.65],[x-r*0.15,y-r*0.65],[x-r*0.15,y-r*0.95],
+                [x+r*0.15,y-r*0.95],[x+r*0.15,y-r*0.8],[x+r*0.45,y-r*0.8],
+                [x+r*0.45,y-r*0.5],[x+r*0.75,y-r*0.5],[x+r*0.75,y+r*0.5],
+                [x+r*0.4,y+r],[x-r*0.45,y+r]];
+            for (var f=1; f<hand.size(); f++) { dc.drawLine(hand[f-1][0],hand[f-1][1],hand[f][0],hand[f][1]); }
+            dc.drawLine(x-r*0.15,y-r*0.65,x-r*0.15,y);
+            dc.drawLine(x+r*0.15,y-r*0.8,x+r*0.15,y);
+            dc.drawLine(x+r*0.45,y-r*0.5,x+r*0.45,y);
+        } else if (icon.equals("cycle")) {
+            dc.drawLine(x-r,y,x-r,y-r*0.6); dc.drawLine(x-r,y-r*0.6,x+r,y-r*0.6);
+            dc.drawLine(x+r,y-r*0.6,x+r*0.4,y-r); dc.drawLine(x+r,y-r*0.6,x+r*0.4,y);
+            dc.drawLine(x+r,y,x+r,y+r*0.6); dc.drawLine(x+r,y+r*0.6,x-r,y+r*0.6);
+            dc.drawLine(x-r,y+r*0.6,x-r*0.4,y+r); dc.drawLine(x-r,y+r*0.6,x-r*0.4,y);
+        }
+        dc.setPenWidth(1);
+    }
+
+    function drawMode(dc, data, maxLumens, status, x, y, width, height, selected, fg, bg) {
+        var pad = width >= 150 ? 10 : 6;
+        var color = selected ? WHITE : fg;
+        var iconSize = width >= 150 ? 18 : 12;
+        var hasIcon = !data[3].equals("none");
+        var nameWidth = width - pad * 2 - (hasIcon ? iconSize + 5 : 0);
+        var titleFont = fitFont(dc, data[0], nameWidth, height * 0.3, 2);
+        var name = StringHelper.trimTextByWidth(dc, data[0], titleFont, nameWidth);
+        dc.setColor(color, -1);
+        dc.drawText(x+pad+(hasIcon?iconSize+5:0), y+pad, titleFont, name, Graphics.TEXT_JUSTIFY_LEFT);
+        if (hasIcon) { drawIcon(dc, data[3], x+pad+iconSize/2, y+pad+dc.getFontHeight(titleFont)/2, iconSize, bg); }
+        if (data[1] == null || height < 65 || width < 80) { return; }
+        var brightnessY = y + pad + dc.getFontHeight(titleFont) + 3;
+        var lumens = data[1].format("%g") + " lm";
+        var lumensFont = 0;
+        var lumensWidth = dc.getTextWidthInPixels(lumens, lumensFont);
+        var stepsWidth = width - pad * 2 - lumensWidth - 8;
+        var stepWidth = (stepsWidth - 5 * 2) / 6;
+        var lit = brightnessSteps(data[1], maxLumens);
+        var stepHeight = 7;
+        for (var i=0; i<6 && stepWidth>=1; i++) {
+            dc.setColor(i<lit ? selected?WHITE:BLUE : selected?0x428CCA:bg==0x000000?0x444444:0xCCCCCC, -1);
+            dc.fillRectangle(x+pad+i*(stepWidth+2),brightnessY+dc.getFontHeight(0)/2-stepHeight/2,stepWidth,stepHeight);
+        }
+        dc.setColor(color,-1);
+        dc.drawText(x+width-pad,brightnessY,lumensFont,lumens,Graphics.TEXT_JUSTIFY_RIGHT);
+        var minutes = remainingMinutes(data[2], status);
+        var time = runtimeText(minutes);
+        var timeY = brightnessY + dc.getFontHeight(0) + 2;
+        var timeHeight = y+height-pad-timeY;
+        var timeFont = fitFont(dc,time,width-pad*2-iconSize-7,timeHeight,titleFont);
+        if (timeHeight < dc.getFontHeight(0)) { return; }
+        var warning = minutes != null && minutes < 30;
+        if (warning && selected) {
+            dc.setColor(0xFFF0F0,-1);
+            dc.fillRoundedRectangle(x+pad-2,timeY,width-pad*2+4,dc.getFontHeight(timeFont),3);
+        }
+        dc.setColor(warning ? (!selected && bg==0x000000 ? 0xFF6666 : RED) : color,-1);
+        drawIcon(dc,"clock",x+pad+iconSize/2,timeY+dc.getFontHeight(timeFont)/2,iconSize,bg);
+        dc.drawText(x+pad+iconSize+7,timeY,timeFont,time,Graphics.TEXT_JUSTIFY_LEFT);
+    }
+}

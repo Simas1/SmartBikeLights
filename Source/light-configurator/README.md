@@ -1,3 +1,22 @@
+# Lights Configurator
+
+Published at https://simas1.github.io/SmartBikeLights/.
+
+GitHub Actions builds and deploys the committed configurator when changes to
+`Source/light-configurator` are pushed to the `visual` branch. The workflow is
+`.github/workflows/deploy-configurator.yml`; Pages uses GitHub Actions as its source.
+
+To build the current data-field configurator locally:
+
+```sh
+npm ci
+npm run build-datafield
+```
+
+The optional `npm run deploy-datafield` command publishes to the fork's `gh-pages`
+branch instead. It requires Git push access and switching Pages to that branch's
+root directory; it is not used by the active Actions deployment.
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
