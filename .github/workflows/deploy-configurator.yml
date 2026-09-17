@@ -2,7 +2,7 @@ name: Deploy configurator
 
 on:
   push:
-    branches: [visual]
+    branches: [master]
     paths:
       - 'Source/light-configurator/**'
       - '.github/workflows/deploy-configurator.yml'
