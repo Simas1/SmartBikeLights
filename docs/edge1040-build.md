@@ -27,12 +27,36 @@ The workflow compiles the property defaults committed on the selected branch:
 - `Source/SmartBikeLights/resources-highmemory/properties.xml`: Steady and Break
   configurations, configuration names, activity color, and active configuration.
 
-The personal defaults currently select **Steady Config**, with blue activity
-color, recording enabled, and invert disabled. Saved settings already on the
-device take precedence over build defaults. Sideloaded applications cannot be
-configured through the iPhone Connect IQ settings page. To replace existing
-settings, use the simulator-generated `.SET` transfer method described in
-[Garmin's forum](https://forums.garmin.com/developer/connect-iq/f/discussion/5382/user-settings-on-development-app-on-actual-device).
+The two `properties.xml` files match the original upstream defaults: empty
+configuration strings, Primary selected, blue activity color, recording enabled,
+and invert disabled. Custom configurations belong in the `.SET` file below.
+Existing saved settings override the defaults compiled into the application.
+
+## Create custom settings
+
+1. Open **Actions → Create SmartBikeLights.SET → Run workflow**.
+2. Select the branch and edit any of the ten inputs. Every input has a default:
+   recording on, invert off, Blue, Secondary, and the Flash/Steady/Break
+   configuration strings and names. Only Flash includes mode icons.
+3. Paste configuration strings directly from the configurator. Keep literal
+   `\n` markers; do not add Markdown escapes before `#` or `@`.
+4. Download the **SmartBikeLights-settings** artifact and unzip it.
+5. Back up the Garmin's existing settings, then copy `SmartBikeLights.SET` into
+   `GARMIN/APPS/SETTINGS`. Its basename must match `SmartBikeLights.prg`.
+6. Safely disconnect and restart the Garmin.
+
+This workflow replaces all ten saved settings; it does not compile or install
+an application. Use **Build Edge 1040** separately for application changes.
+The script uses Python's standard library and checks the generated binary by
+reading it back. It preserves literal configuration text, including icon markers.
+Names have the same 20-character limit as the settings UI. Individual SET strings
+are limited to 65,534 UTF-8 bytes; GitHub also limits the total dispatch payload.
+Blank configuration inputs are allowed to disable optional configurations.
+
+Workflow defaults live in `.github/workflows/create-settings.yml`; they are
+independent of the upstream application defaults. GitHub requires the workflow
+on the repository's default branch before offering its manual Run workflow button.
+See [GitHub's workflow input documentation](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#onworkflow_dispatchinputs).
 
 ## Build details and limitations
 

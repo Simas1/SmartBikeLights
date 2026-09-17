@@ -1,14 +1,10 @@
 using Toybox.Math;
 using Toybox.Graphics;
-using Toybox.WatchUi;
 
 // Kept out of non-touch builds. Metadata lives in the existing title field so
 // old configurations and the configuration parser retain their wire format.
 (:touchScreen)
 module LightPanelGraphics {
-    var _modeIconsSmall;
-    var _modeIconsLarge;
-
     const BLUE = 0x056ABD;
     const WHITE = 0xFFFFFF;
     const RED = 0xCC2222;
@@ -154,7 +150,7 @@ module LightPanelGraphics {
         return font;
     }
 
-    // Mode artwork uses tintable font glyphs; utility symbols use primitives.
+    // Mode and utility artwork use drawing primitives without custom fonts.
     function drawIcon(dc, icon, x, y, size, background) {
         // Runtime is drawn on every mode button. Keep it resource-free so a
         // font-load failure cannot interrupt the rest of the panel's redraw.
@@ -168,22 +164,34 @@ module LightPanelGraphics {
             dc.setPenWidth(1);
             return;
         }
-        var glyph = icon.equals("headlight") ? "H" : icon.equals("taillight") ? "T"
-            : icon.equals("moon") ? "N" : icon.equals("lightning") ? "F" : null;
-        if (glyph != null) {
-            var font;
-            if (size >= 18) {
-                if (_modeIconsLarge == null) { _modeIconsLarge = WatchUi.loadResource(Rez.Fonts[:modeIconsLarge]); }
-                font = _modeIconsLarge;
-            } else {
-                if (_modeIconsSmall == null) { _modeIconsSmall = WatchUi.loadResource(Rez.Fonts[:modeIconsSmall]); }
-                font = _modeIconsSmall;
+        // Flattened from the 48-unit SVG artwork. Avoid custom-font APIs here:
+        // Edge 1040 overflows its VM stack inside their drawing wrappers.
+        var points = null;
+        if (icon.equals("headlight") || icon.equals("taillight")) {
+            points = [[23, 7], [19.31, 7.94], [15.81, 9.23], [12.59, 10.88], [9.75, 12.88], [7.38, 15.19], [5.56, 17.83], [4.41, 20.77], [4.0, 24.0], [4.41, 27.23], [5.56, 30.17], [7.38, 32.81], [9.75, 35.12], [12.59, 37.12], [15.81, 38.77], [19.31, 40.06], [23.0, 41.0], [24.31, 37.08], [25.25, 32.88], [25.81, 28.48], [26.0, 24.0], [25.81, 19.52], [25.25, 15.12], [24.31, 10.92], [23.0, 7.0]];
+        } else if (icon.equals("moon")) {
+            points = [[25, 4], [20.94, 5.11], [17.08, 6.88], [13.52, 9.2], [10.38, 12.0], [7.74, 15.17], [5.73, 18.62], [4.45, 22.27], [4.0, 26.0], [4.36, 29.64], [5.41, 33.03], [7.06, 36.09], [9.25, 38.75], [11.91, 40.94], [14.97, 42.59], [18.36, 43.64], [22.0, 44.0], [25.65, 43.64], [29.09, 42.61], [32.3, 40.99], [35.25, 38.88], [37.92, 36.33], [40.28, 33.45], [42.32, 30.31], [44.0, 27.0], [41.29, 28.6], [38.45, 29.64], [35.54, 30.15], [32.62, 30.12], [29.75, 29.59], [26.98, 28.55], [24.38, 27.01], [22.0, 25.0], [20.04, 22.66], [18.67, 20.17], [17.94, 17.56], [17.88, 14.88], [18.51, 12.14], [19.89, 9.39], [22.04, 6.67], [25.0, 4.0]];
+        } else if (icon.equals("lightning")) {
+            points = [[28,4],[10,26],[22,26],[20,44],[38,20],[26,20],[28,4]];
+        }
+        if (points != null) {
+            var unit = size / 48.0;
+            var direction = icon.equals("headlight") ? -1 : 1;
+            dc.setPenWidth(size >= 18 ? 2 : 1);
+            for (var i = 1; i < points.size(); i++) {
+                dc.drawLine(x + direction * (points[i-1][0]-24) * unit, y + (points[i-1][1]-24) * unit,
+                    x + direction * (points[i][0]-24) * unit, y + (points[i][1]-24) * unit);
             }
-            dc.drawText(x, y - dc.getFontHeight(font) / 2, font, glyph, Graphics.TEXT_JUSTIFY_CENTER);
+            if (icon.equals("headlight") || icon.equals("taillight")) {
+                dc.drawLine(x+direction*8*unit,y-9*unit,x+direction*20*unit,y-9*unit);
+                dc.drawLine(x+direction*9*unit,y,x+direction*20*unit,y);
+                dc.drawLine(x+direction*8*unit,y+9*unit,x+direction*20*unit,y+9*unit);
+            }
+            dc.setPenWidth(1);
             return;
         }
         var r = size / 2;
-        dc.setPenWidth(size >= 28 ? 3 : size >= 20 ? 2 : 1);
+        dc.setPenWidth(size >= 28 ? 3 : size >= 18 ? 2 : 1);
         if (icon.equals("sun")) {
             dc.drawCircle(x,y,r*0.45);
             dc.drawLine(x-r,y,x-r*0.65,y); dc.drawLine(x+r*0.65,y,x+r,y);
@@ -204,7 +212,7 @@ module LightPanelGraphics {
     function drawMode(dc, data, maxLumens, status, x, y, width, height, selected, fg, bg) {
         var pad = width >= 150 ? 10 : 6;
         var color = selected ? WHITE : fg;
-        var iconSize = width >= 150 ? 18 : 12;
+        var iconSize = width >= 150 ? 22 : 18;
         var hasIcon = !data[3].equals("none");
         var nameWidth = width - pad * 2 - (hasIcon ? iconSize + 5 : 0);
         var titleFont = fitFont(dc, data[0], nameWidth, height * 0.3, 2);
@@ -212,6 +220,8 @@ module LightPanelGraphics {
         dc.setColor(color, -1);
         dc.drawText(x+pad+(hasIcon?iconSize+5:0), y+pad, titleFont, name, Graphics.TEXT_JUSTIFY_LEFT);
         if (hasIcon) { drawIcon(dc, data[3], x+pad+iconSize/2, y+pad+dc.getFontHeight(titleFont)/2, iconSize, bg); }
+        // Keep runtime icons at their original size.
+        iconSize = width >= 150 ? 18 : 12;
         if (data[1] == null || height < 65 || width < 80) { return; }
         var brightnessY = y + pad + dc.getFontHeight(titleFont) + 3;
         var lumens = data[1].format("%g") + " lm";

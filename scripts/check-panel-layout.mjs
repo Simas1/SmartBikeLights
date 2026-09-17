@@ -54,6 +54,9 @@ const LightPanelGraphics = new Function('Graphics', 'StringHelper', 'WatchUi', '
   functions.map(name => functionBody(graphicsSource, name)).join('\n') +
   '\nreturn {BLUE,WHITE,RED,' + functions.join(',') + '};'
 )(Graphics, StringHelper, {loadResource: id => { resourceLoads++; return id; }}, {Fonts: {modeIconsSmall: 'icons12', modeIconsLarge: 'icons18'}});
+assert(!functionBody(graphicsSource, 'drawIcon').includes('loadResource'));
+assert(!functionBody(graphicsSource, 'drawIcon').includes('drawText'),
+  'Mode icons must avoid the custom-font drawing wrapper that overflows on Edge 1040');
 const footer = new Function('Graphics', 'StringHelper', 'LightPanelGraphics',
   'let _panelFooter; function setTextColor(dc,c){dc.setColor(c,-1);}\n' +
   functionBody(viewSource, 'drawPanelBattery') + functionBody(viewSource, 'drawPanelConfiguration') +
@@ -191,5 +194,17 @@ if (process.argv[2]) {
     }
     footer.setFooter([84.6,426,112.8,44,'Flash Config']);footer.drawPanelConfiguration(dc,fg,bg);
     fs.writeFileSync(path.join(process.argv[2],bg?'day.svg':'night.svg'),dc.svg());
+  }
+}
+
+assert.equal(resourceLoads, 0, "Mode drawing must not load fonts");
+
+for (const icon of ['headlight','taillight','moon','lightning']) {
+  for (const size of [18,22]) {
+    const dc = new Dc(100,100,0xFFFFFF);
+    LightPanelGraphics.drawIcon(dc,icon,50,50,size,0xFFFFFF);
+    assert(dc.elements.filter(e=>e.startsWith('<line')).length >= 6, icon);
+    assert.equal(dc.texts.length,0);
+    assert.equal(dc.pen,1);
   }
 }

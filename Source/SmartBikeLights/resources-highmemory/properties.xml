@@ -3,11 +3,11 @@
         <!-- Activity color -->
         <property id="AC" type="number">43775</property>
         <!-- Configuration -->
-        <property id="CC" type="number">2</property>
-        <property id="LC2" type="string"><![CDATA[#16384,90382865:1,2147483647:1:267911168,0#5,3!Night:2:51:60:0Es0,r0H]2!Day:2:0:60:0Er0,s0H]2!:1:0:0:0D=1#6291461,1409482753:0,889104606:1:#11,5!BreakD:3:7:5:0Er0,s0H]2A[-20!BreakN:3:63:5:0Es0,r0H]2A[-20!Day:2:5:60:0Er0,s0H]2!Night:2:5:60:0Es0,r0H]2!:1:0:0:0D=1#5,4:AT 1600:0:16777215:0!2,:-1,Off:0!1,Low  \n200lm-12h\n@sun:51!1,Medium  \n 600lm-4h\n@sun:52!1,High  \n1200lm-2h\n@sun:53#6,5:Flare RT:0:16777215:0!2,:-1,Off:0!1,Night Flash  \n5lm-15h\n@lightning:63!1,Day Flash  \n45lm-12h\n@lightning:8!1,Night Steady  \n5lm-13.5h\n@moon:5!1,Day Steady  \n25lm-4.5h\n@sun:1#0::#0:0#123!:123!#0#0#B3843#14#1#0#0]]></property>
-        <property id="LC3" type="string"><![CDATA[#16384,90382865:1,2147483647:1:267911168,0#1,1!:1:0:0:0D=1#6291461,1409482753:0,889104606:1:#7,3!BreakD:3:7:5:0Er0,s0H]2A[-20!BreakN:3:63:5:0Es0,r0H]2A[-20!:1:0:0:0D=1#5,4:AT 1600:0:16777215:0!2,:-1,Off:0!1,Low  \n200lm-12h\n@sun:51!1,Medium  \n 600lm-4h\n@sun:52!1,High  \n1200lm-2h\n@sun:53#6,5:Flare RT:0:16777215:0!2,:-1,Off:0!1,Night Flash  \n5lm-15h\n@lightning:63!1,Day Flash  \n45lm-12h\n@lightning:8!1,Night Steady  \n5lm-13.5h\n@moon:5!1,Day Steady  \n25lm-4.5h\n@sun:1#0::#0:0#123!:123!#0#0#B3843#14#1#0#0]]></property>
-        <property id="CN1" type="string">Flash</property>
-        <property id="CN2" type="string">Steady</property>
-        <property id="CN3" type="string">Break</property>
+        <property id="CC" type="number">1</property>
+        <property id="LC2" type="string"></property>
+        <property id="LC3" type="string"></property>
+        <property id="CN1" type="string">Primary</property>
+        <property id="CN2" type="string">Secondary</property>
+        <property id="CN3" type="string">Tertiary</property>
     </properties>
 </resources>

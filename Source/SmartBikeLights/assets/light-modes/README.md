@@ -22,3 +22,7 @@ draws Sun with circle and line primitives rather than a font glyph.
 
 `preview.png` shows white icons on blue at 24px and 40px, matching the
 control-mode preview. Columns are Sun, Headlight, Taillight, Night, and Flash.
+
+Garmin mode buttons now draw flattened SVG outlines with line primitives. This
+avoids a custom-font drawing stack overflow on Edge 1040 firmware 31.33.
+The ModeIcons bitmap fonts remain generated assets but are not used by mode buttons.
