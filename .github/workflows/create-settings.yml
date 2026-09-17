@@ -33,7 +33,7 @@ on:
         description: Current Configuration
         type: choice
         required: false
-        default: 'Secondary'
+        default: 'Primary'
         options:
           - Primary
           - Secondary
@@ -47,7 +47,7 @@ on:
         description: Lights Configuration Name
         type: string
         required: false
-        default: 'Flash Config'
+        default: 'Smart Flash'
       LC2:
         description: Secondary Lights Configuration
         type: string
@@ -57,7 +57,7 @@ on:
         description: Secondary Lights Configuration Name
         type: string
         required: false
-        default: 'Steady Config'
+        default: 'Smart Steady'
       LC3:
         description: Tertiary Lights Configuration
         type: string
@@ -67,7 +67,7 @@ on:
         description: Tertiary Lights Configuration Name
         type: string
         required: false
-        default: 'Break Config'
+        default: 'Smart Break'
 
 permissions:
   contents: read
