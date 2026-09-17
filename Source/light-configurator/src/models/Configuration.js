@@ -6,6 +6,7 @@ import Polygon from './Polygon';
 import LightPanel from './LightPanel';
 import LightButtonGroup from './LightButtonGroup';
 import LightButton from './LightButton';
+import { serializeButtonGraphics } from './lightButtonGraphics';
 import LightSettings from './LightSettings';
 import LightModeCycleBehavior from './LightModeCycleBehavior';
 import { getLight, isDataField, getLightIconColors, getSeparatorColors } from '../constants';
@@ -208,7 +209,7 @@ const parseLightPanel = (chars, i, filterResult) => {
         const numberOfButtons = parseNumber(chars, filterResult[0] + 1, filterResult); // Number of buttons in the group
         for (let j = 0; j < numberOfButtons; j++) {
             let lightButton = new LightButton();
-            lightButton.name = parseTitle(chars, filterResult[0] + 1, filterResult);
+            lightButton.loadPanelName(parseTitle(chars, filterResult[0] + 1, filterResult));
             lightButton.mode = parseNumber(chars, filterResult[0] + 1, filterResult);
             lightButtonGroup.buttons.push(lightButton);
         }
@@ -1028,7 +1029,7 @@ export default class Configuration {
       buttonGroups += `!${buttons.length}`;
       for (let j = 0; j < buttons.length; j++) {
         let button = buttons[j];
-        buttonGroups += `,${(button.mode < 0 ? '' : button.name)}:${button.mode}`;
+        buttonGroups += `,${(button.mode < 0 ? '' : button.mode === 0 ? button.name : serializeButtonGraphics(button))}:${button.mode}`;
       }
     }
 

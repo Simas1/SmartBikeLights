@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24">
+  <title>Network compact</title>
+  <path fill="#000000" fill-rule="evenodd" d="M8 1h8v7H8z M10 3v3h4V3z M1 16h8v7H1z M3 18v3h4v-3z M15 16h8v7h-8z M17 18v3h4v-3z"/>
+  <path fill="#000000" d="M11 8h2v3h7v5h-2v-3H6v3H4v-5h7z"/>
+</svg>

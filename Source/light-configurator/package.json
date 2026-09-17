@@ -34,7 +34,7 @@
   "scripts": {
     "start-datafield": "env-cmd -e datafield npm start",
     "build-datafield": "env-cmd -e datafield npm run build",
-    "publish-datafield": "gh-pages -f -d build -r https://github.com/maca88/SmartBikeLights.git",
+    "publish-datafield": "gh-pages -d build -r https://github.com/Simas1/SmartBikeLights.git",
     "deploy-datafield": "npm run build-datafield && npm run publish-datafield",
     "start-widget": "env-cmd -e widget npm start",
     "build-widget": "env-cmd -e widget npm run build",
