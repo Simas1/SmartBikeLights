@@ -156,8 +156,20 @@ module LightPanelGraphics {
 
     // Mode artwork uses tintable font glyphs; utility symbols use primitives.
     function drawIcon(dc, icon, x, y, size, background) {
+        // Runtime is drawn on every mode button. Keep it resource-free so a
+        // font-load failure cannot interrupt the rest of the panel's redraw.
+        // Geometry matches assets/time/time.svg (48-unit viewBox).
+        if (icon.equals("clock")) {
+            var scale = size / 48.0;
+            dc.setPenWidth(size >= 18 ? 2 : 1);
+            dc.drawCircle(x, y, 20 * scale);
+            dc.drawLine(x, y - 11 * scale, x, y);
+            dc.drawLine(x, y, x + 8 * scale, y + 6 * scale);
+            dc.setPenWidth(1);
+            return;
+        }
         var glyph = icon.equals("headlight") ? "H" : icon.equals("taillight") ? "T"
-            : icon.equals("moon") ? "N" : icon.equals("lightning") ? "F" : icon.equals("clock") ? "C" : null;
+            : icon.equals("moon") ? "N" : icon.equals("lightning") ? "F" : null;
         if (glyph != null) {
             var font;
             if (size >= 18) {

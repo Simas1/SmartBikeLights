@@ -19,3 +19,6 @@ text color. None removes the icon; Sun remains available for existing setups.
 
 `sun.svg` copies the brightness artwork for the configurator. Garmin currently
 draws Sun with circle and line primitives rather than a font glyph.
+
+`preview.png` shows white icons on blue at 24px and 40px, matching the
+control-mode preview. Columns are Sun, Headlight, Taillight, Night, and Flash.

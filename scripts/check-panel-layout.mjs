@@ -48,11 +48,12 @@ const StringHelper = new Function(
   '\nreturn {trimTextByWidth};'
 )();
 const functions = ['batteryPercent', 'remainingMinutes', 'runtimeText', 'brightnessSteps', 'fitFont', 'drawIcon', 'drawMode', 'panelSettings'];
+let resourceLoads = 0;
 const LightPanelGraphics = new Function('Graphics', 'StringHelper', 'WatchUi', 'Rez',
   'let _modeIconsSmall, _modeIconsLarge; const BLUE=0x056ABD, WHITE=0xFFFFFF, RED=0xCC2222;\n' +
   functions.map(name => functionBody(graphicsSource, name)).join('\n') +
   '\nreturn {BLUE,WHITE,RED,' + functions.join(',') + '};'
-)(Graphics, StringHelper, {loadResource: id => id}, {Fonts: {modeIconsSmall: 'icons12', modeIconsLarge: 'icons18'}});
+)(Graphics, StringHelper, {loadResource: id => { resourceLoads++; return id; }}, {Fonts: {modeIconsSmall: 'icons12', modeIconsLarge: 'icons18'}});
 const footer = new Function('Graphics', 'StringHelper', 'LightPanelGraphics',
   'let _panelFooter; function setTextColor(dc,c){dc.setColor(c,-1);}\n' +
   functionBody(viewSource, 'drawPanelBattery') + functionBody(viewSource, 'drawPanelConfiguration') +
@@ -102,6 +103,32 @@ function within(text, x, y, width, height) {
     text.y >= y - 0.01 && text.y + text.height <= y + height + 0.01,
   `Text escaped its bounds: ${JSON.stringify(text)} in ${[x,y,width,height]}`);
 }
+// The first clock redraw must work without loading any bitmap/font resource.
+for (const size of [12, 18]) {
+  const dc = new Dc(100, 100, 0xFFFFFF);
+  const before = resourceLoads;
+  LightPanelGraphics.drawIcon(dc, 'clock', 50, 50, size, 0xFFFFFF);
+  assert.equal(resourceLoads, before, 'Clock must not load a font');
+  assert.equal(dc.elements.filter(e => e.startsWith('<circle')).length, 1);
+  assert.equal(dc.elements.filter(e => e.startsWith('<line')).length, 2);
+  assert.equal(dc.pen, 1, 'Clock must restore the pen width');
+}
+// Execute the actual panel font-selection code: a normal 32px button must
+// retain the 24px panel glyph instead of falling back to the 12px status glyph.
+const controlStart = viewSource.indexOf('var iconSize = (buttonHeight');
+const controlEnd = viewSource.indexOf('} else if (titleFont == -1)', controlStart);
+assert(controlStart >= 0 && controlEnd > controlStart);
+const drawControl = new Function('dc', 'buttonHeight', 'buttonWidth', '_panelIconFont', '_controlModeFont', 'mode',
+  'const titleX=50, buttonY=0, controlMode=0, $={controlModes:["S","N","M"]};' + viewSource.slice(controlStart, controlEnd));
+for (const [height,width,panel,status,expected] of [[32,66,24,12,24],[50,110,40,19,40],[20,66,24,12,12]]) {
+  for (const mode of [-1,0]) {
+    let drawn;
+    drawControl({getFontHeight: font => font, drawText: (x,y,font,text) => {drawn={x,y,font,text};}},height,width,panel,status,mode);
+    assert.equal(drawn.font, expected, 'Control icon should use the largest fitting loaded font');
+    assert.equal(drawn.text, mode === 0 ? 'P' : 'S');
+    assert(drawn.y >= 2 && drawn.y + drawn.font <= height - 2, 'Control icon exceeds button margin');
+  }
+}
 let cases = 0;
 for (const visibility of [-1, 0, 1, 2, 3, 4]) {
   const settings = [2,2,'Front',0,0xFFFFFF,visibility,1,51,'Low',1,-2,null];
@@ -121,7 +148,6 @@ for (const bg of [0x000000, 0xFFFFFF]) {
         dc.texts.forEach(t=>within(t,x,44,137,96));
         dc.icons.forEach(icon => { within(icon,x,44,137,96); const label = icon.text === 'C' ? dc.texts[2] : dc.texts[0]; assert(icon.x+icon.width <= label.x, 'Icon overlaps label'); });
         const runtime=dc.texts[2];
-        assert.equal(dc.icons.filter(icon => icon.text === 'C').length, 1, 'Runtime must use the clock glyph');
         assert(runtime.height<=dc.texts[0].height,'Runtime must not be larger than the mode name');
         assert(runtime.x>=x+6+12+7,'Runtime must start after the clock');
         assert(dc.texts[1].x+dc.texts[1].width<=x+137-6+0.01,'Lumens must end inside the right padding');

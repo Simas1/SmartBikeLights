@@ -20,17 +20,25 @@ async function main() {
     }
     for (const [name, size] of Object.entries(fonts)) {
         const modeFont = name.startsWith('ModeIcons');
-        const fontGlyphs = modeFont ? [['H', 'headlight'], ['T', 'taillight'], ['N', 'night'], ['F', 'flash'], ['C', 'time']] : glyphs;
+        const fontGlyphs = modeFont ? [['H', 'headlight'], ['T', 'taillight'], ['N', 'night'], ['F', 'flash']] : glyphs;
         const width = powerOfTwo((size + 1) * fontGlyphs.length);
         const height = powerOfTwo(size);
         const images = [];
         const chars = [];
         for (const [index, [char, icon]] of fontGlyphs.entries()) {
-            const svg = fs.readFileSync(path.join(app, 'assets', icon === 'time' ? 'time' : modeFont ? 'light-modes' : icon === 'power' ? 'power' : 'control-mode', icon + '.svg'), 'utf8')
+            const artwork = modeFont ? path.join('light-modes', icon + '.svg')
+                : icon === 'power' ? 'power/power.svg' : path.join('control-mode', icon + '.svg');
+            const svg = fs.readFileSync(path.join(app, 'assets', artwork), 'utf8')
                 .replace(/#000000/g, '#FFFFFF');
             // Supersample before downscaling so tiny strokes retain coverage.
-            const input = await sharp(Buffer.from(svg), {density: 768})
+            let input = await sharp(Buffer.from(svg), {density: 768})
                 .resize(size, size).png().toBuffer();
+            if (!modeFont) {
+                // Binary coverage avoids faint grey fringes on MIP displays.
+                const alpha = await sharp(input).extractChannel('alpha').threshold(112).toBuffer();
+                input = await sharp({create: {width: size, height: size, channels: 3, background: '#FFFFFF'}})
+                    .joinChannel(alpha).png().toBuffer();
+            }
             const x = index * (size + 1);
             images.push({input, left: x, top: 0});
             chars.push(`char id=${char.charCodeAt(0)} x=${x} y=0 width=${size} height=${size} xoffset=0 yoffset=0 xadvance=${size} page=0 chnl=15`);

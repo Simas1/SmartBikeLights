@@ -1,7 +1,8 @@
 # Control-mode icon fonts
 
-These SVGs and `../power/power.svg` are the source artwork for the app's bitmap fonts. All use a
-48×48 viewBox, a 3-unit rounded stroke, and a transparent background.
+The SVGs here and `../power/power.svg` are the source artwork for
+the app's bitmap fonts. They use transparent backgrounds and geometry tuned
+for small device displays. `preview.png` shows the current glyphs.
 
 | Glyph | Icon |
 | --- | --- |
@@ -26,3 +27,14 @@ ControlMode12 = 12px, ControlMode18 and ControlMode32 = 19px, ControlMode54 = 32
 The touch panel uses PanelControl24 or PanelControl40 and falls back to its
 status font in smaller buttons. Runtime control values still map to S/N/M;
 the Off button uses P.
+
+Device fonts use the simplified artwork here: a solid Smart sparkle,
+a symmetrical Network with rectangular nodes and right-angle connectors, and
+a tap hand with a thinner outline and no decorative rays. Power uses
+`../power/power.svg`. The generated glyphs use binary alpha
+coverage for crisp MIP rendering.
+Panel icons fit the button with a two-pixel margin before falling back to the
+smaller status font.
+
+The approved compact Network uses a 24-unit pixel grid: three identical 8×7
+rectangles, 4×3 openings, and 2-unit borders and connectors throughout.

@@ -1815,7 +1815,8 @@ class BikeLightsView extends  WatchUi.DataField  {
                 if (mode == -3) {
                     drawButtonBattery(dc, fgColor, bgColor, buttonX, faceY, buttonWidth, faceHeight, batteryStatus);
                 } else if (mode == -1 || mode == 0) {
-                    var iconSize = buttonHeight * 0.65 < buttonWidth * 0.6 ? buttonHeight * 0.65 : buttonWidth * 0.6;
+                    // Fit the square icon inside the face, keeping a two-pixel margin.
+                    var iconSize = (buttonHeight < buttonWidth ? buttonHeight : buttonWidth) - 4;
                     var icon = mode == 0 ? "P" : $.controlModes[controlMode];
                     var iconFont = dc.getFontHeight(_panelIconFont) <= iconSize ? _panelIconFont : _controlModeFont;
                     dc.drawText(titleX, buttonY + (buttonHeight - dc.getFontHeight(iconFont)) / 2, iconFont, icon, 1 /* TEXT_JUSTIFY_CENTER */);

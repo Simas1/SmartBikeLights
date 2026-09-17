@@ -7,7 +7,8 @@ The SVG here is the source artwork for a brightness indicator. It uses a
 | --- | --- |
 | brightness.svg | Brightness (sun) |
 
-`preview.png` shows the icon on a white background. Update the preview when
-the source artwork changes.
+`preview.png` shows white icons on blue at 24px and 40px, matching the
+control-mode preview. Update it when the source artwork changes.
 
-This icon is not yet included in the app's bitmap fonts or configurator.
+This artwork is also copied to `../light-modes/sun.svg` for the configurator's
+Sun option. Brightness itself is not a separate bitmap-font glyph.

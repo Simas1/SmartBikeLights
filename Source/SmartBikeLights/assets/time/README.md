@@ -3,19 +3,14 @@
 The SVG here is the source artwork for the remaining-runtime indicator. It uses
 a 48×48 viewBox, a 3-unit rounded stroke, and a transparent background.
 
-| Glyph | Icon |
+| File | Icon |
 | --- | --- |
-| C | Time (clock) |
+| time.svg | Time (clock) |
 
-Regenerate from the repository root with Node.js and `sharp` available:
+The Garmin panel draws the clock directly using the SVG's circle and hand
+coordinates. It does not load a bitmap font for runtime estimates. This keeps
+the frequently drawn runtime indicator independent of font resource loading.
 
-```sh
-node scripts/generate-control-mode-fonts.cjs
-```
-
-The script creates white glyphs with alpha coverage so Garmin can apply the
-current text color. Commit both the generated `.fnt` files and PNG atlases.
-
-The panel uses glyph C in ModeIcons12/18 before the remaining-runtime estimate.
-It follows the mode's selected/day/night text color. `preview.png` shows the
-artwork on a white background.
+It appears before the remaining-runtime estimate and follows the mode's
+selected/day/night text color. `preview.png` shows white icons on blue
+at 24px and 40px, matching the control-mode preview.
