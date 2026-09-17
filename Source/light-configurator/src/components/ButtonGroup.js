@@ -11,6 +11,8 @@ import AppTextInput from '../inputs/AppTextInput';
 import AppSelect from '../inputs/AppSelect';
 import LightButtonGroup from '../models/LightButtonGroup';
 import { buttonIcons } from '../models/lightButtonGraphics';
+import LightModeIcon from './LightModeIcon';
+import Box from '@mui/material/Box';
 
 const Root = styled('div')(({ theme }) => ({
   flexGrow: 1,
@@ -111,7 +113,14 @@ export default observer(({ buttonGroup, lightModes, index, moveGroup, addButton,
                 <AppTextInput type="number" label="Full-charge runtime (hours)" value={button.runtimeHours} setter={button.setRuntimeHours} />
               </Grid>
               <Grid item xs={12}>
-                <AppSelect required items={buttonIcons} label="Mode icon" value={button.icon} setter={button.setIcon} />
+                <AppSelect required items={buttonIcons} label="Mode icon" value={button.icon} setter={button.setIcon}
+                  itemTemplateFunc={item => <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
+                    <LightModeIcon icon={item.id} />{item.name}
+                  </Box>} />
+                <Box aria-label="Light mode preview" sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2, overflowWrap: 'anywhere' }}>
+                  <LightModeIcon icon={button.icon} />
+                  <span>{(button.name || 'Light mode').split('\\n').join(' ')}</span>
+                </Box>
               </Grid>
             </>}
           </Grid>

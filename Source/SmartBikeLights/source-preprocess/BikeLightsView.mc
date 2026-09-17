@@ -94,6 +94,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
     private var _taillightPanel;
     private var _panelInitialized = false;
     private var _panelFooter; // [left, top, width, height, configuration name]
+    private var _panelIconFont;
     private var _headlightGroupName;
     private var _taillightGroupName;
 
@@ -1874,6 +1875,11 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
     }
 
     private function initializeLightPanels(dc, width, height) {
+  // #if highResolution
+        _panelIconFont = WatchUi.loadResource(Rez.Fonts[:panelControlLargeFont]);
+  // #else
+        _panelIconFont = WatchUi.loadResource(Rez.Fonts[:panelControlFont]);
+  // #endif
         var footerHeight = dc.getFontHeight(0) * 2 + 10;
         var currentConfig = getPropertyValue("CC");
         var configName = getPropertyValue("CN" + (currentConfig == null ? 1 : currentConfig));
@@ -2075,8 +2081,9 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
                     drawButtonBattery(dc, fgColor, bgColor, buttonX, faceY, buttonWidth, faceHeight, batteryStatus);
                 } else if (mode == -1 || mode == 0) {
                     var iconSize = buttonHeight * 0.65 < buttonWidth * 0.6 ? buttonHeight * 0.65 : buttonWidth * 0.6;
-                    var icon = mode == 0 ? "power" : controlMode == 0 ? "smart" : controlMode == 1 ? "network" : "manual";
-                    LightPanelGraphics.drawIcon(dc, icon, titleX, buttonY + buttonHeight / 2, iconSize, faceColor);
+                    var icon = mode == 0 ? "P" : $.controlModes[controlMode];
+                    var iconFont = dc.getFontHeight(_panelIconFont) <= iconSize ? _panelIconFont : _controlModeFont;
+                    dc.drawText(titleX, buttonY + (buttonHeight - dc.getFontHeight(iconFont)) / 2, iconFont, icon, 1 /* TEXT_JUSTIFY_CENTER */);
                 } else if (titleFont == -1) {
                     LightPanelGraphics.drawMode(dc, titleParts, panelData[8], batteryStatus, buttonX, buttonY, buttonWidth, buttonHeight, isSelected, fgColor, faceColor);
                 } else {

@@ -25,3 +25,12 @@ test('supports no ratings, explicit icons without ratings, and empty labels', ()
   expect(parseButtonGraphics(null).name).toBeNull();
   expect(parseButtonGraphics('@sun').name).toBe('');
 });
+
+test.each(['headlight', 'taillight', 'moon', 'lightning'])('round-trips %s with and without ratings', icon => {
+  for (const ratings of [{ lumens: null, runtimeHours: null }, { lumens: 100, runtimeHours: 2.5 }]) {
+    const button = { name: 'Custom mode', icon, ...ratings };
+    expect(parseButtonGraphics(serializeButtonGraphics(button))).toEqual(button);
+    button.name = 'Renamed';
+    expect(parseButtonGraphics(serializeButtonGraphics(button))).toEqual(button);
+  }
+});

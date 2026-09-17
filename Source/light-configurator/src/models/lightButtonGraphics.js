@@ -3,8 +3,10 @@
 export const buttonIcons = [
   { id: 'none', name: 'None' },
   { id: 'sun', name: 'Sun' },
-  { id: 'moon', name: 'Moon' },
-  { id: 'lightning', name: 'Lightning' }
+  { id: 'headlight', name: 'Headlight' },
+  { id: 'taillight', name: 'Taillight' },
+  { id: 'moon', name: 'Night' },
+  { id: 'lightning', name: 'Flash' }
 ];
 
 export function parseButtonGraphics(value) {

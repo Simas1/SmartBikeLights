@@ -1,10 +1,14 @@
 using Toybox.Math;
 using Toybox.Graphics;
+using Toybox.WatchUi;
 
 // Kept out of non-touch builds. Metadata lives in the existing title field so
 // old configurations and the configuration parser retain their wire format.
 (:touchScreen)
 module LightPanelGraphics {
+    var _modeIconsSmall;
+    var _modeIconsLarge;
+
     const BLUE = 0x056ABD;
     const WHITE = 0xFFFFFF;
     const RED = 0xCC2222;
@@ -22,7 +26,7 @@ module LightPanelGraphics {
         lines.add(title);
         var icon = "none";
         var last = lines[lines.size() - 1];
-        if (last.equals("@sun") || last.equals("@moon") || last.equals("@lightning") || last.equals("@none")) {
+        if (last.equals("@headlight") || last.equals("@taillight") || last.equals("@sun") || last.equals("@moon") || last.equals("@lightning") || last.equals("@none")) {
             icon = last.substring(1, last.length());
             lines = lines.slice(0, lines.size() - 1);
         }
@@ -150,23 +154,28 @@ module LightPanelGraphics {
         return font;
     }
 
-    // Integer primitives avoid bitmap/font dependencies and scale on both Edge
-    // display resolutions. Callers provide the face color for cut-outs.
+    // Mode artwork uses tintable font glyphs; utility symbols use primitives.
     function drawIcon(dc, icon, x, y, size, background) {
+        var glyph = icon.equals("headlight") ? "H" : icon.equals("taillight") ? "T"
+            : icon.equals("moon") ? "N" : icon.equals("lightning") ? "F" : null;
+        if (glyph != null) {
+            var font;
+            if (size >= 18) {
+                if (_modeIconsLarge == null) { _modeIconsLarge = WatchUi.loadResource(Rez.Fonts[:modeIconsLarge]); }
+                font = _modeIconsLarge;
+            } else {
+                if (_modeIconsSmall == null) { _modeIconsSmall = WatchUi.loadResource(Rez.Fonts[:modeIconsSmall]); }
+                font = _modeIconsSmall;
+            }
+            dc.drawText(x, y - dc.getFontHeight(font) / 2, font, glyph, Graphics.TEXT_JUSTIFY_CENTER);
+            return;
+        }
         var r = size / 2;
         dc.setPenWidth(size >= 28 ? 3 : size >= 20 ? 2 : 1);
         if (icon.equals("clock")) {
             dc.drawCircle(x, y, r);
             dc.drawLine(x, y, x, y - r * 0.6);
             dc.drawLine(x, y, x + r * 0.5, y + r * 0.25);
-        } else if (icon.equals("power")) {
-            // Open ring formed from line segments: no background-color changes.
-            var points = [[x-r*0.6,y-r*0.8],[x-r,y-r*0.25],[x-r,y+r*0.4],[x-r*0.5,y+r],[x+r*0.5,y+r],[x+r,y+r*0.4],[x+r,y-r*0.25],[x+r*0.6,y-r*0.8]];
-            for (var i = 1; i < points.size(); i++) { dc.drawLine(points[i-1][0],points[i-1][1],points[i][0],points[i][1]); }
-            dc.drawLine(x, y-r, x, y);
-        } else if (icon.equals("smart")) {
-            // A solid four-point sparkle remains distinct from the mode's sun.
-            dc.fillPolygon([[x,y-r],[x+r*0.3,y-r*0.3],[x+r,y],[x+r*0.3,y+r*0.3],[x,y+r],[x-r*0.3,y+r*0.3],[x-r,y],[x-r*0.3,y-r*0.3]]);
         } else if (icon.equals("sun")) {
             dc.drawCircle(x,y,r*0.45);
             dc.drawLine(x-r,y,x-r*0.65,y); dc.drawLine(x+r*0.65,y,x+r,y);
@@ -175,28 +184,6 @@ module LightPanelGraphics {
             dc.drawLine(x+r*0.5,y+r*0.5,x+r*0.75,y+r*0.75);
             dc.drawLine(x+r*0.75,y-r*0.75,x+r*0.5,y-r*0.5);
             dc.drawLine(x-r*0.5,y+r*0.5,x-r*0.75,y+r*0.75);
-        } else if (icon.equals("moon")) {
-            // Crescent polygon, with no dependency on an arc API level.
-            dc.fillPolygon([[x+r*0.4,y-r],[x-r*0.5,y-r*0.8],[x-r,y],[x-r*0.5,y+r*0.8],[x+r*0.4,y+r],[x+r,y+r*0.4],[x,y+r*0.3],[x-r*0.2,y-r*0.3]]);
-        } else if (icon.equals("lightning")) {
-            dc.fillPolygon([[x+r*0.3,y-r],[x-r,y+r*0.2],[x,y+r*0.2],[x-r*0.3,y+r],[x+r,y-r*0.2],[x,y-r*0.2]]);
-        } else if (icon.equals("network")) {
-            dc.drawLine(x,y-r*0.3,x,y+r*0.3);
-            dc.drawLine(x-r*0.7,y+r*0.3,x+r*0.7,y+r*0.3);
-            dc.drawRectangle(x-r*0.3,y-r,r*0.6,r*0.6);
-            dc.drawRectangle(x-r,y+r*0.3,r*0.6,r*0.6);
-            dc.drawRectangle(x+r*0.4,y+r*0.3,r*0.6,r*0.6);
-        } else if (icon.equals("manual")) {
-            // Continuous open-hand silhouette with four distinct finger tips.
-            var hand = [[x-r*0.45,y+r],[x-r,y+r*0.15],[x-r*0.75,y-r*0.05],[x-r*0.45,y+r*0.3],
-                [x-r*0.45,y-r*0.65],[x-r*0.15,y-r*0.65],[x-r*0.15,y-r*0.95],
-                [x+r*0.15,y-r*0.95],[x+r*0.15,y-r*0.8],[x+r*0.45,y-r*0.8],
-                [x+r*0.45,y-r*0.5],[x+r*0.75,y-r*0.5],[x+r*0.75,y+r*0.5],
-                [x+r*0.4,y+r],[x-r*0.45,y+r]];
-            for (var f=1; f<hand.size(); f++) { dc.drawLine(hand[f-1][0],hand[f-1][1],hand[f][0],hand[f][1]); }
-            dc.drawLine(x-r*0.15,y-r*0.65,x-r*0.15,y);
-            dc.drawLine(x+r*0.15,y-r*0.8,x+r*0.15,y);
-            dc.drawLine(x+r*0.45,y-r*0.5,x+r*0.45,y);
         } else if (icon.equals("cycle")) {
             dc.drawLine(x-r,y,x-r,y-r*0.6); dc.drawLine(x-r,y-r*0.6,x+r,y-r*0.6);
             dc.drawLine(x+r,y-r*0.6,x+r*0.4,y-r); dc.drawLine(x+r,y-r*0.6,x+r*0.4,y);

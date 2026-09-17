@@ -26,6 +26,7 @@ function functionBody(source, name) {
   } while (depth > 0 && end < source.length);
   // Only the small, untyped drawing subset is executed here.
   return source.slice(start, end)
+    .replace(/Rez\.Fonts\[:(\w+)\]/g, 'Rez.Fonts.$1')
     .replace(/\.length\(\)/g, '.length')
     .replace(/\.size\(\)/g, '.length')
     .replace(/\.toCharArray\(\)/g, ".split('')")
@@ -47,11 +48,11 @@ const StringHelper = new Function(
   '\nreturn {trimTextByWidth};'
 )();
 const functions = ['batteryPercent', 'remainingMinutes', 'runtimeText', 'brightnessSteps', 'fitFont', 'drawIcon', 'drawMode', 'panelSettings'];
-const LightPanelGraphics = new Function('Graphics', 'StringHelper',
-  'const BLUE=0x056ABD, WHITE=0xFFFFFF, RED=0xCC2222;\n' +
+const LightPanelGraphics = new Function('Graphics', 'StringHelper', 'WatchUi', 'Rez',
+  'let _modeIconsSmall, _modeIconsLarge; const BLUE=0x056ABD, WHITE=0xFFFFFF, RED=0xCC2222;\n' +
   functions.map(name => functionBody(graphicsSource, name)).join('\n') +
   '\nreturn {BLUE,WHITE,RED,' + functions.join(',') + '};'
-)(Graphics, StringHelper);
+)(Graphics, StringHelper, {loadResource: id => id}, {Fonts: {modeIconsSmall: 'icons12', modeIconsLarge: 'icons18'}});
 const footer = new Function('Graphics', 'StringHelper', 'LightPanelGraphics',
   'let _panelFooter; function setTextColor(dc,c){dc.setColor(c,-1);}\n' +
   functionBody(viewSource, 'drawPanelBattery') + functionBody(viewSource, 'drawPanelConfiguration') +
@@ -63,15 +64,25 @@ const color = n => '#' + n.toString(16).padStart(6, '0');
 class Dc {
   constructor(width, height, bg, scale = 1) {
     this.width = width; this.height = height; this.scale = scale;
-    this.color = '#ffffff'; this.pen = 1; this.texts = []; this.boxes = [];
+    this.color = '#ffffff'; this.pen = 1; this.texts = []; this.boxes = []; this.icons = [];
     this.elements = [`<rect width="100%" height="100%" fill="${color(bg)}"/>`];
   }
   getWidth() { return this.width; }
-  getFontHeight(font) { return [16, 20, 24, 28, 40][font] * this.scale; }
+  getFontHeight(font) { if (typeof font === 'string') return Number(font.slice(5)); return [16, 20, 24, 28, 40][font] * this.scale; }
   getTextWidthInPixels(text, font) { return text.length * this.getFontHeight(font) * 0.52; }
   setColor(value) { this.color = color(value); }
   setPenWidth(value) { this.pen = value; }
   drawText(x, y, font, text, justification) {
+    if (typeof font === 'string') {
+      const size = this.getFontHeight(font);
+      const name = {H: 'headlight', T: 'taillight', N: 'night', F: 'flash'}[text];
+      assert(name, 'Unknown mode icon glyph');
+      const svg = read('Source/SmartBikeLights/assets/light-modes/' + name + '.svg')
+        .replace(/<svg[^>]*>/, '<g fill="none" stroke="' + this.color + '" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">').replace('</svg>', '</g>');
+      this.icons.push({x: x-size/2, y, width: size, height: size, text});
+      this.elements.push(`<g transform="translate(${x-size/2} ${y}) scale(${size/48})">${svg}</g>`);
+      return;
+    }
     const width = this.getTextWidthInPixels(text, font), height = this.getFontHeight(font);
     const left = x - (justification === 0 ? width : justification === 1 ? width / 2 : 0);
     this.texts.push({x: left, y, width, height, text, color: this.color});
@@ -102,12 +113,13 @@ for (const visibility of [-1, 0, 1, 2, 3, 4]) {
 for (const bg of [0x000000, 0xFFFFFF]) {
   const fg = bg === 0 ? 0xFFFFFF : 0;
   for (const selected of [false, true]) for (const scale of [1, 1.25]) {
-    for (const x of [2, 143]) for (const data of [['Low',200,12,'sun'],['Night Steady',5,13.5,'none'],['Long custom mode name',1200,2,'lightning']]) {
+    for (const x of [2, 143]) for (const data of [['Low',200,12,'sun'],['Night Steady',5,13.5,'none'],['Long custom mode name',1200,2,'lightning'],['Front',200,12,'headlight'],['Rear',200,12,'taillight'],['Night',200,12,'moon']]) {
       for (const status of [1,4,5,7]) {
         const dc = new Dc(282,470,bg,scale);
         LightPanelGraphics.drawMode(dc,data,1200,status,x,44,137,96,selected,fg,selected?LightPanelGraphics.BLUE:bg);
         assert.equal(dc.texts.length,3,'Name, brightness, and runtime must all remain visible');
         dc.texts.forEach(t=>within(t,x,44,137,96));
+        dc.icons.forEach(icon => { within(icon,x,44,137,96); assert(icon.x+icon.width <= dc.texts[0].x, 'Mode icon overlaps name'); });
         const runtime=dc.texts[2];
         assert(runtime.height<=dc.texts[0].height,'Runtime must not be larger than the mode name');
         assert(runtime.x>=x+6+12+7,'Runtime must start after the clock');

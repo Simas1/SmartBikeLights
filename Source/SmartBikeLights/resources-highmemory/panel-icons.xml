@@ -1,0 +1,6 @@
+<resources>
+    <font id="panelControlFont" filename="../resources/fonts/PanelControl24.fnt" antialias="true" />
+    <font id="panelControlLargeFont" filename="../resources/fonts/PanelControl40.fnt" antialias="true" />
+    <font id="modeIconsSmall" filename="../resources/fonts/ModeIcons12.fnt" antialias="true" />
+    <font id="modeIconsLarge" filename="../resources/fonts/ModeIcons18.fnt" antialias="true" />
+</resources>

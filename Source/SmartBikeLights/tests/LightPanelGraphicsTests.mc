@@ -10,6 +10,13 @@ function graphicsLegacyTitleTest(logger) {
     Test.assert(data[1] == 5);
     Test.assert(data[2] == 13.5);
     Test.assert(data[3].equals("lightning"));
+    var icons = ["headlight", "taillight", "moon", "lightning"];
+    for (var i = 0; i < icons.size(); i++) {
+        var named = LightPanelGraphics.parseTitle("Custom mode\\n@" + icons[i]);
+        Test.assert(named[0].equals("Custom mode"));
+        Test.assert(named[1] == null);
+        Test.assert(named[3].equals(icons[i]));
+    }
     Test.assert(LightPanelGraphics.parseTitle("Night Flash") == null);
     Test.assert(LightPanelGraphics.parseTitle("Low\\n200lm-badh") == null);
     Test.assert(LightPanelGraphics.parseTitle("Low\\n200lm-0h") == null);
