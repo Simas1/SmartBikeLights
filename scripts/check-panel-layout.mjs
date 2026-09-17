@@ -75,9 +75,9 @@ class Dc {
   drawText(x, y, font, text, justification) {
     if (typeof font === 'string') {
       const size = this.getFontHeight(font);
-      const name = {H: 'headlight', T: 'taillight', N: 'night', F: 'flash'}[text];
+      const name = {H: 'headlight', T: 'taillight', N: 'night', F: 'flash', C: 'time'}[text];
       assert(name, 'Unknown mode icon glyph');
-      const svg = read('Source/SmartBikeLights/assets/light-modes/' + name + '.svg')
+      const svg = read('Source/SmartBikeLights/assets/' + (name === 'time' ? 'time/' : 'light-modes/') + name + '.svg')
         .replace(/<svg[^>]*>/, '<g fill="none" stroke="' + this.color + '" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">').replace('</svg>', '</g>');
       this.icons.push({x: x-size/2, y, width: size, height: size, text});
       this.elements.push(`<g transform="translate(${x-size/2} ${y}) scale(${size/48})">${svg}</g>`);
@@ -119,8 +119,9 @@ for (const bg of [0x000000, 0xFFFFFF]) {
         LightPanelGraphics.drawMode(dc,data,1200,status,x,44,137,96,selected,fg,selected?LightPanelGraphics.BLUE:bg);
         assert.equal(dc.texts.length,3,'Name, brightness, and runtime must all remain visible');
         dc.texts.forEach(t=>within(t,x,44,137,96));
-        dc.icons.forEach(icon => { within(icon,x,44,137,96); assert(icon.x+icon.width <= dc.texts[0].x, 'Mode icon overlaps name'); });
+        dc.icons.forEach(icon => { within(icon,x,44,137,96); const label = icon.text === 'C' ? dc.texts[2] : dc.texts[0]; assert(icon.x+icon.width <= label.x, 'Icon overlaps label'); });
         const runtime=dc.texts[2];
+        assert.equal(dc.icons.filter(icon => icon.text === 'C').length, 1, 'Runtime must use the clock glyph');
         assert(runtime.height<=dc.texts[0].height,'Runtime must not be larger than the mode name');
         assert(runtime.x>=x+6+12+7,'Runtime must start after the clock');
         assert(dc.texts[1].x+dc.texts[1].width<=x+137-6+0.01,'Lumens must end inside the right padding');

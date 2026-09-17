@@ -10,7 +10,7 @@ jest.mock('react-dnd', () => ({
   useDrop: () => [{ handlerId: 'test' }, value => value]
 }));
 
-test('choosing each mode icon updates its label preview and None removes it', async () => {
+test('choosing each mode icon updates the selection without repeating the button name', async () => {
   const button = new LightButton();
   button.setMode(1);
   button.setName('My mode');
@@ -18,19 +18,22 @@ test('choosing each mode icon updates its label preview and None removes it', as
   group.buttons.push(button);
   render(<ButtonGroup buttonGroup={group} lightModes={[{id: 1, name: 'Low'}]} index={0}
     moveGroup={() => {}} addButton={() => {}} removeButton={() => {}} />);
-  const preview = screen.getByLabelText('Light mode preview');
-  for (const [label, id] of [['Headlight', 'headlight'], ['Taillight', 'taillight'], ['Night', 'moon'], ['Flash', 'lightning']]) {
+  expect(screen.queryByLabelText('Light mode preview')).toBeNull();
+  for (const [label, id] of [['Sun', 'sun'], ['Headlight', 'headlight'], ['Taillight', 'taillight'], ['Night', 'moon'], ['Flash', 'lightning']]) {
     fireEvent.mouseDown(screen.getByLabelText(/Mode icon/, {selector: '[role="button"]'}));
     fireEvent.click(within(screen.getByRole('listbox')).getByText(label));
     await waitFor(() => expect(screen.queryByRole('listbox', {hidden: true})).toBeNull());
     expect(button.icon).toBe(id);
-    expect(preview.querySelector('svg')).not.toBeNull();
-    expect(preview).toHaveTextContent('My mode');
+    const selection = screen.getByLabelText(/Mode icon/, {selector: '[role="button"]'});
+    expect(selection.querySelector('svg')).not.toBeNull();
+    expect(selection).toHaveTextContent(label);
+    expect(screen.queryByText('My mode')).toBeNull();
   }
   fireEvent.change(screen.getByLabelText(/Button name/), {target: {value: 'Renamed'}});
-  expect(preview).toHaveTextContent('Renamed');
+  expect(button.name).toBe('Renamed');
+  expect(screen.queryByText('Renamed')).toBeNull();
   fireEvent.mouseDown(screen.getByLabelText(/Mode icon/, {selector: '[role="button"]'}));
   fireEvent.click(within(screen.getByRole('listbox')).getByText('None'));
   expect(button.icon).toBe('none');
-  expect(preview.querySelector('svg')).toBeNull();
+  expect(screen.getByLabelText(/Mode icon/, {selector: '[role="button"]'}).querySelector('svg')).toBeNull();
 });

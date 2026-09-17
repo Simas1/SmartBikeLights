@@ -117,10 +117,6 @@ export default observer(({ buttonGroup, lightModes, index, moveGroup, addButton,
                   itemTemplateFunc={item => <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
                     <LightModeIcon icon={item.id} />{item.name}
                   </Box>} />
-                <Box aria-label="Light mode preview" sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2, overflowWrap: 'anywhere' }}>
-                  <LightModeIcon icon={button.icon} />
-                  <span>{(button.name || 'Light mode').split('\\n').join(' ')}</span>
-                </Box>
               </Grid>
             </>}
           </Grid>

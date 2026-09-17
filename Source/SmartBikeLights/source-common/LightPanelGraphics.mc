@@ -157,7 +157,7 @@ module LightPanelGraphics {
     // Mode artwork uses tintable font glyphs; utility symbols use primitives.
     function drawIcon(dc, icon, x, y, size, background) {
         var glyph = icon.equals("headlight") ? "H" : icon.equals("taillight") ? "T"
-            : icon.equals("moon") ? "N" : icon.equals("lightning") ? "F" : null;
+            : icon.equals("moon") ? "N" : icon.equals("lightning") ? "F" : icon.equals("clock") ? "C" : null;
         if (glyph != null) {
             var font;
             if (size >= 18) {
@@ -172,11 +172,7 @@ module LightPanelGraphics {
         }
         var r = size / 2;
         dc.setPenWidth(size >= 28 ? 3 : size >= 20 ? 2 : 1);
-        if (icon.equals("clock")) {
-            dc.drawCircle(x, y, r);
-            dc.drawLine(x, y, x, y - r * 0.6);
-            dc.drawLine(x, y, x + r * 0.5, y + r * 0.25);
-        } else if (icon.equals("sun")) {
+        if (icon.equals("sun")) {
             dc.drawCircle(x,y,r*0.45);
             dc.drawLine(x-r,y,x-r*0.65,y); dc.drawLine(x+r*0.65,y,x+r,y);
             dc.drawLine(x,y-r,x,y-r*0.65); dc.drawLine(x,y+r*0.65,x,y+r);
