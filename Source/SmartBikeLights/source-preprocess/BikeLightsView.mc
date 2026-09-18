@@ -1875,6 +1875,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
     }
 
     private function initializeLightPanels(dc, width, height) {
+        LightPanelGraphics.initializeFonts();
   // #if highResolution
         _panelIconFont = WatchUi.loadResource(Rez.Fonts[:panelControlLargeFont]);
   // #else

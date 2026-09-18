@@ -48,13 +48,19 @@ const StringHelper = new Function(
   functionBody(stringSource, 'trimTextByWidth') +
   '\nreturn {trimTextByWidth};'
 )();
-const functions = ['batteryPercent', 'remainingMinutes', 'runtimeText', 'brightnessSteps', 'fitFont', 'drawIcon', 'drawMode', 'panelSettings'];
+const functions = ['initializeFonts', 'batteryPercent', 'remainingMinutes', 'runtimeText', 'brightnessSteps', 'fitFont', 'drawIcon', 'drawMode', 'panelSettings'];
 let resourceLoads = 0;
 const LightPanelGraphics = new Function('Graphics', 'StringHelper', 'WatchUi', 'Rez',
-  'let _modeIconsSmall, _modeIconsLarge; const BLUE=0x056ABD, WHITE=0xFFFFFF, RED=0xCC2222;\n' +
+  'let _modeIconsSmall, _modeIconsLarge, _modeIconsWide; const BLUE=0x056ABD, WHITE=0xFFFFFF, RED=0xCC2222;\n' +
   functions.map(name => functionBody(graphicsSource, name)).join('\n') +
   '\nreturn {BLUE,WHITE,RED,' + functions.join(',') + '};'
-)(Graphics, StringHelper, {loadResource: id => { resourceLoads++; return id; }}, {Fonts: {modeIconsSmall: 'icons12', modeIconsLarge: 'icons18'}});
+)(Graphics, StringHelper, {loadResource: id => { resourceLoads++; return id; }}, {Fonts: {modeIconsSmall: 'icons12', modeIconsLarge: 'icons18', modeIconsWide: 'icons22'}});
+LightPanelGraphics.initializeFonts();
+LightPanelGraphics.initializeFonts();
+assert.equal(resourceLoads,3,'Fonts load once during setup');
+resourceLoads=0;
+assert(!functionBody(graphicsSource, 'drawMode').includes('loadResource'));
+assert(!functionBody(graphicsSource, 'drawMode').includes('drawIcon('),'Bitmap glyphs must draw without an extra wrapper');
 assert(!functionBody(graphicsSource, 'drawIcon').includes('loadResource'));
 assert(!functionBody(graphicsSource, 'drawIcon').includes('drawText'),
   'Mode icons must avoid the custom-font drawing wrapper that overflows on Edge 1040');
@@ -82,7 +88,7 @@ class Dc {
   drawText(x, y, font, text, justification) {
     if (typeof font === 'string') {
       const size = this.getFontHeight(font);
-      const name = {H: 'headlight', T: 'taillight', N: 'night', F: 'flash', C: 'time'}[text];
+      const name = {H: 'headlight', T: 'taillight', N: 'night', F: 'flash', C: 'time', S: 'sun'}[text];
       assert(name, 'Unknown mode icon glyph');
       const svg = read('Source/SmartBikeLights/assets/' + 'button-icons/' + name + '.svg')
         .replace(/<svg[^>]*>/, '<g fill="none" stroke="' + this.color + '" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">').replace('</svg>', '</g>');
@@ -108,16 +114,6 @@ function within(text, x, y, width, height) {
   assert(text.x >= x - 0.01 && text.x + text.width <= x + width + 0.01 &&
     text.y >= y - 0.01 && text.y + text.height <= y + height + 0.01,
   `Text escaped its bounds: ${JSON.stringify(text)} in ${[x,y,width,height]}`);
-}
-// The first clock redraw must work without loading any bitmap/font resource.
-for (const size of [12, 18]) {
-  const dc = new Dc(100, 100, 0xFFFFFF);
-  const before = resourceLoads;
-  LightPanelGraphics.drawIcon(dc, 'clock', 50, 50, size, 0xFFFFFF);
-  assert.equal(resourceLoads, before, 'Clock must not load a font');
-  assert.equal(dc.elements.filter(e => e.startsWith('<circle')).length, 1);
-  assert.equal(dc.elements.filter(e => e.startsWith('<line')).length, 2);
-  assert.equal(dc.pen, 1, 'Clock must restore the pen width');
 }
 // Execute the actual panel font-selection code: a normal 32px button must
 // retain the 24px panel glyph instead of falling back to the 12px status glyph.
@@ -202,20 +198,8 @@ if (process.argv[2]) {
 
 assert.equal(resourceLoads, 0, "Mode drawing must not load fonts");
 
-for (const icon of ['headlight','taillight','moon','lightning']) {
-  for (const size of [18,22]) {
-    const dc = new Dc(100,100,0xFFFFFF);
-    LightPanelGraphics.drawIcon(dc,icon,50,50,size,0xFFFFFF);
-    assert(dc.elements.some(e=>e.startsWith(icon === 'moon' || icon === 'lightning' ? '<polygon' : '<line')), icon);
-    assert.equal(dc.antialiasUsed, true);
-    assert.equal(dc.antialias, false, 'Restore non-icon drawing state');
-    assert.equal(dc.texts.length,0);
-    assert.equal(dc.pen,1);
-  }
-}
-
 // Every icon releases its drawing state, including on older devices without AA.
-for (const icon of ['sun','clock','headlight','taillight','moon','lightning','cycle']) {
+for (const icon of ['cycle']) {
   for (const supported of [true,false]) {
     const dc = new Dc(100,100,0xFFFFFF);
     if (!supported) dc.setAntiAlias = undefined;
@@ -227,4 +211,11 @@ for (const icon of ['sun','clock','headlight','taillight','moon','lightning','cy
     }
     assert.equal(resourceLoads,0);
   }
+}
+
+for (const icon of ['sun','headlight','taillight','moon','lightning']) {
+  const dc = new Dc(480,800,0xFFFFFF);
+  LightPanelGraphics.drawMode(dc,['Mode',200,12,icon],1200,1,0,0,230,160,false,0,0xFFFFFF);
+  assert.deepEqual(dc.icons.map(i=>i.width),[22,18]);
+  assert.equal(resourceLoads,0,'Wide buttons must reuse loaded fonts');
 }
