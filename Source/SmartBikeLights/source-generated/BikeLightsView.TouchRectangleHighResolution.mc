@@ -1614,6 +1614,7 @@ class BikeLightsView extends  WatchUi.DataField  {
     }
 
     private function initializeLightPanels(dc, width, height) {
+        LightPanelGraphics.initializeFonts();
         _panelIconFont = WatchUi.loadResource(Rez.Fonts[:panelControlLargeFont]);
         var footerHeight = dc.getFontHeight(0) * 2 + 10;
         var currentConfig = getPropertyValue("CC");

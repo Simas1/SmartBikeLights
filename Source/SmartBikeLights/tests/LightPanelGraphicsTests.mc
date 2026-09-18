@@ -10,7 +10,7 @@ function graphicsLegacyTitleTest(logger) {
     Test.assert(data[1] == 5);
     Test.assert(data[2] == 13.5);
     Test.assert(data[3].equals("lightning"));
-    var icons = ["headlight", "taillight", "moon", "lightning"];
+    var icons = ["headlight", "taillight", "moon", "lightning", "headlight-high", "headlight-medium", "headlight-low", "taillight-high", "taillight-medium", "taillight-low"];
     for (var i = 0; i < icons.size(); i++) {
         var named = LightPanelGraphics.parseTitle("Custom mode\\n@" + icons[i]);
         Test.assert(named[0].equals("Custom mode"));

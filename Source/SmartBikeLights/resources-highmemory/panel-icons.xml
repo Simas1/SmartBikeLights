@@ -3,4 +3,5 @@
     <font id="panelControlLargeFont" filename="../resources/fonts/PanelControl40.fnt" antialias="true" />
     <font id="modeIconsSmall" filename="../resources/fonts/ModeIcons12.fnt" antialias="true" />
     <font id="modeIconsLarge" filename="../resources/fonts/ModeIcons18.fnt" antialias="true" />
+    <font id="modeIconsWide" filename="../resources/fonts/ModeIcons22.fnt" antialias="true" />
 </resources>
