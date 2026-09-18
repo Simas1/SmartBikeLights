@@ -1,4 +1,5 @@
-name: Create SmartBikeLights.SET
+name: Build SBL Settings
+run-name: Build SBL Settings
 
 on:
   workflow_dispatch:
@@ -78,18 +79,15 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Check out source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
-      - name: Test settings serializer
-        run: python3 -m unittest discover -s scripts -p 'test_create_settings.py'
-
-      - name: Create settings file
-        env:
-          SETTINGS_INPUTS: ${{ toJSON(inputs) }}
-        run: python3 scripts/create-settings.py
+      - name: Build settings file
+        uses: ./.github/actions/build-sbl-settings
+        with:
+          settings: ${{ toJSON(inputs) }}
 
       - name: Upload Garmin settings
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: SmartBikeLights-settings
           path: Build/settings/SmartBikeLights.SET
@@ -106,5 +104,5 @@ jobs:
           Safely disconnect and restart the Garmin.
 
           This file replaces all ten app settings. It does not rebuild the app.
-          The Build Edge 1040 workflow produces the separate application file.
+          The Build SBL workflow produces the separate application file.
           EOF

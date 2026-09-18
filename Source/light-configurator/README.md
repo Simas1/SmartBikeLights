@@ -4,7 +4,7 @@ Published at https://simas1.github.io/SmartBikeLights/.
 
 GitHub Actions builds and deploys the committed configurator when changes to
 `Source/light-configurator` are pushed to the `visual` branch. The workflow is
-`.github/workflows/deploy-configurator.yml`; Pages uses GitHub Actions as its source.
+`.github/workflows/deploy-sbl-configurator.yml`; Pages uses GitHub Actions as its source.
 
 To build the current data-field configurator locally:
 
