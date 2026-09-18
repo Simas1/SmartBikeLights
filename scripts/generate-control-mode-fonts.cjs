@@ -16,7 +16,7 @@ async function main() {
     const webIcons = path.resolve(app, '../light-configurator/src/icons/light-modes');
     fs.mkdirSync(webIcons, {recursive: true});
     for (const icon of (process.argv.includes('--panel-only') ? [] : ['headlight', 'taillight', 'night', 'flash', 'sun'])) {
-        fs.copyFileSync(path.join(app, 'assets/light-modes', icon + '.svg'), path.join(webIcons, icon + '.svg'));
+        fs.copyFileSync(path.join(app, 'assets/button-icons', icon + '.svg'), path.join(webIcons, icon + '.svg'));
     }
     for (const [name, size] of Object.entries(fonts)) {
         if (process.argv.includes('--panel-only') && name !== 'PanelControl24') { continue; }
@@ -27,7 +27,7 @@ async function main() {
         const images = [];
         const chars = [];
         for (const [index, [char, icon]] of fontGlyphs.entries()) {
-            const artwork = modeFont ? path.join('light-modes', icon + '.svg')
+            const artwork = modeFont ? path.join('button-icons', icon + '.svg')
                 : path.join('control-icons', icon + '.svg');
             const svg = fs.readFileSync(path.join(app, 'assets', artwork), 'utf8')
                 .replace(/#000000/g, '#FFFFFF');
@@ -51,7 +51,7 @@ async function main() {
         // Garmin bitmap fonts need coverage in RGB intensity, not just PNG alpha.
         // Black represents no glyph coverage; grey represents a smooth edge.
         const output = sharp(atlas);
-        if (!modeFont) { output.flatten({background: '#000000'}); }
+        output.flatten({background: '#000000'});
         await output.png().toFile(path.join(app, 'resources/fonts', name + '.png'));
         const fnt = [
             `info face="ControlMode" size=${size} bold=0 italic=0 charset="" unicode=1 stretchH=100 smooth=1 aa=1 padding=0,0,0,0 spacing=1,1 outline=0`,

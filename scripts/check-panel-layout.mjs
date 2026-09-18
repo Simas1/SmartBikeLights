@@ -27,6 +27,7 @@ function functionBody(source, name) {
   // Only the small, untyped drawing subset is executed here.
   return source.slice(start, end)
     .replace(/Rez\.Fonts\[:(\w+)\]/g, 'Rez.Fonts.$1')
+    .replace(/dc has :setAntiAlias/g, 'typeof dc.setAntiAlias === \"function\"')
     .replace(/\.length\(\)/g, '.length')
     .replace(/\.size\(\)/g, '.length')
     .replace(/\.toCharArray\(\)/g, ".split('')")
@@ -76,12 +77,14 @@ class Dc {
   getTextWidthInPixels(text, font) { return text.length * this.getFontHeight(font) * 0.52; }
   setColor(value) { this.color = color(value); }
   setPenWidth(value) { this.pen = value; }
+  setAntiAlias(value) { this.antialias = value; if (value) this.antialiasUsed = true; }
+  fillCircle(x,y,r) { this.elements.push(`<circle cx="${x}" cy="${y}" r="${r}" fill="${this.color}"/>`); }
   drawText(x, y, font, text, justification) {
     if (typeof font === 'string') {
       const size = this.getFontHeight(font);
       const name = {H: 'headlight', T: 'taillight', N: 'night', F: 'flash', C: 'time'}[text];
       assert(name, 'Unknown mode icon glyph');
-      const svg = read('Source/SmartBikeLights/assets/' + (name === 'time' ? 'time/' : 'light-modes/') + name + '.svg')
+      const svg = read('Source/SmartBikeLights/assets/' + 'button-icons/' + name + '.svg')
         .replace(/<svg[^>]*>/, '<g fill="none" stroke="' + this.color + '" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">').replace('</svg>', '</g>');
       this.icons.push({x: x-size/2, y, width: size, height: size, text});
       this.elements.push(`<g transform="translate(${x-size/2} ${y}) scale(${size/48})">${svg}</g>`);
@@ -203,8 +206,25 @@ for (const icon of ['headlight','taillight','moon','lightning']) {
   for (const size of [18,22]) {
     const dc = new Dc(100,100,0xFFFFFF);
     LightPanelGraphics.drawIcon(dc,icon,50,50,size,0xFFFFFF);
-    assert(dc.elements.filter(e=>e.startsWith('<line')).length >= 6, icon);
+    assert(dc.elements.some(e=>e.startsWith(icon === 'moon' || icon === 'lightning' ? '<polygon' : '<line')), icon);
+    assert.equal(dc.antialiasUsed, true);
+    assert.equal(dc.antialias, false, 'Restore non-icon drawing state');
     assert.equal(dc.texts.length,0);
     assert.equal(dc.pen,1);
+  }
+}
+
+// Every icon releases its drawing state, including on older devices without AA.
+for (const icon of ['sun','clock','headlight','taillight','moon','lightning','cycle']) {
+  for (const supported of [true,false]) {
+    const dc = new Dc(100,100,0xFFFFFF);
+    if (!supported) dc.setAntiAlias = undefined;
+    LightPanelGraphics.drawIcon(dc,icon,50,50,18,0xFFFFFF);
+    assert.equal(dc.pen,1);
+    if (supported) {
+      assert.equal(dc.antialiasUsed,true);
+      assert.equal(dc.antialias,false);
+    }
+    assert.equal(resourceLoads,0);
   }
 }

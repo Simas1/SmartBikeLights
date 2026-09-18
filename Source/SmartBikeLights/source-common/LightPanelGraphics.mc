@@ -152,9 +152,10 @@ module LightPanelGraphics {
 
     // Mode and utility artwork use drawing primitives without custom fonts.
     function drawIcon(dc, icon, x, y, size, background) {
+        if (dc has :setAntiAlias) { dc.setAntiAlias(true); }
         // Runtime is drawn on every mode button. Keep it resource-free so a
         // font-load failure cannot interrupt the rest of the panel's redraw.
-        // Geometry matches assets/time/time.svg (48-unit viewBox).
+        // Geometry matches assets/button-icons/time.svg (48-unit viewBox).
         if (icon.equals("clock")) {
             var scale = size / 48.0;
             dc.setPenWidth(size >= 18 ? 2 : 1);
@@ -162,6 +163,7 @@ module LightPanelGraphics {
             dc.drawLine(x, y - 11 * scale, x, y);
             dc.drawLine(x, y, x + 8 * scale, y + 6 * scale);
             dc.setPenWidth(1);
+            if (dc has :setAntiAlias) { dc.setAntiAlias(false); }
             return;
         }
         // Flattened from the 48-unit SVG artwork. Avoid custom-font APIs here:
@@ -178,6 +180,15 @@ module LightPanelGraphics {
             var unit = size / 48.0;
             var direction = icon.equals("headlight") ? -1 : 1;
             dc.setPenWidth(size >= 18 ? 2 : 1);
+            if (icon.equals("moon") || icon.equals("lightning")) {
+                for (var i = 0; i < points.size(); i++) {
+                    points[i] = [x + (points[i][0]-24)*unit, y + (points[i][1]-24)*unit];
+                }
+                dc.fillPolygon(points);
+                dc.setPenWidth(1);
+                if (dc has :setAntiAlias) { dc.setAntiAlias(false); }
+                return;
+            }
             for (var i = 1; i < points.size(); i++) {
                 dc.drawLine(x + direction * (points[i-1][0]-24) * unit, y + (points[i-1][1]-24) * unit,
                     x + direction * (points[i][0]-24) * unit, y + (points[i][1]-24) * unit);
@@ -188,14 +199,15 @@ module LightPanelGraphics {
                 dc.drawLine(x+direction*8*unit,y+9*unit,x+direction*20*unit,y+9*unit);
             }
             dc.setPenWidth(1);
+            if (dc has :setAntiAlias) { dc.setAntiAlias(false); }
             return;
         }
         var r = size / 2;
         dc.setPenWidth(size >= 28 ? 3 : size >= 18 ? 2 : 1);
         if (icon.equals("sun")) {
-            dc.drawCircle(x,y,r*0.45);
-            dc.drawLine(x-r,y,x-r*0.65,y); dc.drawLine(x+r*0.65,y,x+r,y);
-            dc.drawLine(x,y-r,x,y-r*0.65); dc.drawLine(x,y+r*0.65,x,y+r);
+            dc.fillCircle(x,y,r/3);
+            dc.drawLine(x-r*5/6,y,x-r*0.625,y); dc.drawLine(x+r*0.625,y,x+r*5/6,y);
+            dc.drawLine(x,y-r*5/6,x,y-r*0.625); dc.drawLine(x,y+r*0.625,x,y+r*5/6);
             dc.drawLine(x-r*0.75,y-r*0.75,x-r*0.5,y-r*0.5);
             dc.drawLine(x+r*0.5,y+r*0.5,x+r*0.75,y+r*0.75);
             dc.drawLine(x+r*0.75,y-r*0.75,x+r*0.5,y-r*0.5);
@@ -207,6 +219,7 @@ module LightPanelGraphics {
             dc.drawLine(x-r,y+r*0.6,x-r*0.4,y+r); dc.drawLine(x-r,y+r*0.6,x-r*0.4,y);
         }
         dc.setPenWidth(1);
+        if (dc has :setAntiAlias) { dc.setAntiAlias(false); }
     }
 
     function drawMode(dc, data, maxLumens, status, x, y, width, height, selected, fg, bg) {
