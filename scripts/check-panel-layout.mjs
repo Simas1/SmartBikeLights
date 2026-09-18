@@ -88,7 +88,7 @@ class Dc {
   drawText(x, y, font, text, justification) {
     if (typeof font === 'string') {
       const size = this.getFontHeight(font);
-      const name = {H: 'headlight', T: 'taillight', N: 'night', F: 'flash', C: 'time', S: 'sun'}[text];
+      const name = {H: 'headlight-high', h: 'headlight-medium', L: 'headlight-low', T: 'taillight-high', t: 'taillight-medium', l: 'taillight-low', N: 'night', F: 'flash', C: 'time', S: 'sun'}[text];
       assert(name, 'Unknown mode icon glyph');
       const svg = read('Source/SmartBikeLights/assets/' + 'button-icons/' + name + '.svg')
         .replace(/<svg[^>]*>/, '<g fill="none" stroke="' + this.color + '" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">').replace('</svg>', '</g>');
@@ -218,4 +218,10 @@ for (const icon of ['sun','headlight','taillight','moon','lightning']) {
   LightPanelGraphics.drawMode(dc,['Mode',200,12,icon],1200,1,0,0,230,160,false,0,0xFFFFFF);
   assert.deepEqual(dc.icons.map(i=>i.width),[22,18]);
   assert.equal(resourceLoads,0,'Wide buttons must reuse loaded fonts');
+}
+
+for (const [icon,glyph] of Object.entries({'headlight-high':'H','headlight-medium':'h','headlight-low':'L','taillight-high':'T','taillight-medium':'t','taillight-low':'l'})) {
+ const dc=new Dc(282,470,0xFFFFFF);
+ LightPanelGraphics.drawMode(dc,['Mode',200,12,icon],1200,1,0,0,137,96,false,0,0xFFFFFF);
+ assert.equal(dc.icons[0].text,glyph);
 }

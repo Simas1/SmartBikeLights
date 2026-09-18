@@ -15,13 +15,13 @@ const powerOfTwo = n => 2 ** Math.ceil(Math.log2(n));
 async function main() {
     const webIcons = path.resolve(app, '../light-configurator/src/icons/light-modes');
     fs.mkdirSync(webIcons, {recursive: true});
-    for (const icon of (process.argv.includes('--panel-only') ? [] : ['headlight', 'taillight', 'night', 'flash', 'sun'])) {
+    for (const icon of (process.argv.includes('--panel-only') ? [] : ['headlight', 'taillight', 'headlight-high', 'headlight-medium', 'headlight-low', 'taillight-high', 'taillight-medium', 'taillight-low', 'night', 'flash', 'sun'])) {
         fs.copyFileSync(path.join(app, 'assets/button-icons', icon + '.svg'), path.join(webIcons, icon + '.svg'));
     }
     for (const [name, size] of Object.entries(fonts)) {
         if (process.argv.includes('--panel-only') && name !== 'PanelControl24') { continue; }
         const modeFont = name.startsWith('ModeIcons');
-        const fontGlyphs = modeFont ? [['H', 'headlight'], ['T', 'taillight'], ['N', 'night'], ['F', 'flash'], ['S', 'sun'], ['C', 'time']] : glyphs;
+        const fontGlyphs = modeFont ? [['H', 'headlight-high'], ['h', 'headlight-medium'], ['L', 'headlight-low'], ['T', 'taillight-high'], ['t', 'taillight-medium'], ['l', 'taillight-low'], ['N', 'night'], ['F', 'flash'], ['S', 'sun'], ['C', 'time']] : glyphs;
         const width = powerOfTwo((size + 1) * fontGlyphs.length);
         const height = powerOfTwo(size);
         const images = [];
@@ -66,7 +66,7 @@ async function main() {
         let top = 0;
         // Show actual runtime glyph pixels, in the README's display order.
         for (const size of [12, 18, 22]) {
-            for (let index = 0; index < 6; index++) {
+            for (let index = 0; index < 10; index++) {
                 const input = await sharp(path.join(app, 'resources/fonts', `ModeIcons${size}.png`))
                     .extract({left: index * (size + 1), top: 0, width: size, height: size})
                     .negate().resize(size * 3, size * 3, {kernel: 'nearest'}).png().toBuffer();
@@ -74,7 +74,7 @@ async function main() {
             }
             top += size * 3 + 12;
         }
-        await sharp({create: {width: (23 * 6 - 1) * 3, height: top, channels: 3, background: '#FFFFFF'}})
+        await sharp({create: {width: (23 * 10 - 1) * 3, height: top, channels: 3, background: '#FFFFFF'}})
             .composite(layers).png().toFile(path.join(app, 'assets/button-icons/preview.png'));
     }
 }

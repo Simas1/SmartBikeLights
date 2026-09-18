@@ -35,7 +35,7 @@ module LightPanelGraphics {
         lines.add(title);
         var icon = "none";
         var last = lines[lines.size() - 1];
-        if (last.equals("@headlight") || last.equals("@taillight") || last.equals("@sun") || last.equals("@moon") || last.equals("@lightning") || last.equals("@none")) {
+        if (last.equals("@headlight-high") || last.equals("@headlight-medium") || last.equals("@headlight-low") || last.equals("@taillight-high") || last.equals("@taillight-medium") || last.equals("@taillight-low") || last.equals("@headlight") || last.equals("@taillight") || last.equals("@sun") || last.equals("@moon") || last.equals("@lightning") || last.equals("@none")) {
             icon = last.substring(1, last.length());
             lines = lines.slice(0, lines.size() - 1);
         }
@@ -191,8 +191,10 @@ module LightPanelGraphics {
             // Draw directly: no extra icon/font wrapper frame on the Edge VM stack.
             dc.drawText(x+pad+iconSize/2, y+pad+(dc.getFontHeight(titleFont)-iconSize)/2,
                 width >= 150 ? _modeIconsWide : _modeIconsLarge,
-                data[3].equals("sun") ? "S" : data[3].equals("headlight") ? "H"
-                : data[3].equals("taillight") ? "T" : data[3].equals("moon") ? "N" : "F",
+                data[3].equals("sun") ? "S" : (data[3].equals("headlight") || data[3].equals("headlight-high")) ? "H"
+                : data[3].equals("headlight-medium") ? "h" : data[3].equals("headlight-low") ? "L"
+                : (data[3].equals("taillight") || data[3].equals("taillight-high")) ? "T"
+                : data[3].equals("taillight-medium") ? "t" : data[3].equals("taillight-low") ? "l" : data[3].equals("moon") ? "N" : "F",
                 Graphics.TEXT_JUSTIFY_CENTER);
         }
         // Keep runtime icons at their original size.

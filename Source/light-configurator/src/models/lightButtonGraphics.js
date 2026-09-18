@@ -5,6 +5,12 @@ export const buttonIcons = [
   { id: 'sun', name: 'Sun' },
   { id: 'headlight', name: 'Headlight' },
   { id: 'taillight', name: 'Taillight' },
+  { id: 'headlight-high', name: 'Headlight High' },
+  { id: 'headlight-medium', name: 'Headlight Medium' },
+  { id: 'headlight-low', name: 'Headlight Low' },
+  { id: 'taillight-high', name: 'Taillight High' },
+  { id: 'taillight-medium', name: 'Taillight Medium' },
+  { id: 'taillight-low', name: 'Taillight Low' },
   { id: 'moon', name: 'Night' },
   { id: 'lightning', name: 'Flash' }
 ];

@@ -4,8 +4,12 @@ These SVGs supply the configurator and the Garmin bitmap fonts.
 
 | File | Saved metadata / use | Glyph |
 | --- | --- | --- |
-| headlight.svg | @headlight | H |
-| taillight.svg | @taillight | T |
+| headlight-high.svg | @headlight-high (or legacy @headlight) | H |
+| headlight-medium.svg | @headlight-medium | h |
+| headlight-low.svg | @headlight-low | L |
+| taillight-high.svg | @taillight-high (or legacy @taillight) | T |
+| taillight-medium.svg | @taillight-medium | t |
+| taillight-low.svg | @taillight-low | l |
 | night.svg | @moon | N |
 | flash.svg | @lightning | F |
 | sun.svg | @sun | S |
@@ -28,3 +32,6 @@ change the apparent edges. Both preview and app now use the same artwork and
 pixel dimensions rather than independent SVG/primitive implementations.
 Brightness bars and configuration-switch arrows remain procedural. Saved
 configuration metadata is unchanged.
+
+High uses three beams, medium two, and low one. Legacy `headlight.svg` and
+`taillight.svg` remain for existing configurator imports and match the high variants.
