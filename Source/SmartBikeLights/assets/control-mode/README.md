@@ -1,5 +1,9 @@
 # Control-mode icon fonts
 
+The 24px panel trial now uses `../panel-control-24/` artwork, rendered at native
+size with partial alpha preserved. See that directory's README. The binary-alpha
+description below applies to the remaining ControlMode and PanelControl sizes.
+
 The SVGs here and `../power/power.svg` are the source artwork for
 the app's bitmap fonts. They use transparent backgrounds and geometry tuned
 for small device displays. `preview.png` shows the current glyphs.

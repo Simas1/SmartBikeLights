@@ -15,10 +15,11 @@ const powerOfTwo = n => 2 ** Math.ceil(Math.log2(n));
 async function main() {
     const webIcons = path.resolve(app, '../light-configurator/src/icons/light-modes');
     fs.mkdirSync(webIcons, {recursive: true});
-    for (const icon of ['headlight', 'taillight', 'night', 'flash', 'sun']) {
+    for (const icon of (process.argv.includes('--panel-only') ? [] : ['headlight', 'taillight', 'night', 'flash', 'sun'])) {
         fs.copyFileSync(path.join(app, 'assets/light-modes', icon + '.svg'), path.join(webIcons, icon + '.svg'));
     }
     for (const [name, size] of Object.entries(fonts)) {
+        if (process.argv.includes('--panel-only') && name !== 'PanelControl24') { continue; }
         const modeFont = name.startsWith('ModeIcons');
         const fontGlyphs = modeFont ? [['H', 'headlight'], ['T', 'taillight'], ['N', 'night'], ['F', 'flash']] : glyphs;
         const width = powerOfTwo((size + 1) * fontGlyphs.length);
@@ -26,14 +27,23 @@ async function main() {
         const images = [];
         const chars = [];
         for (const [index, [char, icon]] of fontGlyphs.entries()) {
-            const artwork = modeFont ? path.join('light-modes', icon + '.svg')
+            const artwork = name === 'PanelControl24' ? path.join('panel-control-24', icon + '.svg')
+                : modeFont ? path.join('light-modes', icon + '.svg')
                 : icon === 'power' ? 'power/power.svg' : path.join('control-mode', icon + '.svg');
             const svg = fs.readFileSync(path.join(app, 'assets', artwork), 'utf8')
                 .replace(/#000000/g, '#FFFFFF');
-            // Supersample before downscaling so tiny strokes retain coverage.
-            let input = await sharp(Buffer.from(svg), {density: 768})
-                .resize(size, size).png().toBuffer();
-            if (!modeFont) {
+            // The 24px panel artwork is rasterized directly at its authored size.
+            // Other fonts retain their existing supersampled generation.
+            let input = name === 'PanelControl24'
+                ? await sharp(Buffer.from(svg)).png().toBuffer()
+                : await sharp(Buffer.from(svg), {density: 768}).resize(size, size).png().toBuffer();
+            if (name === 'PanelControl24') {
+                const metadata = await sharp(input).metadata();
+                if (metadata.width !== size || metadata.height !== size) {
+                    throw new Error(`${artwork} must be exactly ${size}x${size}`);
+                }
+            }
+            if (!modeFont && name !== 'PanelControl24') {
                 // Binary coverage avoids faint grey fringes on MIP displays.
                 const alpha = await sharp(input).extractChannel('alpha').threshold(112).toBuffer();
                 input = await sharp({create: {width: size, height: size, channels: 3, background: '#FFFFFF'}})
@@ -43,8 +53,13 @@ async function main() {
             images.push({input, left: x, top: 0});
             chars.push(`char id=${char.charCodeAt(0)} x=${x} y=0 width=${size} height=${size} xoffset=0 yoffset=0 xadvance=${size} page=0 chnl=15`);
         }
-        await sharp({create: {width, height, channels: 4, background: {r: 255, g: 255, b: 255, alpha: 0}}})
-            .composite(images).png().toFile(path.join(app, 'resources/fonts', name + '.png'));
+        const atlas = await sharp({create: {width, height, channels: 4, background: {r: 255, g: 255, b: 255, alpha: 0}}})
+            .composite(images).png().toBuffer();
+        // Garmin bitmap fonts need coverage in RGB intensity, not just PNG alpha.
+        // Black represents no glyph coverage; grey represents a smooth edge.
+        const output = sharp(atlas);
+        if (name === 'PanelControl24') { output.flatten({background: '#000000'}); }
+        await output.png().toFile(path.join(app, 'resources/fonts', name + '.png'));
         const fnt = [
             `info face="ControlMode" size=${size} bold=0 italic=0 charset="" unicode=1 stretchH=100 smooth=1 aa=1 padding=0,0,0,0 spacing=1,1 outline=0`,
             `common lineHeight=${size} base=${size} scaleW=${width} scaleH=${height} pages=1 packed=0 alphaChnl=0 redChnl=4 greenChnl=4 blueChnl=4`,

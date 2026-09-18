@@ -1,5 +1,8 @@
 # Power icon
 
+For the 24px panel trial, `../panel-control-24/power.svg` overrides this source
+and preserves antialiased edges. Other sizes still use the pipeline below.
+
 The SVG here is the source artwork for the app's Power / Off button. It uses a
 48×48 viewBox, a 4-unit rounded stroke, and a transparent background.
 
