@@ -13,7 +13,7 @@ The device-specific entry point is equivalent and needs no device argument:
 
 ```bash
 ./Simulator/edge1040/run-simulator.sh --scenario low-battery \
-  --settings Simulator/edge1040/settings.example.json
+  --settings Simulator/settings.example.json
 ```
 
 Default lights are **AT1600 and Flare RT**. `--lights` accepts comma-separated IDs
@@ -29,26 +29,28 @@ filters to choose between lights of the same type. Fixture serials are in the ca
 Simulator/
   run-simulator.sh          Shared dispatcher (takes a device argument)
   lights.json               Shared fake-light catalog
+  settings.example.json     Shared defaults from create-settings.yml
   common/
     run.py                  Shared preparation, settings, build and launch logic
     test_run.py             Shared validation and isolation tests
   edge1040/
     run-simulator.sh        Edge 1040 entry point
     profile.json            Device-specific qualifiers and preview app identity
-    settings.example.json  All defaults from create-settings.yml
     README.md              Edge 1040 usage
 ```
 
 The shared runner discovers supported devices from `*/profile.json`. To add Edge
-1050 later, create `edge1050/` with its own profile, app ID, launcher and settings
-example, and validate its resource/annotation rules. Edge 1050 is not implemented yet.
+1050 later, create `edge1050/` with its own profile, app ID and launcher, and validate its resource/annotation rules. Edge 1050 is not implemented yet.
 Generated source and binaries remain under ignored `Build/simulator/`.
 
 ## Saved settings
 
+Settings are shared across device profiles that support the same app properties;
+only build qualifiers and simulator identity belong to a device profile.
+
 `--settings PATH` accepts a partial JSON object or Garmin `.SET` file. Omit it to
 use application defaults. To use the complete workflow defaults, pass
-`Simulator/edge1040/settings.example.json` explicitly. It contains all ten parameters
+`Simulator/settings.example.json` explicitly. It contains all ten parameters
 from `.github/workflows/create-settings.yml`, including the three full configurations.
 
 Use `--list-settings` to display defaults and accepted choices. Keys are `LC`, `LC2`,

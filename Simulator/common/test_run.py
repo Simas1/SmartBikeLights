@@ -76,7 +76,7 @@ class PreviewTests(unittest.TestCase):
         for key, block in re.findall(r'^      (\w+):\n(.*?)(?=^      \w+:|\Z)', workflow, re.M | re.S):
             raw = re.search(r'^        default: (.*)$', block, re.M)[1]
             expected[key] = raw[1:-1].replace("''", "'") if raw.startswith("'") else json.loads(raw)
-        actual = json.loads((preview.SIMULATOR / 'edge1040/settings.example.json').read_text())
+        actual = json.loads((preview.SIMULATOR / 'settings.example.json').read_text())
         self.assertEqual(actual, expected)
         self.assertEqual(set(actual), set(preview.settings_schema()[0]))
         preview.validate_settings(actual)
