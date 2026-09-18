@@ -1,0 +1,56 @@
+name: Build SBL
+run-name: Build SBL (${{ inputs.device }})
+
+on:
+  workflow_dispatch:
+    inputs:
+      device:
+        description: Device to build for
+        type: choice
+        required: true
+        default: edge1040
+        options:
+          - edge1040
+          - edge1050
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ inputs.device }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Build sideloadable data field
+        uses: ./.github/actions/build-sbl
+        with:
+          device: ${{ inputs.device }}
+
+      - name: Upload Garmin application
+        uses: actions/upload-artifact@v7
+        with:
+          name: SmartBikeLights-${{ inputs.device }}
+          path: Build/${{ inputs.device }}/SmartBikeLights.prg
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Show installation instructions
+        env:
+          DEVICE: ${{ inputs.device }}
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" <<EOF
+          ## ${DEVICE} build
+          Download **SmartBikeLights-${DEVICE}** from this run's artifacts and unzip it.
+          Copy **SmartBikeLights.prg** to **GARMIN/APPS** on your USB-connected ${DEVICE}, then eject and unplug it.
+
+          This build uses the configuration defaults in the selected revision of the repository.
+          Existing saved settings override those defaults.
+          See docs/edge-build.md in the repository for details.
+          EOF

@@ -1,0 +1,16 @@
+name: Build SBL
+description: Build a sideloadable SmartBikeLights application using Docker on Linux.
+inputs:
+  device:
+    description: Garmin device ID (edge1040 or edge1050).
+    required: false
+    default: edge1040
+runs:
+  using: composite
+  steps:
+    - name: Compile Garmin application
+      shell: bash
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+        DEVICE: ${{ inputs.device }}
+      run: bash "$ACTION_PATH/build-edge.sh" "$DEVICE"
