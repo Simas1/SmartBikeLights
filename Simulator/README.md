@@ -4,14 +4,13 @@ Run from the repository root on macOS. Requires Python 3.9+, Java 17, Node.js/np
 Connect IQ SDK (tested with 9.2.0), and the installed target-device profile.
 The pinned `directive-preprocessor@1.1.1` is downloaded through npx on first use.
 
+Use Simulator launcher with a device argument and optional settings:
+
 ```bash
 ./Simulator/run-simulator.sh edge1040 --lights at1600,flare-rt --scenario low-battery
+
 ./Simulator/run-simulator.sh edge1040 --lights at1600,varia-515,flare-rt
-```
 
-Use the same launcher with a device argument and optional settings:
-
-```bash
 ./Simulator/run-simulator.sh edge1040 --scenario low-battery \
   --settings Simulator/settings.example.json
 ```
@@ -39,7 +38,7 @@ Simulator/
 ```
 
 The shared runner discovers supported devices from `*/profile.json`. To add Edge
-1050 later, create `edge1050/` with its own profile and app ID, and validate its resource/annotation rules. Edge 1050 is not implemented yet.
+xxxx later, create `edgexxxx/` with its own profile and app ID, and validate its resource/annotation rules.
 Generated source and binaries remain under ignored `Build/simulator/`.
 
 ## Saved settings
