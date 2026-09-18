@@ -237,3 +237,11 @@ The following errors can be displayed:
 - **Error 10:** `Connect Radar` option was enabled and the bike radar is not paired. Use the Garmin Sensors menu "Search All" option to pair the radar. The sensor name should be: `SBL RD <DEVICE_NUMBER>`
 - **Error 11:** One of the ANT channels used for connection to the bike radar could not be opened. Try to disable some sensors from the Garmin Sensors menu.
 - **Error 12:** The device does not have enough free ANT channels to be used for connection to the bike radar. Try to disable some sensors from the Garmin Sensors menu.
+
+### Local Edge 1040 simulator previews
+
+Run `./Simulator/run-simulator.sh edge1040 --scenario lights-on` for an isolated
+fake-light preview (defaults: AT1600 and Flare RT). Select models using
+`--lights at1600,varia-515,flare-rt` and saved JSON or Garmin `.SET` settings using
+`--settings PATH`. See [simulator instructions](Simulator/README.md) for shared
+files, device-specific profiles, and the complete workflow settings example.
