@@ -1,6 +1,8 @@
-# Build and install on Edge 1040
+# Build and install on Edge 1040 or Edge 1050
 
-The manual GitHub Actions workflow builds a `.prg` on a standard Linux runner.
+The manual GitHub Actions workflow (`.github/workflows/build-sbl.yml`) builds a `.prg`
+on a standard Linux runner. Runs are titled `Build SBL (edge1040)` or
+`Build SBL (edge1050)` according to the selected device.
 You do not need Java, Garmin's SDK, VS Code, Docker, or Garmin credentials on
 your Mac. No repository secrets are required.
 
@@ -10,13 +12,30 @@ your Mac. No repository secrets are required.
    `Simas1/SmartBikeLights`. The workflow must be on the default branch before
    GitHub displays its manual run button.
 2. Open the repository's **Actions** tab. If prompted, enable workflows on your fork.
-3. Select **Build Edge 1040**, then **Run workflow** and select your branch.
+3. Select **Build SBL**, then **Run workflow** and select your branch.
+   Choose `edge1040` (the default) or `edge1050` from the **Device to build for** dropdown.
 4. Open the completed run. Under **Artifacts**, download
-   **SmartBikeLights-edge1040** and unzip it. Artifacts expire after seven days.
-5. Connect the Edge 1040 with a USB data cable. Copy `SmartBikeLights.prg` into
+   **SmartBikeLights-edge1040** or **SmartBikeLights-edge1050**, matching your selection,
+   and unzip it. Artifacts expire after seven days.
+5. Connect the selected Edge device with a USB data cable. Copy `SmartBikeLights.prg` into
    `GARMIN/APPS` on the device, then eject and unplug it.
 6. Add **Connect IQ → Smart Bike Lights** to a one-field activity data screen.
    Turn on your paired lights and test mode changes, including quick successive taps.
+
+## Reusable local actions
+
+The workflows call composite actions after checking out the repository:
+
+- `.github/actions/build-sbl/action.yml` accepts `device` (`edge1040` by default,
+  or `edge1050`) and builds `Build/<device>/SmartBikeLights.prg`. It requires Docker
+  on Linux.
+- `.github/actions/build-sbl-settings/action.yml` accepts a `settings` JSON object
+  containing all ten settings, runs the serializer tests, and creates
+  `Build/settings/SmartBikeLights.SET`. It requires Python 3.
+
+Helper scripts are stored beside each action's `action.yml`. With Docker
+installed, you can also run `bash .github/actions/build-sbl/build-edge.sh edge1050`
+locally; omitting the device defaults to `edge1040`.
 
 ## Configuration
 
@@ -34,7 +53,7 @@ Existing saved settings override the defaults compiled into the application.
 
 ## Create custom settings
 
-1. Open **Actions → Create SmartBikeLights.SET → Run workflow**.
+1. Open **Actions → Build SBL Settings → Run workflow**.
 2. Select the branch and edit any of the ten inputs. Every input has a default:
    recording on, invert off, Blue, Secondary, and the Flash/Steady/Break
    configuration strings and names. Only Flash includes mode icons.
@@ -46,14 +65,14 @@ Existing saved settings override the defaults compiled into the application.
 6. Safely disconnect and restart the Garmin.
 
 This workflow replaces all ten saved settings; it does not compile or install
-an application. Use **Build Edge 1040** separately for application changes.
+an application. Use **Build SBL** separately for application changes.
 The script uses Python's standard library and checks the generated binary by
 reading it back. It preserves literal configuration text, including icon markers.
 Names have the same 20-character limit as the settings UI. Individual SET strings
 are limited to 65,534 UTF-8 bytes; GitHub also limits the total dispatch payload.
 Blank configuration inputs are allowed to disable optional configurations.
 
-Workflow defaults live in `.github/workflows/create-settings.yml`; they are
+Workflow defaults live in `.github/workflows/build-sbl-settings.yml`; they are
 independent of the upstream application defaults. GitHub requires the workflow
 on the repository's default branch before offering its manual Run workflow button.
 See [GitHub's workflow input documentation](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#onworkflow_dispatchinputs).
@@ -100,3 +119,17 @@ lights before Garmin starts the data field after a full power-on.
 
 GitHub Free supports this workflow: standard runners are free for public
 repositories; private repositories consume your included Actions allowance.
+
+## Workflow warnings
+
+The workflows use Node 24-compatible GitHub Actions releases. The Node version
+selected by `setup-node` for the configurator build is separate from the runtime
+used by the actions themselves.
+
+The configurator's `npm ci` still reports deprecated transitive dependencies from
+`react-scripts@5.0.1`: `w3c-hr-time`, `stable`, `rollup-plugin-terser`,
+`sourcemap-codec`, and `svgo@1`. Removing these requires a build-tooling migration;
+forcing incompatible dependency versions or hiding npm warnings is avoided.
+
+Git's initial-branch-name hint during checkout is informational and does not
+change the checked-out branch or affect the build.

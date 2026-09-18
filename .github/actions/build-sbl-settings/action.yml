@@ -1,0 +1,21 @@
+name: Build SBL Settings
+description: Test the settings serializer and generate a verified SmartBikeLights.SET file.
+inputs:
+  settings:
+    description: JSON object containing all ten SmartBikeLights settings.
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Test settings serializer
+      shell: bash
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+        PYTHONDONTWRITEBYTECODE: '1'
+      run: python3 -m unittest discover -s "$ACTION_PATH" -p 'test_create_settings.py'
+    - name: Create settings file
+      shell: bash
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+        SETTINGS_INPUTS: ${{ inputs.settings }}
+      run: python3 "$ACTION_PATH/create-settings.py"

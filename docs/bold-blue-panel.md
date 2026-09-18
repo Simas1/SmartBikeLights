@@ -72,7 +72,7 @@ Text anchors use the SDK's named constants: Garmin's numeric values are Right
 0, Center 1, Left 2. Using the opposite numeric convention causes text to spill
 into the adjacent light column and over the clock/battery icons.
 
-Build/install instructions: [Edge 1040](edge1040-build.md). Existing saved
+Build/install instructions: [Edge 1040 and Edge 1050](edge-build.md). Existing saved
 settings take precedence over defaults, but old rating labels and old
 configuration buttons are handled by the updated layout automatically.
 
