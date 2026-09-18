@@ -6,7 +6,10 @@ bitmap-font mapping and metrics stay unchanged: M manual, N network, S smart,
 P power. Smooth coverage is flattened to grayscale on black in the exported
 font atlas, rather than encoded only in PNG alpha. This is a font coverage mask,
 not a black background to display on the button. Network
-rectangles use integer edges; the hand and power use two-pixel strokes.
+nodes use integer-aligned edges and rounded corners; the hand and power use
+two-pixel strokes. Smart uses four symmetrical cubic curves instead of straight
+polygon shoulders. The palm is curved, and the power ring is inset to balance
+the visual weight and margins of the set.
 
 Run `node scripts/generate-control-mode-fonts.cjs --panel-only` with sharp
 available to regenerate just this atlas. The normal full generation also uses

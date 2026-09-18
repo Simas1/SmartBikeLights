@@ -1,5 +1,4 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
   <title>Network, 24 pixel panel</title>
-  <path fill="#000000" fill-rule="evenodd" d="M8 1h8v7H8z M10 3v3h4V3z M1 16h8v7H1z M3 18v3h4v-3z M15 16h8v7h-8z M17 18v3h4v-3z"/>
-  <path fill="#000000" d="M11 8h2v3h7v5h-2v-3H6v3H4v-5h7z"/>
+  <path fill="none" stroke="#000000" stroke-width="2" stroke-linejoin="round" d="M9 3h6v5H9z M3 16h6v5H3z M15 16h6v5h-6z M12 8v4M6 16v-4h12v4"/>
 </svg>
