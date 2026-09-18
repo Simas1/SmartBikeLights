@@ -6,3 +6,4 @@ Build/
 BikeLightSensor.LightSensor.mc
 networkKeys
 node_modules/
+__pycache__/
