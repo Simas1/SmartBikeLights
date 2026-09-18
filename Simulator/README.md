@@ -9,10 +9,10 @@ The pinned `directive-preprocessor@1.1.1` is downloaded through npx on first use
 ./Simulator/run-simulator.sh edge1040 --lights at1600,varia-515,flare-rt
 ```
 
-The device-specific entry point is equivalent and needs no device argument:
+Use the same launcher with a device argument and optional settings:
 
 ```bash
-./Simulator/edge1040/run-simulator.sh --scenario low-battery \
+./Simulator/run-simulator.sh edge1040 --scenario low-battery \
   --settings Simulator/settings.example.json
 ```
 
@@ -34,13 +34,12 @@ Simulator/
     run.py                  Shared preparation, settings, build and launch logic
     test_run.py             Shared validation and isolation tests
   edge1040/
-    run-simulator.sh        Edge 1040 entry point
     profile.json            Device-specific qualifiers and preview app identity
     README.md              Edge 1040 usage
 ```
 
 The shared runner discovers supported devices from `*/profile.json`. To add Edge
-1050 later, create `edge1050/` with its own profile, app ID and launcher, and validate its resource/annotation rules. Edge 1050 is not implemented yet.
+1050 later, create `edge1050/` with its own profile and app ID, and validate its resource/annotation rules. Edge 1050 is not implemented yet.
 Generated source and binaries remain under ignored `Build/simulator/`.
 
 ## Saved settings

@@ -3,13 +3,13 @@
 Install Edge 1040 / 1040 Solar in Garmin SDK Manager, then from the repository root:
 
 ```bash
-./Simulator/edge1040/run-simulator.sh --scenario lights-on
-./Simulator/edge1040/run-simulator.sh --lights at1600,flare-rt --scenario low-battery
-./Simulator/edge1040/run-simulator.sh --lights at1600,varia-515,flare-rt
-./Simulator/edge1040/run-simulator.sh --settings Simulator/settings.example.json
+./Simulator/run-simulator.sh edge1040 --scenario lights-on
+./Simulator/run-simulator.sh edge1040 --lights at1600,flare-rt --scenario low-battery
+./Simulator/run-simulator.sh edge1040 --lights at1600,varia-515,flare-rt
+./Simulator/run-simulator.sh edge1040 --settings Simulator/settings.example.json
 ```
 
-This launcher fixes the device to `edge1040`; do not repeat the device argument.
+The shared launcher selects this profile using the `edge1040` argument.
 `profile.json` owns its resource qualifiers and preview app ID. The shared
 [`settings.example.json`](../settings.example.json)
 contains all ten parameters and exact defaults from the settings workflow, including

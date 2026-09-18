@@ -240,7 +240,7 @@ The following errors can be displayed:
 
 ### Local Edge 1040 simulator previews
 
-Run `./Simulator/edge1040/run-simulator.sh --scenario lights-on` for an isolated
+Run `./Simulator/run-simulator.sh edge1040 --scenario lights-on` for an isolated
 fake-light preview (defaults: AT1600 and Flare RT). Select models using
 `--lights at1600,varia-515,flare-rt` and saved JSON or Garmin `.SET` settings using
 `--settings PATH`. See [simulator instructions](Simulator/README.md) for shared
