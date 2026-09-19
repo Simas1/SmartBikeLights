@@ -10,7 +10,7 @@ spec.loader.exec_module(settings)
 
 class SettingsTests(unittest.TestCase):
     def inputs(self):
-        return dict(RL=True, IL=False, AC='Blue', CC='Secondary', LC=r'Low\n@headlight',
+        return dict(RL=True, IL=False, TH='Blue', CC='Secondary', LC=r'Low\n@headlight',
                     LC2='', LC3='', CN1='Flash Config', CN2='Steady Config', CN3='Break Config')
 
     def test_known_wire_records(self):
@@ -25,7 +25,7 @@ class SettingsTests(unittest.TestCase):
     def test_all_options_match_application_schema(self):
         inputs = self.inputs()
         self.assertEqual(set(inputs), set(settings.schema()))
-        for key in ('AC', 'CC'):
+        for key in ('TH', 'CC'):
             for label, value in settings.schema()[key][1].items():
                 inputs[key] = label
                 self.assertEqual(settings.validate(inputs)[key], value)
@@ -40,7 +40,7 @@ class SettingsTests(unittest.TestCase):
         self.assertEqual(value['LC2'], '')
 
     def test_invalid_inputs(self):
-        for key, value in [('RL', 'false'), ('AC', 'Cyan'), ('CC', 'Fourth'),
+        for key, value in [('RL', 'false'), ('TH', 'Cyan'), ('CC', 'Fourth'),
                            ('CN1', 'x' * 21), ('LC', 'x' * 65535),
                            ('LC', 'actual\nnewline'), ('CN2', 'bad\0name')]:
             with self.subTest(key=key, value=str(value)[:30]):

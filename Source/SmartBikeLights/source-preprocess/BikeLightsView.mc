@@ -80,9 +80,6 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
     protected var _separatorColor;
     protected var _titleFont;
     protected var _invertLights;
-// #if highMemory
-    protected var _activityColor;
-// #endif
 // #if touchScreen
 
     // Light panel settings
@@ -99,11 +96,6 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
     private var _taillightGroupName;
 
   // #if dataField
-    // Setting menu
-    private var _lastModeTap;
-    private var _firstModeTapTime = 0;
-    private var _modeTapCount = 0;
-
     // Light icon tap behavior
     var headlightIconTapBehavior;
     var taillightIconTapBehavior;
@@ -427,7 +419,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
         //System.println("onSettingsChanged" + " timer=" + System.getTimer());
         _invertLights = getPropertyValue("IL");
 // #if highMemory
-        _activityColor = getPropertyValue("AC");
+        AppTheme.load();
 // #endif
         _errorCode = null;
         try {
@@ -452,7 +444,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
 // #if dataField
             var separatorColor = configuration[/* #if highMemory */ 16 /* #else */ 11 /* #endif */];
             _separatorColor = separatorColor == null || separatorColor == 0
-                ? /* #if highMemory */ _activityColor /* #else */ 43775 /* Blue */ /* #endif */
+                ? /* #if highMemory */ AppTheme.accent /* #else */ 43775 /* Blue */ /* #endif */ // Default separator
                 : separatorColor;
   // #if highMemory
             remoteControllers = configuration[17];
@@ -930,6 +922,23 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
 // #endif
 
 // #if touchScreen
+    function onHold(location) {
+  // #if dataField
+        if (!DataFieldUi.isMenuOpen() && _initializedLights > 0 && _errorCode == null &&
+            isConfigurationButton(location)) {
+            DataFieldUi.pushMenu(new AppSettings.Menu(self));
+            return true;
+        }
+  // #endif
+        return false;
+    }
+
+    private function isConfigurationButton(location) {
+        return _isFullScreen && _panelInitialized && _panelFooter != null &&
+            location[0] >= _panelFooter[0] && location[0] < _panelFooter[0] + _panelFooter[2] &&
+            location[1] >= _panelFooter[1] && location[1] < _panelFooter[1] + _panelFooter[3];
+    }
+
     function onTap(location) {
   // #if dataField
         if (DataFieldUi.onTap(location)) {
@@ -958,9 +967,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
           : (_fieldWidth / 2) > location[0] ? (_invertLights ? 2 : 0)
           : (_invertLights ? 0 : 2));
         // Configuration switching does not require the tapped light to be connected.
-        if (_isFullScreen && _panelInitialized && _panelFooter != null &&
-            location[0] >= _panelFooter[0] && location[0] < _panelFooter[0] + _panelFooter[2] &&
-            location[1] >= _panelFooter[1] && location[1] < _panelFooter[1] + _panelFooter[3]) {
+        if (isConfigurationButton(location)) {
             onLightPanelModeChange(lightData, lightData[0].type, -2, lightData[4]);
             return true;
         }
@@ -1340,8 +1347,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
         var panelData = lightType == 0 /* LIGHT_TYPE_HEADLIGHT */ ? _headlightPanel : _taillightPanel;
         var tapX = location[0];
         var tapY = location[1];
-        if (_panelFooter != null && tapX >= _panelFooter[0] && tapX < _panelFooter[0] + _panelFooter[2] &&
-            tapY >= _panelFooter[1] && tapY < _panelFooter[1] + _panelFooter[3]) {
+        if (isConfigurationButton(location)) {
             onLightPanelModeChange(lightData, lightType, -2, controlMode);
             return true;
         }
@@ -1371,23 +1377,6 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
     }
 
     protected function onLightPanelModeChange(lightData, lightType, lightMode, controlMode) {
-  // #if dataField
-        if ((System.getTimer() - _firstModeTapTime) > 5000) {
-            _lastModeTap = null;
-            _modeTapCount = 0;
-            _firstModeTapTime = System.getTimer();
-        }
-
-        _modeTapCount = _lastModeTap == 0 && lightMode == 0 ? _modeTapCount + 1 : 1;
-        _lastModeTap = lightMode;
-        if (_modeTapCount > 2) {
-            _lastModeTap = null;
-            _modeTapCount = 0;
-            DataFieldUi.pushMenu(new AppSettings.Menu(self));
-            return;
-        }
-  // #endif
-
         if (lightMode == -2) {
             // A bounded search also handles an unset CC with no saved profiles.
             var currentConfig = getPropertyValue("CC");
@@ -1855,7 +1844,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
         data.add(totalButtonGroups); // Total buttons
         data.add(totalButtonGroups); // Total button groups
         data.add(lightType == 0 /* LIGHT_TYPE_HEADLIGHT */ ? "Headlight" : "Taillight"); // Light name
-        data.add(0 /* Activity color */); // Button color
+        data.add(0 /* Theme */); // Button color
         data.add(0xFFFFFF /* White */); // Button text color
         data.add(-1 /* Do not display */); // Display group name text size
         for (var i = 0; i < totalButtonGroups; i++) {
@@ -2012,7 +2001,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
         // The footer has two outer light summaries and one shared cycle target.
         x = position == 2 ? width * 0.15 : position == 1 ? width * 0.15 : width * 0.85;
         panelData[1] = StringHelper.trimTextByWidth(dc, panelSettings[2], 0, width * 0.28);
-        panelData[2] = LightPanelGraphics.BLUE;
+        panelData[2] = AppTheme.accent;
         panelData[3] = LightPanelGraphics.WHITE;
         panelData[4] = x;
         panelData[5] = _panelFooter[1] + 4;
@@ -2133,7 +2122,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
         var text = StringHelper.trimTextByWidth(dc, _panelFooter[4], 0, width - iconSize - 10);
         var textWidth = dc.getTextWidthInPixels(text, 0);
         var left = x + (width - textWidth - iconSize - 6) / 2;
-        setTextColor(dc, bgColor == 0x000000 ? 0x55BBFF : LightPanelGraphics.BLUE);
+        setTextColor(dc, bgColor == 0x000000 ? AppTheme.onDark : AppTheme.accent);
         LightPanelGraphics.drawIcon(dc, "cycle", left + iconSize / 2, y + height / 2, iconSize, bgColor);
         dc.drawText(left + iconSize + 6, y + (height - dc.getFontHeight(0)) / 2, 0, text, Graphics.TEXT_JUSTIFY_LEFT);
     }
@@ -2629,7 +2618,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
         data[2] = parse(0 /* STRING */, chars, null, filterResult);
         data[3] = chars[filterResult[0]] == ':'
             ? parse(1 /* NUMBER */, chars, null, filterResult)
-            : 0 /* Activity color */; // Old configuration
+            : 0 /* Theme */; // Old configuration
         data[4] = chars[filterResult[0]] == ':'
             ? parse(1 /* NUMBER */, chars, null, filterResult)
             : 0xFFFFFF /* White */; // Old configuration

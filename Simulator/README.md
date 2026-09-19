@@ -49,11 +49,10 @@ only build qualifiers and simulator identity belong to a device profile.
 `--settings PATH` accepts a partial JSON object or Garmin `.SET` file. Omit it to
 use application defaults. To use the complete workflow defaults, pass
 `Simulator/settings.example.json` explicitly. It contains all ten parameters
-from `.github/workflows/create-settings.yml`, including the three full configurations.
+from `.github/workflows/build-sbl-settings.yml`, including the three full configurations.
 
 Use `--list-settings` to display defaults and accepted choices. Keys are `LC`, `LC2`,
-`LC3` (configurator strings), `CN1`–`CN3` (names), `CC` (active slot), `AC` (activity
-color), `IL` (invert lights), and `RL` (record modes). Choice values accept displayed
+`LC3` (configurator strings), `CN1`–`CN3` (names), `CC` (active slot), `TH` (theme), `IL` (invert lights), and `RL` (record modes). Choice values accept displayed
 labels or numbers; booleans require true/false. JSON strings must escape backslashes:
 a literal `\n` configurator marker is written as `\\n` in the file.
 

@@ -12,6 +12,7 @@ using Toybox.Time;
 using Toybox.Time.Gregorian;
 using Toybox.Application.Properties as Properties;
 using Toybox.Attention;
+using Toybox.Graphics;
 
 (:highMemory :round :nonTouchScreen :highResolution)
 const lightModeCharacters = [
@@ -82,7 +83,6 @@ class BikeLightsView extends  WatchUi.DataField  {
     protected var _separatorColor;
     protected var _titleFont;
     protected var _invertLights;
-    protected var _activityColor;
     protected var _batteryY;
     protected var _lightY;
     protected var _titleY;
@@ -376,7 +376,7 @@ class BikeLightsView extends  WatchUi.DataField  {
     function onSettingsChanged(setupSensors) {
         //System.println("onSettingsChanged" + " timer=" + System.getTimer());
         _invertLights = getPropertyValue("IL");
-        _activityColor = getPropertyValue("AC");
+        AppTheme.load();
         _errorCode = null;
         try {
             var hlData = headlightData;
@@ -393,7 +393,7 @@ class BikeLightsView extends  WatchUi.DataField  {
             _globalFilters = configuration[0];
             var separatorColor = configuration[ 16 ];
             _separatorColor = separatorColor == null || separatorColor == 0
-                ?  _activityColor 
+                ?  AppTheme.accent  // Default separator
                 : separatorColor;
             remoteControllers = configuration[17];
             _bikeRadarNumber = configuration[18];
@@ -618,7 +618,6 @@ class BikeLightsView extends  WatchUi.DataField  {
 
     function onUpdate(dc) {
         var timer = System.getTimer();
-
         if (_updateSettings) {
             _updateSettings = false;
             onSettingsChanged(true);

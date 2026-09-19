@@ -5,7 +5,7 @@ import LightButton from './LightButton';
 export default class LightPanel {
   buttonGroups = [];
   lightName = null;
-  buttonColor = 0; /* Activity color */
+  buttonColor = 0; /* Theme */
   buttonTextColor = 0xFFFFFF; /* White */
   groupNameVisibility = -1; /* Not visible */
 

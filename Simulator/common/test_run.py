@@ -14,8 +14,8 @@ SPEC.loader.exec_module(preview)
 
 class PreviewTests(unittest.TestCase):
     def test_settings_types_and_choices(self):
-        self.assertEqual(preview.validate_settings({'AC': 'Orange', 'IL': True})['AC'], 16733440)
-        for values in ({'IL': 'false'}, {'CC': True}, {'AC': 123}, {'unknown': 1}, {'LC': 'a\nb'}):
+        self.assertEqual(preview.validate_settings({'TH': 'Violet', 'IL': True})['TH'], 1)
+        for values in ({'IL': 'false'}, {'CC': True}, {'TH': 123}, {'unknown': 1}, {'LC': 'a\nb'}):
             with self.subTest(values=values), self.assertRaises(ValueError):
                 preview.validate_settings(values)
 
@@ -71,7 +71,7 @@ class PreviewTests(unittest.TestCase):
 
     def test_example_matches_workflow_defaults(self):
         import re
-        workflow = (preview.ROOT / '.github/workflows/create-settings.yml').read_text().split('\npermissions:')[0]
+        workflow = (preview.ROOT / '.github/workflows/build-sbl-settings.yml').read_text().split('\npermissions:')[0]
         expected = {}
         for key, block in re.findall(r'^      (\w+):\n(.*?)(?=^      \w+:|\Z)', workflow, re.M | re.S):
             raw = re.search(r'^        default: (.*)$', block, re.M)[1]
@@ -87,7 +87,7 @@ class PreviewTests(unittest.TestCase):
                 self.assertEqual(preview.CATALOG[model]['serial'], (high << 31) | low)
 
     def test_saved_set_file(self):
-        spec = importlib.util.spec_from_file_location('codec', preview.ROOT / 'scripts/create-settings.py')
+        spec = importlib.util.spec_from_file_location('codec', preview.ROOT / '.github/actions/build-sbl-settings/create-settings.py')
         codec = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(codec)
         with tempfile.TemporaryDirectory() as fixture:

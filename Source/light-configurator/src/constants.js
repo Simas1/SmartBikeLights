@@ -1487,7 +1487,7 @@ export const getDeviceLights = (device, lightsList, useIndividualNetwork) => {
 
 export const getSeparatorColors = (device) => {
   var noSeparator = { id: -1, name: 'No separator' };
-  return device.highMemory && device.bitsPerPixel > 1 ? [noSeparator, { id: 0, name: 'Activity color' }].concat(colors)
+  return device.highMemory && device.bitsPerPixel > 1 ? [noSeparator, { id: 0, name: 'Theme' }].concat(colors)
     : device.bitsPerPixel === 1 ? [noSeparator, { id: 0, name: 'Black/White' }]
     : [noSeparator].concat(colors.map(val => val.id !== 43775 /* Blue */ ? val : { id: 0, name: 'Blue' }));
 };
@@ -1499,7 +1499,7 @@ export const getLightIconColors = (device) => {
 };
 
 export const getButtonColors = () => {
-  return [{ id: 0, name: 'Activity color' }].concat(colors.filter(o => o.id !== 1 /* Black/White */));
+  return [{ id: 0, name: 'Theme' }].concat(colors.filter(o => o.id !== 1 /* Black/White */));
 };
 
 export const getButtonTextColors = () => {

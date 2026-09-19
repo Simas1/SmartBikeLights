@@ -12,6 +12,12 @@ class BikeLightsViewDelegate extends WatchUi.InputDelegate {
         _eventHandler = eventHandler.weak();
     }
 
+    function onHold(clickEvent) {
+        return _eventHandler.stillAlive()
+            ? _eventHandler.get().onHold(clickEvent.getCoordinates())
+            : false;
+    }
+
     function onTap(clickEvent) {
         return _eventHandler.stillAlive()
             ? _eventHandler.get().onTap(clickEvent.getCoordinates())

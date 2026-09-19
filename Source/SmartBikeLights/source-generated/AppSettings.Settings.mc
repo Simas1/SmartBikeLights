@@ -6,12 +6,12 @@ using Toybox.Application.Properties as Properties;
 (:settings)
 module AppSettings {
 
-    const colorValues = [16711680, 11141120, 16733440, 16755200, 65280, 43520, 43775, 255, 11141375, 16711935];
-    const colorNames = [:Red, :DarkRed, :Orange, :Yellow, :Green, :DarkGreen, :Blue, :DarkBlue, :Purple, :Pink];
+    const themeValues = [0, 1, 2];
+    const themeNames = [:Blue, :Violet, :Mint];
     const configurationNames = [:Primary, :Secondary, :Tertiary];
     const configurationNameValues = ["CN1", "CN2", "CN3"];
     const configurationValues = [1, 2, 3];
-    const settingValues = ["IL", "AC", "CC"];
+    const settingValues = ["IL", "TH", "CC"];
     const buttonNames = ["", "Center", "Top", "Right", "Bottom", "Left"];
 
     class BaseMenu extends WatchUi.Menu2 {
@@ -39,9 +39,9 @@ module AppSettings {
             Menu2.setTitle("Settings");
             // Invert lights
             Menu2.addItem(new WatchUi.ToggleMenuItem(Rez.Strings.IL, null, 0, Properties.getValue("IL"), null));
-            // Activity color
-            var colorIndex = colorValues.indexOf(Properties.getValue("AC"));
-            Menu2.addItem(new WatchUi.MenuItem(Rez.Strings.AC, (colorIndex < 0 ? null : Rez.Strings[colorNames[colorIndex]]), 1, null));
+            // Theme
+            var themeIndex = themeValues.indexOf(Properties.getValue("TH"));
+            Menu2.addItem(new WatchUi.MenuItem(Rez.Strings.TH, (themeIndex < 0 ? null : Rez.Strings[themeNames[themeIndex]]), 1, null));
             // Current configuration
             var configurationIndex = configurationValues.indexOf((Properties.getValue("CC")));
             Menu2.addItem(new WatchUi.MenuItem(Rez.Strings.CC, (configurationIndex < 0 ? null : Properties.getValue(configurationNameValues[configurationIndex])), 2, null));
@@ -49,6 +49,7 @@ module AppSettings {
             if (view.remoteControllers != null && view.remoteControllers.size() > 0) {
                 Menu2.addItem(new WatchUi.MenuItem(Rez.Strings.RemoteControllers, null, 3, null));
             }
+            Menu2.addItem(new WatchUi.MenuItem("About", Rez.Strings.AppVersion, 4, null));
         }
 
         // This method will be called only for native Menu2
@@ -66,6 +67,11 @@ module AppSettings {
         }
 
         public function onSelect(index, menuItem) {
+            if (index == 4) {
+                openSubMenu(new AboutMenu());
+                return;
+            }
+
             var key = index < settingValues.size() ? settingValues[index] : null;
             if (index == 0) {
                 var newValue = !Properties.getValue(key); // Toggle invert lights
@@ -73,10 +79,23 @@ module AppSettings {
                 Properties.setValue(key, newValue);
                 Application.getApp().onSettingsChanged();
             } else {
-                openSubMenu(index == 1 ? new ListMenu("Color", key, menuItem, colorValues, colorNames, null)
+                openSubMenu(index == 1 ? new ListMenu("Theme", key, menuItem, themeValues, themeNames, null)
                     : index == 2 ? new ListMenu("Configuration", key, menuItem, configurationValues, configurationNames, configurationNameValues)
                     : new ControllersMenu(viewRef.get()));
             }
+        }
+    }
+
+    class AboutMenu extends BaseMenu {
+
+        public function initialize() {
+            BaseMenu.initialize(null);
+            Menu2.setTitle("About");
+            Menu2.addItem(new WatchUi.MenuItem("Version", Rez.Strings.AppVersion, 0, null));
+        }
+
+        public function onSelect(index, menuItem) {
+            // Version information is read-only.
         }
     }
 

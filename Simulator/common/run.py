@@ -66,7 +66,7 @@ def validate_settings(values):
 
 def read_settings(path):
     if path.suffix.lower() == '.set':
-        spec = importlib.util.spec_from_file_location('settings_codec', ROOT / 'scripts/create-settings.py')
+        spec = importlib.util.spec_from_file_location('settings_codec', ROOT / '.github/actions/build-sbl-settings/create-settings.py')
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         return module.decode(path.read_bytes())

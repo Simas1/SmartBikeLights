@@ -6,7 +6,6 @@ using Toybox.WatchUi;
 // old configurations and the configuration parser retain their wire format.
 (:touchScreen)
 module LightPanelGraphics {
-    const BLUE = 0x056ABD;
     const WHITE = 0xFFFFFF;
     const RED = 0xCC2222;
     var _modeIconsSmall;
@@ -209,7 +208,7 @@ module LightPanelGraphics {
         var lit = brightnessSteps(data[1], maxLumens);
         var stepHeight = 7;
         for (var i=0; i<6 && stepWidth>=1; i++) {
-            dc.setColor(i<lit ? selected?WHITE:BLUE : selected?0x428CCA:bg==0x000000?0x444444:0xCCCCCC, -1);
+            dc.setColor(i<lit ? selected?WHITE:(bg==0x000000?AppTheme.onDark:AppTheme.accent) : selected?AppTheme.muted:bg==0x000000?0x444444:0xCCCCCC, -1);
             dc.fillRectangle(x+pad+i*(stepWidth+2),brightnessY+dc.getFontHeight(0)/2-stepHeight/2,stepWidth,stepHeight);
         }
         dc.setColor(color,-1);

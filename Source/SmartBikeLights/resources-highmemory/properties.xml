@@ -1,7 +1,7 @@
 <resources>
     <properties>
-        <!-- Activity color -->
-        <property id="AC" type="number">43775</property>
+        <!-- Theme: Blue, Violet, Mint -->
+        <property id="TH" type="number">0</property>
         <!-- Configuration -->
         <property id="CC" type="number">1</property>
         <property id="LC2" type="string"></property>
