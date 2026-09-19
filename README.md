@@ -150,7 +150,7 @@ In order to avoid using Garmin Express or Garmin Connect Mobile for changing app
 
 ### Edge touchscreen devices
 
-The app settings editor can be opened only when the data field is set to a `1 Field layout`. Press and hold the configuration button at the bottom of the screen to open Settings. A single tap still switches configurations. If the light network is not formed or an error is displayed, tap once anywhere on the screen to open the editor.
+The app settings editor can be opened only when the data field is set to a `1 Field layout`. Double-tap the configuration button at the bottom of the screen to open Settings. A single tap switches configurations after a brief delay; a double-tap leaves the configuration unchanged. If the light network is not formed or an error is displayed, tap once anywhere on the screen to open the editor.
 
 <img src="/Images/TouchSettings.png?raw=true"> <img src="/Images/TouchSettingsColor.png?raw=true">
 
@@ -240,7 +240,7 @@ The following errors can be displayed:
 
 ### Local Edge 1040 simulator previews
 
-Run `./Simulator/run-simulator.sh edge1040 --scenario lights-on` for an isolated
+Run `./Simulator/run-simulator.sh edge1040` for an isolated
 fake-light preview (defaults: AT1600 and Flare RT). Select models using
 `--lights at1600,varia-515,flare-rt` and saved JSON or Garmin `.SET` settings using
 `--settings PATH`. See [simulator instructions](Simulator/README.md) for shared

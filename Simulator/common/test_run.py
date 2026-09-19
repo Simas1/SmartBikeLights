@@ -27,7 +27,7 @@ class PreviewTests(unittest.TestCase):
             settings = Path(fixture) / 'settings.json'
             settings.write_text(json.dumps({'CN1': 'Quote " slash \\', 'IL': True}))
             result = subprocess.run([sys.executable, str(Path(__file__).with_name('run.py')),
-                '--prepare-only', '--scenario', 'low-battery', '--lights', 'at1600,varia-515,flare-rt',
+                '--prepare-only', '--battery', 'at1600=25,varia-515=25,flare-rt=25', '--lights', 'at1600,varia-515,flare-rt',
                 '--settings', str(settings)], capture_output=True, text=True, check=True)
         work = Path(result.stdout.splitlines()[0].removeprefix('Preview: '))
         try:
@@ -35,7 +35,7 @@ class PreviewTests(unittest.TestCase):
             self.assertEqual(len(resolved['lights']), 3)
             self.assertTrue(resolved['settings']['IL'])
             network = (work / 'source-preprocess/TestLightNetwork.mc').read_text()
-            self.assertIn('batteryStatus.batteryStatus = 4;', network)
+            self.assertIn('batteryStatus.batteryStatus = [4, 4, 4][id];', network)
             self.assertIn('mode = [51, 4, 1][id];', network)
             self.assertIn('productInfo.serial = serial.toNumber();', network)
             self.assertNotIn('counter = (counter + 1)', network)
@@ -63,10 +63,12 @@ class PreviewTests(unittest.TestCase):
             try:
                 resolved = json.loads((work / 'preview.json').read_text())
                 self.assertEqual([item['catalogId'] for item in resolved['lights']], ['at1600', 'flare-rt'])
+                self.assertEqual([item['batteryStatus'] for item in resolved['lights']], [1, 1])
+                self.assertNotIn('scenario', resolved)
             finally:
                 shutil.rmtree(work)
         result = subprocess.run([sys.executable, str(Path(__file__).with_name('run.py')),
-            '--devices', 'removed.json'], capture_output=True, text=True)
+            '--scenario', 'low-battery'], capture_output=True, text=True)
         self.assertNotEqual(result.returncode, 0)
 
     def test_example_matches_workflow_defaults(self):
@@ -85,6 +87,28 @@ class PreviewTests(unittest.TestCase):
             for model, index in (('at1600', 1), ('flare-rt', 3)):
                 high, low = map(int, blocks[index].split(':')[1].split(','))
                 self.assertEqual(preview.CATALOG[model]['serial'], (high << 31) | low)
+
+    def test_individual_batteries(self):
+        for value, expected in [('100%', 1), ('75', 2), ('50%', 3), ('25', 4),
+                                ('5%', 5), ('Chg', 6), ('charging', 6), ('good', 2)]:
+            lights = preview.read_lights('at1600,flare-rt')
+            preview.apply_batteries(lights, [f'at1600={value}'])
+            self.assertEqual([light['batteryStatus'] for light in lights], [expected, 1])
+        for value in ('at1600=24', 'at1600=0', 'varia-515=50', 'at1600=chg%',
+                      'at1600=25,at1600=5', 'at1600', ''):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                preview.apply_batteries(preview.read_lights('at1600,flare-rt'), [value])
+        result = subprocess.run([sys.executable, str(Path(__file__).with_name('run.py')),
+            '--prepare-only', '--lights', 'flare-rt,at1600',
+            '--battery', 'at1600=75%,flare-rt=Chg'], capture_output=True, text=True, check=True)
+        work = Path(result.stdout.splitlines()[0].removeprefix('Preview: '))
+        try:
+            resolved = json.loads((work / 'preview.json').read_text())
+            self.assertEqual([light['batteryStatus'] for light in resolved['lights']], [6, 2])
+            network = (work / 'source-preprocess/TestLightNetwork.mc').read_text()
+            self.assertIn('batteryStatus.batteryStatus = [6, 2][id];', network)
+        finally:
+            shutil.rmtree(work)
 
     def test_saved_set_file(self):
         spec = importlib.util.spec_from_file_location('codec', preview.ROOT / '.github/actions/build-sbl-settings/create-settings.py')

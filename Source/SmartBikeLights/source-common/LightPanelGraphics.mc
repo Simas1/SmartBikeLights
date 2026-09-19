@@ -164,14 +164,15 @@ module LightPanelGraphics {
 
     // Only the configuration-switch arrows remain procedural.
     function drawIcon(dc, icon, x, y, size, background) {
-        if (!icon.equals("cycle")) { return; }
+        if (!icon.equals("cycle") && !icon.equals("cycle-flipped")) { return; }
         if (dc has :setAntiAlias) { dc.setAntiAlias(true); }
         var r = size / 2;
+        var rx = icon.equals("cycle-flipped") ? -r : r;
         dc.setPenWidth(size >= 28 ? 3 : size >= 18 ? 2 : 1);
-        dc.drawLine(x-r,y,x-r,y-r*0.6); dc.drawLine(x-r,y-r*0.6,x+r,y-r*0.6);
-        dc.drawLine(x+r,y-r*0.6,x+r*0.4,y-r); dc.drawLine(x+r,y-r*0.6,x+r*0.4,y);
-        dc.drawLine(x+r,y,x+r,y+r*0.6); dc.drawLine(x+r,y+r*0.6,x-r,y+r*0.6);
-        dc.drawLine(x-r,y+r*0.6,x-r*0.4,y+r); dc.drawLine(x-r,y+r*0.6,x-r*0.4,y);
+        dc.drawLine(x-rx,y,x-rx,y-r*0.6); dc.drawLine(x-rx,y-r*0.6,x+rx,y-r*0.6);
+        dc.drawLine(x+rx,y-r*0.6,x+rx*0.4,y-r); dc.drawLine(x+rx,y-r*0.6,x+rx*0.4,y);
+        dc.drawLine(x+rx,y,x+rx,y+r*0.6); dc.drawLine(x+rx,y+r*0.6,x-rx,y+r*0.6);
+        dc.drawLine(x-rx,y+r*0.6,x-rx*0.4,y+r); dc.drawLine(x-rx,y+r*0.6,x-rx*0.4,y);
         dc.setPenWidth(1);
         if (dc has :setAntiAlias) { dc.setAntiAlias(false); }
     }

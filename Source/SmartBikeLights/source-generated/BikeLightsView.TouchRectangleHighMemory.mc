@@ -92,6 +92,8 @@ class BikeLightsView extends  WatchUi.DataField  {
     private var _headlightPanel;
     private var _taillightPanel;
     private var _panelInitialized = false;
+    private var _configHighlightTime; // -1 until first painted; then visible for at least one second.
+    private var _configTapTime; // Pending single tap; a second tap within 450 ms opens Settings.
     private var _panelFooter; // [left, top, width, height, configuration name]
     private var _panelIconFont;
     private var _headlightGroupName;
@@ -643,6 +645,15 @@ class BikeLightsView extends  WatchUi.DataField  {
 
     function onUpdate(dc) {
         var timer = System.getTimer();
+        if (_configTapTime != null && _configHighlightTime != null && _configHighlightTime >= 0 &&
+            timer - _configHighlightTime >= 1000) {
+            // Clear feedback and commit the switch in the same redraw.
+            _configTapTime = null;
+            _configHighlightTime = null;
+            if (_isFullScreen && _initializedLights > 0 && _errorCode == null && !DataFieldUi.isMenuOpen()) {
+                cycleConfiguration();
+            }
+        }
         if (_updateSettings) {
             _updateSettings = false;
             onSettingsChanged(true);
@@ -850,15 +861,6 @@ class BikeLightsView extends  WatchUi.DataField  {
         }
     }
 
-    function onHold(location) {
-        if (!DataFieldUi.isMenuOpen() && _initializedLights > 0 && _errorCode == null &&
-            isConfigurationButton(location)) {
-            DataFieldUi.pushMenu(new AppSettings.Menu(self));
-            return true;
-        }
-        return false;
-    }
-
     private function isConfigurationButton(location) {
         return _isFullScreen && _panelInitialized && _panelFooter != null &&
             location[0] >= _panelFooter[0] && location[0] < _panelFooter[0] + _panelFooter[2] &&
@@ -866,6 +868,10 @@ class BikeLightsView extends  WatchUi.DataField  {
     }
 
     function onTap(location) {
+        if (!isConfigurationButton(location)) {
+            _configTapTime = null;
+            _configHighlightTime = null;
+        }
         if (DataFieldUi.onTap(location)) {
             if (!DataFieldUi.isMenuOpen()) {
                 // Call onSettingsChanged in next onUpdate call. We don't want to call the method here in order to prevent Stack Overflow Error.
@@ -890,7 +896,7 @@ class BikeLightsView extends  WatchUi.DataField  {
           : (_invertLights ? 0 : 2));
         // Configuration switching does not require the tapped light to be connected.
         if (isConfigurationButton(location)) {
-            onLightPanelModeChange(lightData, lightData[0].type, -2, lightData[4]);
+            onConfigurationTap();
             return true;
         }
         if (getLightBatteryStatus(lightData) > 7 /* Invalid */) {
@@ -1132,7 +1138,7 @@ class BikeLightsView extends  WatchUi.DataField  {
         var tapX = location[0];
         var tapY = location[1];
         if (isConfigurationButton(location)) {
-            onLightPanelModeChange(lightData, lightType, -2, controlMode);
+            onConfigurationTap();
             return true;
         }
         var groupIndex = 9;
@@ -1160,20 +1166,42 @@ class BikeLightsView extends  WatchUi.DataField  {
         return false;
     }
 
+    private function onConfigurationTap() {
+        var now = System.getTimer();
+        if (_configTapTime != null) {
+            var elapsed = now - _configTapTime;
+            if (elapsed <= 450) {
+                _configTapTime = null;
+                _configHighlightTime = null;
+                DataFieldUi.pushMenu(new AppSettings.Menu(self));
+                return;
+            }
+            // Let the highlighted single tap finish before accepting another switch.
+            return;
+        }
+        _configTapTime = now;
+        _configHighlightTime = -1;
+        WatchUi.requestUpdate();
+    }
+
+    private function cycleConfiguration() {
+        // A bounded search also handles an unset CC with no saved profiles.
+        var currentConfig = getPropertyValue("CC");
+        if (currentConfig == null) { currentConfig = 1; }
+        for (var attempt = 1; attempt <= 3; attempt++) {
+            var nextConfig = ((currentConfig - 1 + attempt) % 3) + 1;
+            var configValue = getPropertyValue(nextConfig == 1 ? "LC" : "LC" + nextConfig);
+            if (configValue != null && configValue.length() > 0) {
+                Properties.setValue("CC", nextConfig);
+                _updateSettings = true;
+                break;
+            }
+        }
+    }
+
     protected function onLightPanelModeChange(lightData, lightType, lightMode, controlMode) {
         if (lightMode == -2) {
-            // A bounded search also handles an unset CC with no saved profiles.
-            var currentConfig = getPropertyValue("CC");
-            if (currentConfig == null) { currentConfig = 1; }
-            for (var attempt = 1; attempt <= 3; attempt++) {
-                var nextConfig = ((currentConfig - 1 + attempt) % 3) + 1;
-                var configValue = getPropertyValue(nextConfig == 1 ? "LC" : "LC" + nextConfig);
-                if (configValue != null && configValue.length() > 0) {
-                    Properties.setValue("CC", nextConfig);
-                    _updateSettings = true;
-                    break;
-                }
-            }
+            cycleConfiguration();
             return;
         }
 
@@ -1839,7 +1867,7 @@ class BikeLightsView extends  WatchUi.DataField  {
         var labelWidth = dc.getTextWidthInPixels(label, 0);
         var left = x - (labelWidth + 22) / 2;
         var top = y + dc.getFontHeight(0) / 2 - 5;
-        setTextColor(dc, status == 5 ? (fgColor == 0xFFFFFF ? 0xFF6666 : LightPanelGraphics.RED) : fgColor);
+        setTextColor(dc, percent != null && percent <= 25 ? (fgColor == 0xFFFFFF ? 0xFF6666 : LightPanelGraphics.RED) : fgColor);
         dc.setPenWidth(1);
         dc.drawRectangle(left, top, 16, 10);
         dc.fillRectangle(left + 16, top + 3, 2, 4);
@@ -1860,8 +1888,19 @@ class BikeLightsView extends  WatchUi.DataField  {
         var text = StringHelper.trimTextByWidth(dc, _panelFooter[4], 0, width - iconSize - 10);
         var textWidth = dc.getTextWidthInPixels(text, 0);
         var left = x + (width - textWidth - iconSize - 6) / 2;
-        setTextColor(dc, bgColor == 0x000000 ? AppTheme.onDark : AppTheme.accent);
-        LightPanelGraphics.drawIcon(dc, "cycle", left + iconSize / 2, y + height / 2, iconSize, bgColor);
+        // Start feedback duration when actually painted, not when the tap arrives.
+        // A slow data-field redraw may occur after the double-tap window expires.
+        var now = System.getTimer();
+        if (_configHighlightTime == -1) {
+            _configHighlightTime = now;
+        }
+        var pressed = _configHighlightTime != null;
+        if (pressed) {
+            setTextColor(dc, AppTheme.accent);
+            dc.fillRoundedRectangle(x + 2, y + 2, width - 4, height - 4, 4);
+        }
+        setTextColor(dc, pressed ? LightPanelGraphics.WHITE : bgColor == 0x000000 ? AppTheme.onDark : AppTheme.accent);
+        LightPanelGraphics.drawIcon(dc, pressed ? "cycle-flipped" : "cycle", left + iconSize / 2, y + height / 2, iconSize, pressed ? AppTheme.accent : bgColor);
         dc.drawText(left + iconSize + 6, y + (height - dc.getFontHeight(0)) / 2, 0, text, Graphics.TEXT_JUSTIFY_LEFT);
     }
 
