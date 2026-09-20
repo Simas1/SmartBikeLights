@@ -137,9 +137,54 @@ def arguments():
     return args
 
 
+def menu_configuration(value):
+    """Convert touchscreen panel sections to the non-touch settings-menu grammar."""
+    if not value:
+        return value
+    parts = value.split('#')
+    for index in (5, 6):
+        if len(parts) <= index:
+            continue
+        panel = parts[index]
+        header, *groups = panel.split('!')
+        fields = header.split(':')
+        if ',' not in fields[0]:
+            continue  # Already a menu configuration (or no panel).
+        counts = fields[0].split(',')
+        if len(counts) != 2 or not all(item.isdigit() for item in counts) or len(fields) < 2:
+            raise ValueError('Malformed touchscreen light panel')
+        total, group_count = map(int, counts)
+        if len(groups) != group_count:
+            raise ValueError('Touchscreen panel group count does not match its contents')
+        buttons = []
+        parsed = 0
+        for group in groups:
+            count, *entries = group.split(',')
+            if not count.isdigit() or int(count) != len(entries):
+                raise ValueError('Touchscreen panel button count does not match its contents')
+            for entry in entries:
+                title, separator, raw_mode = entry.rpartition(':')
+                if not separator or not re.fullmatch(r'-?\d+', raw_mode):
+                    raise ValueError('Malformed touchscreen light button')
+                mode = int(raw_mode)
+                parsed += 1
+                if mode < 0:
+                    continue  # Touch-only control/configuration buttons are not light modes.
+                lines = re.split(r'\\+n', title)
+                title = ' '.join(line.strip() for line in lines if line.strip() and not line.strip().startswith('@'))
+                buttons.append(f'{title}:{mode}')
+        if parsed != total or len(buttons) > 20:
+            raise ValueError('Unsupported touchscreen light panel button count')
+        parts[index] = f'{len(buttons)}:{fields[1]}' + ''.join('|' + button for button in buttons)
+    return '#'.join(parts)
+
+
 def prepare(args):
     values = read_settings(args.settings) if args.settings else {}
     settings = validate_settings(values)
+    if args.profile.get('settingsFormat') == 'menu':
+        for key in ('LC', 'LC2', 'LC3'):
+            settings[key] = menu_configuration(settings[key])
     output = ROOT / 'Build/simulator'
     output.mkdir(parents=True, exist_ok=True)
     work = Path(tempfile.mkdtemp(prefix=f'{args.device}-', dir=output))

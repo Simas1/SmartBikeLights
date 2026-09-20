@@ -164,6 +164,33 @@ class PreviewTests(unittest.TestCase):
                 finally:
                     shutil.rmtree(work)
 
+    def test_touchscreen_configuration_converts_to_menu(self):
+        settings = json.loads((preview.SIMULATOR / 'settings.example.json').read_text())
+        for key in ('LC', 'LC2', 'LC3'):
+            original = settings[key]
+            converted = preview.menu_configuration(original)
+            before, after = original.split('#'), converted.split('#')
+            self.assertEqual(before[:5], after[:5])
+            self.assertEqual(before[7:], after[7:])
+            self.assertTrue(after[5].startswith('4:AT 1600|Off:0|Low'))
+            self.assertTrue(after[6].startswith('5:Flare RT|Off:0|Night Flash'))
+            self.assertNotIn('@', after[5] + after[6])
+            self.assertNotIn(':-1', after[5] + after[6])
+            self.assertNotIn(':-2', after[5] + after[6])
+            self.assertEqual(preview.menu_configuration(converted), converted)
+        self.assertEqual(preview.menu_configuration(''), '')
+        for device in ('edge540', 'edge550'):
+            result = subprocess.run([sys.executable, str(Path(__file__).with_name('run.py')),
+                device, '--prepare-only', '--settings', str(preview.SIMULATOR / 'settings.example.json')],
+                capture_output=True, text=True, check=True)
+            work = Path(result.stdout.splitlines()[0].removeprefix('Preview: '))
+            try:
+                resolved = json.loads((work / 'preview.json').read_text())['settings']
+                for key in ('LC', 'LC2', 'LC3'):
+                    self.assertEqual(resolved[key], preview.menu_configuration(settings[key]))
+            finally:
+                shutil.rmtree(work)
+
     def test_saved_set_file(self):
         spec = importlib.util.spec_from_file_location('codec', preview.ROOT / '.github/actions/build-sbl-settings/create-settings.py')
         codec = importlib.util.module_from_spec(spec)

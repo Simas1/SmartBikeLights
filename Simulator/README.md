@@ -56,7 +56,13 @@ Generated source and binaries remain under ignored `Build/simulator/`.
 ## Saved settings
 
 Settings are shared across device profiles that support the same app properties;
-only build qualifiers and simulator identity belong to a device profile.
+Device profiles select build qualifiers, simulator identity and settings format.
+For Edge 540/550, touchscreen panel definitions in all three configuration slots
+are converted to mode menus automatically. Touch-only controls and icon markers
+are omitted; light modes, serial filters and automation rules are preserved.
+Already menu-formatted configurations are unchanged. This conversion only affects
+the simulator build; physical-device settings still need the correct configurator
+device selection.
 
 `--settings PATH` accepts a partial JSON object or Garmin `.SET` file. Omit it to
 use application defaults. To use the complete workflow defaults, pass
