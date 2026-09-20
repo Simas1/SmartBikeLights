@@ -27,6 +27,33 @@ subject to app/device memory. Multiple network devices do not create extra UI
 panels: the app has headlight and taillight slots. Use configuration serial-number
 filters to choose between lights of the same type. Fixture serials are in the catalog.
 
+## Preview original upstream
+
+```bash
+./Simulator/run-simulator.sh edge1040 --source upstream
+./Simulator/run-simulator.sh edge1050 --source upstream --battery at1600=25,flare-rt=75
+```
+
+`--source local` (the default) uses your current checkout, including uncommitted edits.
+`--source upstream` clones the latest `master` from
+[maca88/SmartBikeLights](https://github.com/maca88/SmartBikeLights) into a fresh ignored
+`Build/simulator/upstream-source-*` directory. It requires Git and network access.
+It never switches branches or adds remotes to your repository. Each build records
+the upstream commit and repository in `preview.json` and prints them in the Terminal.
+The original upstream UI/resources are used; only simulator plumbing (fake lights,
+settings initialization, isolated app identity and device selection) is adapted.
+Upstream and local previews have separate app IDs and storage.
+
+Upstream uses its own property defaults and schema. Do not pass this fork's
+`settings.example.json`: it contains fork-specific properties and visual markers.
+For customized original panels, use a saved JSON/.SET file produced for upstream;
+`--source upstream --list-settings` lists its supported properties (e.g. AC instead
+of this fork's TH). No settings file means upstream defaults and its default panels.
+`--prepare-only --source upstream` still downloads source but skips preprocessing
+and compilation. Both the source checkout and build output are retained for inspection
+and may be deleted afterwards. If upstream changes its source structure, preparation
+fails rather than silently falling back to your fork.
+
 ## File organization
 
 ```text

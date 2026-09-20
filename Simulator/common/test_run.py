@@ -191,6 +191,38 @@ class PreviewTests(unittest.TestCase):
             finally:
                 shutil.rmtree(work)
 
+    def test_upstream_uses_own_sources_schema_and_identity(self):
+        from unittest.mock import patch
+        import contextlib
+        import io
+        with tempfile.TemporaryDirectory() as fixture:
+            app = Path(fixture) / 'app'
+            shutil.copytree(preview.APP, app)
+            for folder in ('resources', 'resources-highmemory'):
+                for name in ('properties.xml', 'settings.xml', 'strings.xml'):
+                    path = app / folder / name
+                    path.write_text(path.read_text().replace('TH', 'AC'))
+            marker = app / 'source/upstream-marker.mc'
+            marker.write_text('// Only in the upstream fixture')
+            with patch.object(preview, 'upstream_source', return_value=(app, 'a' * 40)), \
+                 patch.object(sys, 'argv', ['run.py', 'edge1040', '--source', 'upstream', '--prepare-only']):
+                args = preview.arguments()
+                with contextlib.redirect_stdout(io.StringIO()):
+                    work = preview.prepare(args)
+            try:
+                resolved = json.loads((work / 'preview.json').read_text())
+                self.assertEqual(resolved['source'], 'upstream')
+                self.assertEqual(resolved['upstreamCommit'], 'a' * 40)
+                self.assertIn('AC', resolved['settings'])
+                self.assertNotIn('TH', resolved['settings'])
+                self.assertTrue((work / 'source/upstream-marker.mc').exists())
+                self.assertNotIn(args.profile['previewAppId'], (work / 'manifest.xml').read_text())
+                self.assertNotIn('TestNetwork.TestLightNetwork', (app / 'source/SmartBikeLightsApp.mc').read_text())
+                with self.assertRaises(ValueError):
+                    preview.validate_settings({'TH': 0}, app)
+            finally:
+                shutil.rmtree(work)
+
     def test_saved_set_file(self):
         spec = importlib.util.spec_from_file_location('codec', preview.ROOT / '.github/actions/build-sbl-settings/create-settings.py')
         codec = importlib.util.module_from_spec(spec)
