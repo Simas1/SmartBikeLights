@@ -31,6 +31,7 @@ filters to choose between lights of the same type. Fixture serials are in the ca
 
 ```bash
 ./Simulator/run-simulator.sh edge1040 --source upstream
+./Simulator/run-simulator.sh edge1040 --source upstream --settings Simulator/settings.upstream.json
 ./Simulator/run-simulator.sh edge1050 --source upstream --battery at1600=25,flare-rt=75
 ```
 
@@ -46,7 +47,10 @@ Upstream and local previews have separate app IDs and storage.
 
 Upstream uses its own property defaults and schema. Do not pass this fork's
 `settings.example.json`: it contains fork-specific properties and visual markers.
-For customized original panels, use a saved JSON/.SET file produced for upstream;
+Use `Simulator/settings.upstream.json` for AT1600/Flare RT panels and the three
+Flash/Steady/Break configurations adapted from the fork example. It uses upstream
+`AC` and removes custom icon markers while preserving mode labels and automation.
+For other customized original panels, use a saved JSON/.SET file produced for upstream;
 `--source upstream --list-settings` lists its supported properties (e.g. AC instead
 of this fork's TH). No settings file means upstream defaults and its default panels.
 `--prepare-only --source upstream` still downloads source but skips preprocessing
