@@ -6,7 +6,6 @@ using Toybox.WatchUi;
 // old configurations and the configuration parser retain their wire format.
 (:touchScreen)
 module LightPanelGraphics {
-    const BLUE = 0x056ABD;
     const WHITE = 0xFFFFFF;
     const RED = 0xCC2222;
     var _modeIconsSmall;
@@ -165,14 +164,15 @@ module LightPanelGraphics {
 
     // Only the configuration-switch arrows remain procedural.
     function drawIcon(dc, icon, x, y, size, background) {
-        if (!icon.equals("cycle")) { return; }
+        if (!icon.equals("cycle") && !icon.equals("cycle-flipped")) { return; }
         if (dc has :setAntiAlias) { dc.setAntiAlias(true); }
         var r = size / 2;
+        var rx = icon.equals("cycle-flipped") ? -r : r;
         dc.setPenWidth(size >= 28 ? 3 : size >= 18 ? 2 : 1);
-        dc.drawLine(x-r,y,x-r,y-r*0.6); dc.drawLine(x-r,y-r*0.6,x+r,y-r*0.6);
-        dc.drawLine(x+r,y-r*0.6,x+r*0.4,y-r); dc.drawLine(x+r,y-r*0.6,x+r*0.4,y);
-        dc.drawLine(x+r,y,x+r,y+r*0.6); dc.drawLine(x+r,y+r*0.6,x-r,y+r*0.6);
-        dc.drawLine(x-r,y+r*0.6,x-r*0.4,y+r); dc.drawLine(x-r,y+r*0.6,x-r*0.4,y);
+        dc.drawLine(x-rx,y,x-rx,y-r*0.6); dc.drawLine(x-rx,y-r*0.6,x+rx,y-r*0.6);
+        dc.drawLine(x+rx,y-r*0.6,x+rx*0.4,y-r); dc.drawLine(x+rx,y-r*0.6,x+rx*0.4,y);
+        dc.drawLine(x+rx,y,x+rx,y+r*0.6); dc.drawLine(x+rx,y+r*0.6,x-rx,y+r*0.6);
+        dc.drawLine(x-rx,y+r*0.6,x-rx*0.4,y+r); dc.drawLine(x-rx,y+r*0.6,x-rx*0.4,y);
         dc.setPenWidth(1);
         if (dc has :setAntiAlias) { dc.setAntiAlias(false); }
     }
@@ -209,7 +209,7 @@ module LightPanelGraphics {
         var lit = brightnessSteps(data[1], maxLumens);
         var stepHeight = 7;
         for (var i=0; i<6 && stepWidth>=1; i++) {
-            dc.setColor(i<lit ? selected?WHITE:BLUE : selected?0x428CCA:bg==0x000000?0x444444:0xCCCCCC, -1);
+            dc.setColor(i<lit ? selected?WHITE:(bg==0x000000?AppTheme.onDark:AppTheme.accent) : selected?AppTheme.muted:bg==0x000000?0x444444:0xCCCCCC, -1);
             dc.fillRectangle(x+pad+i*(stepWidth+2),brightnessY+dc.getFontHeight(0)/2-stepHeight/2,stepWidth,stepHeight);
         }
         dc.setColor(color,-1);

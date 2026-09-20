@@ -17,7 +17,6 @@ ROOT = Path(__file__).resolve().parents[2]
 APP = ROOT / 'Source/SmartBikeLights'
 SIMULATOR = ROOT / 'Simulator'
 CATALOG = json.loads((SIMULATOR / 'lights.json').read_text())
-SCENARIOS = ('lights-on', 'low-battery', 'lights-off')
 
 
 def replace_once(text, old, new):
@@ -66,7 +65,7 @@ def validate_settings(values):
 
 def read_settings(path):
     if path.suffix.lower() == '.set':
-        spec = importlib.util.spec_from_file_location('settings_codec', ROOT / 'scripts/create-settings.py')
+        spec = importlib.util.spec_from_file_location('settings_codec', ROOT / '.github/actions/build-sbl-settings/create-settings.py')
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         return module.decode(path.read_bytes())
@@ -85,12 +84,36 @@ def read_lights(value):
     return [dict(CATALOG[key], catalogId=key) for key in ids]
 
 
+def apply_batteries(lights, overrides):
+    """Percentages are display approximations of ANT light battery categories."""
+    statuses = {'100': 1, '75': 2, '50': 3, '25': 4, '5': 5,
+                'new': 1, 'good': 2, 'ok': 3, 'low': 4, 'critical': 5,
+                'chg': 6, 'charging': 6}
+    selected = {light['catalogId']: light for light in lights}
+    for light in lights:
+        light['batteryStatus'] = 1
+    seen = set()
+    for group in overrides:
+        for entry in group.split(','):
+            key, separator, value = entry.strip().partition('=')
+            key, value = key.strip(), value.strip().lower()
+            if value.endswith('%') and value[:-1] in ('100', '75', '50', '25', '5'):
+                value = value[:-1]
+            if not separator or key not in selected or value not in statuses:
+                raise ValueError('--battery requires selected-light=100,75,50,25,5 or chg (optional %); e.g. at1600=25,flare-rt=chg')
+            if key in seen:
+                raise ValueError(f'Duplicate battery override for {key}')
+            seen.add(key)
+            selected[key]['batteryStatus'] = statuses[value]
+
+
 def arguments():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('device', nargs='?', default='edge1040', choices=sorted(p.parent.name for p in SIMULATOR.glob('*/profile.json')))
-    parser.add_argument('--scenario', choices=SCENARIOS, default='lights-on')
     parser.add_argument('--lights', '-lights', default='at1600,flare-rt',
                         help='Comma-separated IDs from lights.json (default: at1600,flare-rt)')
+    parser.add_argument('--battery', action='append', default=[], metavar='LIGHT=VALUE,...',
+                        help='Per-light battery: 100,75,50,25,5 (optional %%), or chg; default 100%%')
     parser.add_argument('--settings', type=Path, help='Partial settings JSON or Garmin .SET file')
     parser.add_argument('--list-lights', action='store_true')
     parser.add_argument('--list-settings', action='store_true')
@@ -109,6 +132,7 @@ def arguments():
             print(f'{key}: default={json.dumps(value)}' + (f'; choices={choices}' if choices else ''))
         parser.exit()
     args.lights = read_lights(args.lights)
+    apply_batteries(args.lights, args.battery)
     args.profile = json.loads((SIMULATOR / args.device / 'profile.json').read_text())
     return args
 
@@ -118,7 +142,7 @@ def prepare(args):
     settings = validate_settings(values)
     output = ROOT / 'Build/simulator'
     output.mkdir(parents=True, exist_ok=True)
-    work = Path(tempfile.mkdtemp(prefix=f'{args.device}-{args.scenario}-', dir=output))
+    work = Path(tempfile.mkdtemp(prefix=f'{args.device}-', dir=output))
     shutil.copytree(APP, work, dirs_exist_ok=True, ignore=shutil.ignore_patterns('bin', '.git', 'node_modules', 'networkKeys'))
     cfg_path = work / 'preprocess.config.json'
     cfg = json.loads(cfg_path.read_text())
@@ -145,8 +169,10 @@ def prepare(args):
     # Garmin exposes serials as signed 32-bit Numbers, matching configuration parsing.
     text = replace_once(text, 'productInfo.serial = serial;', 'productInfo.serial = serial.toNumber();')
     on_modes = [light['onMode'] for light in args.lights]
-    text = replace_once(text, '            mode = 0;', '            mode = ' + ('0' if args.scenario == 'lights-off' else f'{json.dumps(on_modes)}[id]') + ';')
-    text = replace_once(text, 'batteryStatus.batteryStatus = 1;', f'batteryStatus.batteryStatus = {4 if args.scenario == "low-battery" else 1};')
+    text = replace_once(text, '            mode = 0;', f'            mode = {json.dumps(on_modes)}[id];')
+    batteries = [light['batteryStatus'] for light in args.lights]
+    text = replace_once(text, 'batteryStatus.batteryStatus = 1;',
+                        f'batteryStatus.batteryStatus = {json.dumps(batteries)}[id];')
     # Keep network stable and process tap changes even when updates occur faster than 1 Hz.
     start, end = text.index('            var delta ='), text.index('            for (var i =')
     text = text[:start] + text[end:]
@@ -166,9 +192,9 @@ def prepare(args):
     path = work / 'source/SmartBikeLightsApp.mc'
     assignments = '\n'.join(f'        Application.Properties.setValue({json.dumps(key)}, {json.dumps(value, ensure_ascii=False)});' for key, value in settings.items())
     path.write_text(replace_once(path.read_text(), '        AppBase.initialize();', '        AppBase.initialize();\n        Application.Storage.clearValues();\n' + assignments))
-    (work / 'preview.json').write_text(json.dumps({'device': args.device, 'scenario': args.scenario, 'lights': args.lights, 'settings': settings}, indent=2))
+    (work / 'preview.json').write_text(json.dumps({'device': args.device, 'lights': args.lights, 'settings': settings}, indent=2))
     print(f'Preview: {work}', flush=True)
-    print(f'{args.scenario}: ' + ', '.join(light['name'] for light in args.lights), flush=True)
+    print('Lights: ' + ', '.join(light['name'] for light in args.lights), flush=True)
     return work
 
 

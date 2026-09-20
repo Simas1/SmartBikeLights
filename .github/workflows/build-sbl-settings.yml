@@ -14,22 +14,15 @@ on:
         type: boolean
         required: false
         default: false
-      AC:
-        description: Activity color
+      TH:
+        description: Theme
         type: choice
         required: false
         default: 'Blue'
         options:
-          - Red
-          - Dark Red
-          - Orange
-          - Yellow
-          - Green
-          - Dark Green
           - Blue
-          - Dark Blue
-          - Purple
-          - Pink
+          - Violet
+          - Mint
       CC:
         description: Current Configuration
         type: choice

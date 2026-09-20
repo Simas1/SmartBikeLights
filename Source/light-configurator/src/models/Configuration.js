@@ -190,7 +190,7 @@ const parseLightPanel = (chars, i, filterResult) => {
   panel.lightName = parseTitle(chars, filterResult[0] + 1, filterResult);
   panel.buttonColor = chars[filterResult[0]] === ':'
       ? parseNumber(chars, filterResult[0] + 1, filterResult)
-      : 0 /* Activity color */; // Old configuration
+      : 0 /* Theme */; // Old configuration
   panel.buttonTextColor = chars[filterResult[0]] === ':'
       ? parseNumber(chars, filterResult[0] + 1, filterResult)
       : 0xFFFFFF /* White */; // Old configuration

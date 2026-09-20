@@ -44,10 +44,10 @@ The workflow compiles the property defaults committed on the selected branch:
 - `Source/SmartBikeLights/resources/properties.xml`: Flash configuration,
   record light modes, and invert lights.
 - `Source/SmartBikeLights/resources-highmemory/properties.xml`: Steady and Break
-  configurations, configuration names, activity color, and active configuration.
+  configurations, configuration names, theme, and active configuration.
 
 The two `properties.xml` files match the original upstream defaults: empty
-configuration strings, Primary selected, blue activity color, recording enabled,
+configuration strings, Primary selected, blue theme, recording enabled,
 and invert disabled. Custom configurations belong in the `.SET` file below.
 Existing saved settings override the defaults compiled into the application.
 

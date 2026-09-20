@@ -7,11 +7,11 @@ The pinned `directive-preprocessor@1.1.1` is downloaded through npx on first use
 Use Simulator launcher with a device argument and optional settings:
 
 ```bash
-./Simulator/run-simulator.sh edge1040 --lights at1600,flare-rt --scenario low-battery
+./Simulator/run-simulator.sh edge1040 --lights at1600,flare-rt --battery at1600=25,flare-rt=25
 
 ./Simulator/run-simulator.sh edge1040 --lights at1600,varia-515,flare-rt
 
-./Simulator/run-simulator.sh edge1040 --scenario low-battery \
+./Simulator/run-simulator.sh edge1040 --battery at1600=25,flare-rt=25 \
   --settings Simulator/settings.example.json
 ```
 
@@ -49,11 +49,10 @@ only build qualifiers and simulator identity belong to a device profile.
 `--settings PATH` accepts a partial JSON object or Garmin `.SET` file. Omit it to
 use application defaults. To use the complete workflow defaults, pass
 `Simulator/settings.example.json` explicitly. It contains all ten parameters
-from `.github/workflows/create-settings.yml`, including the three full configurations.
+from `.github/workflows/build-sbl-settings.yml`, including the three full configurations.
 
 Use `--list-settings` to display defaults and accepted choices. Keys are `LC`, `LC2`,
-`LC3` (configurator strings), `CN1`–`CN3` (names), `CC` (active slot), `AC` (activity
-color), `IL` (invert lights), and `RL` (record modes). Choice values accept displayed
+`LC3` (configurator strings), `CN1`–`CN3` (names), `CC` (active slot), `TH` (theme), `IL` (invert lights), and `RL` (record modes). Choice values accept displayed
 labels or numbers; booleans require true/false. JSON strings must escape backslashes:
 a literal `\n` configurator marker is written as `\\n` in the file.
 
@@ -68,20 +67,45 @@ Individual-network routing is disabled in the copied code so selected lights use
 the fake network. Pairing, radar targets, TransmitR remotes and ANT radio behavior
 are not simulated. Avoid these features in visual preview settings.
 
-## Scenarios
+## Initial light state
 
-- `lights-on`: each light starts in its catalog `onMode`, battery status 1 (new).
-- `low-battery`: same initial modes, battery status 4 (low, not a percentage).
-- `lights-off`: mode 0 for every light, battery status 1.
+Each light starts in its catalog `onMode`, with battery status New (100%) unless
+changed with `--battery`. AT1600 starts at preset 1 (51, Low). App filters and taps
+can subsequently change modes. The fake network remains connected; battery states
+stay fixed for the run. AT1600 mode IDs come from the configurator. Its manufacturer/
+model numbers are synthetic placeholders, not physical ANT identification.
 
-AT1600 starts at preset 1 (51, Low). App filters and taps can subsequently change
-modes. The fake network remains connected; battery states stay fixed for the run.
-AT1600 mode IDs come from the configurator. Its manufacturer/model numbers are
-synthetic zero-valued placeholders, not claims about physical ANT identification.
+## Individual battery values
+
+```bash
+./Simulator/run-simulator.sh edge1040 --battery at1600=25%,flare-rt=75%
+./Simulator/run-simulator.sh edge1040 --battery at1600=25,flare-rt=Chg
+```
+
+`--battery` sets the named lights independently; omitted lights default to New (100%). It accepts comma-separated assignments or repeated `--battery` flags.
+The light IDs must be selected by `--lights` (default: `at1600,flare-rt`).
+
+| Value (percent sign optional) | Battery category |
+| --- | --- |
+| 100% | New (1) |
+| 75% | Good (2) |
+| 50% | OK (3) |
+| 25% | Low (4) |
+| 5% | Critical (5) |
+| Chg | Charging (6) |
+
+Names (`new`, `good`, `ok`, `low`, `critical`, `charging`) are also accepted,
+case-insensitively. These percentages are the app's approximate category labels,
+not precise readings; other percentages are rejected. Resolved battery statuses
+are saved with each light in `preview.json`.
+
+ANT+ Bike Lights defines status 6 as Charging. A physical light can send it, but
+whether a particular model reports it while charging depends on its firmware.
+Charging is not a percentage and does not produce a remaining-runtime estimate.
 
 ## Build output and troubleshooting
 
-Each invocation creates `Build/simulator/DEVICE-SCENARIO-UNIQUE/` containing copied
+Each invocation creates `Build/simulator/DEVICE-UNIQUE/` containing copied
 source, `preview.json` with resolved choices, and `SmartBikeLights-sim.prg`. Normal
 application source and settings are unchanged. Delete old preview folders when
 finished; these folders are retained, not auto-cleaned. Keep personal settings under
