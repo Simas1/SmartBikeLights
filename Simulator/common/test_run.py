@@ -110,6 +110,60 @@ class PreviewTests(unittest.TestCase):
         finally:
             shutil.rmtree(work)
 
+    def test_edge1050_profile(self):
+        result = subprocess.run([sys.executable, str(Path(__file__).with_name('run.py')),
+            'edge1050', '--prepare-only', '--battery', 'at1600=25,flare-rt=75'],
+            capture_output=True, text=True, check=True)
+        work = Path(result.stdout.splitlines()[0].removeprefix('Preview: '))
+        try:
+            jungle = (work / 'monkey.jungle').read_text()
+            self.assertIn('edge1050.excludeAnnotations = $(rectangleHighResolution)', jungle)
+            self.assertIn('edge1050.resourcePath = resources-highmemory;$(edge1050.resourcePath)', jungle)
+            self.assertNotIn('edge1040.resourcePath', jungle)
+            import xml.etree.ElementTree as ET
+            manifest = ET.parse(work / 'manifest.xml')
+            ns = {'iq': 'http://www.garmin.com/xml/connectiq'}
+            self.assertEqual([node.attrib['id'] for node in manifest.findall('.//iq:product', ns)], ['edge1050'])
+            profile = json.loads((preview.SIMULATOR / 'edge1050/profile.json').read_text())
+            other = json.loads((preview.SIMULATOR / 'edge1040/profile.json').read_text())
+            self.assertNotEqual(profile['previewAppId'], other['previewAppId'])
+            self.assertEqual(manifest.find('iq:application', ns).attrib['id'], profile['previewAppId'])
+            self.assertTrue((work / 'resources-edge1050/resources.xml').is_file())
+            resolved = json.loads((work / 'preview.json').read_text())
+            self.assertEqual(resolved['device'], 'edge1050')
+            self.assertEqual([light['batteryStatus'] for light in resolved['lights']], [4, 2])
+        finally:
+            shutil.rmtree(work)
+
+    def test_additional_edge_profiles_and_pipeline(self):
+        import re
+        expected = {'edge850': 'rectangleHighResolution',
+                    'edge550': 'rectangleNonTouchScreenHighResolution',
+                    'edge840': None, 'edge540': 'rectangleNonTouchScreen'}
+        workflow = (preview.ROOT / '.github/workflows/build-sbl.yml').read_text()
+        script = (preview.ROOT / '.github/actions/build-sbl/build-edge.sh').read_text()
+        identities = [json.loads(path.read_text())['previewAppId'] for path in preview.SIMULATOR.glob('*/profile.json')]
+        self.assertEqual(len(identities), len(set(identities)))
+        for device, annotation in expected.items():
+            with self.subTest(device=device):
+                self.assertIn('          - ' + device, workflow)
+                self.assertIn(device, script.split('case "$device" in')[1].split(')')[0])
+                result = subprocess.run([sys.executable, str(Path(__file__).with_name('run.py')),
+                    device, '--prepare-only'], capture_output=True, text=True, check=True)
+                work = Path(result.stdout.splitlines()[0].removeprefix('Preview: '))
+                try:
+                    jungle = (work / 'monkey.jungle').read_text()
+                    self.assertIn(device + '.resourcePath', jungle)
+                    if annotation:
+                        self.assertIn(f'{device}.excludeAnnotations = $({annotation})', jungle)
+                    else:
+                        self.assertIn('resources-highmemory;resources-touchscreen', jungle)
+                    self.assertNotIn('edge1040.resourcePath', jungle)
+                    products = re.findall(r'<iq:product id="([^"]+)"', (work / 'manifest.xml').read_text())
+                    self.assertEqual(products, [device])
+                finally:
+                    shutil.rmtree(work)
+
     def test_saved_set_file(self):
         spec = importlib.util.spec_from_file_location('codec', preview.ROOT / '.github/actions/build-sbl-settings/create-settings.py')
         codec = importlib.util.module_from_spec(spec)

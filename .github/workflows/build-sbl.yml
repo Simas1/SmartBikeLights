@@ -12,6 +12,10 @@ on:
         options:
           - edge1040
           - edge1050
+          - edge850
+          - edge550
+          - edge840
+          - edge540
 
 permissions:
   contents: read

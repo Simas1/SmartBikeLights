@@ -238,10 +238,12 @@ The following errors can be displayed:
 - **Error 11:** One of the ANT channels used for connection to the bike radar could not be opened. Try to disable some sensors from the Garmin Sensors menu.
 - **Error 12:** The device does not have enough free ANT channels to be used for connection to the bike radar. Try to disable some sensors from the Garmin Sensors menu.
 
-### Local Edge 1040 simulator previews
+### Local Garmin simulator previews
 
-Run `./Simulator/run-simulator.sh edge1040` for an isolated
-fake-light preview (defaults: AT1600 and Flare RT). Select models using
+Run `./Simulator/run-simulator.sh edge1040` or
+`./Simulator/run-simulator.sh edge1050` for an isolated
+fake-light preview (defaults: AT1600 and Flare RT). Device arguments also include
+`edge850`, `edge550`, `edge840`, and `edge540`. Select light models using
 `--lights at1600,varia-515,flare-rt` and saved JSON or Garmin `.SET` settings using
 `--settings PATH`. See [simulator instructions](Simulator/README.md) for shared
 files, device-specific profiles, and the complete workflow settings example.

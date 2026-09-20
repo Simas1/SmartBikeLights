@@ -4,9 +4,14 @@ Run from the repository root on macOS. Requires Python 3.9+, Java 17, Node.js/np
 Connect IQ SDK (tested with 9.2.0), and the installed target-device profile.
 The pinned `directive-preprocessor@1.1.1` is downloaded through npx on first use.
 
-Use Simulator launcher with a device argument and optional settings:
+Use the simulator launcher with a device ID and optional settings:
+
+Supported: `edge1040`, `edge1050`, `edge850`, `edge550`, `edge840`, `edge540`.
+Edge 540 and 550 use button controls, not the touchscreen light panel.
 
 ```bash
+./Simulator/run-simulator.sh edge1050 --settings Simulator/settings.example.json
+
 ./Simulator/run-simulator.sh edge1040 --lights at1600,flare-rt --battery at1600=25,flare-rt=25
 
 ./Simulator/run-simulator.sh edge1040 --lights at1600,varia-515,flare-rt
@@ -35,6 +40,13 @@ Simulator/
   edge1040/
     profile.json            Device-specific qualifiers and preview app identity
     README.md              Edge 1040 usage
+  edge1050/
+    profile.json            High-resolution touchscreen profile and preview app identity
+    README.md              Edge 1050 usage
+  edge850/                 Edge 850 profile and usage (high-resolution touch)
+  edge550/                 Edge 550 profile and usage (high-resolution buttons)
+  edge840/                 Edge 840 profile and usage (medium-resolution touch)
+  edge540/                 Edge 540 profile and usage (medium-resolution buttons)
 ```
 
 The shared runner discovers supported devices from `*/profile.json`. To add Edge
