@@ -127,6 +127,17 @@ module AntLightNetwork {
             return errorCode;
         }
 
+        function getErrorContext() {
+            if (_lightControllers != null) {
+                for (var i = 0; i < _lightControllers.size(); i++) {
+                    if (_lightControllers[i].errorCode != null) {
+                        return _lightControllers[i].getErrorContext();
+                    }
+                }
+            }
+            return null;
+        }
+
         function release() {
             if (_lightControllers == null) {
                 return;
@@ -167,6 +178,14 @@ module AntLightNetwork {
         public var light;
         public var batteryStatus;
         public var capableModes;
+
+        function getErrorContext() {
+            var component = _lightType == 0 ? "Headlight" : "Taillight";
+            var detail = "Device " + _deviceNumber + ". ";
+            detail += errorCode == 7 ? "Does not support the configured light type."
+                : errorCode == 5 ? "No free ANT channel available." : "ANT channel could not be opened.";
+            return [errorCode, component, detail];
+        }
 
         function initialize(identifier, lightType, deviceNumber, listener, manualModeTracking) {
             _lightType = lightType;

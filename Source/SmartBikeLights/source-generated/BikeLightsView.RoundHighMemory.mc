@@ -78,6 +78,7 @@ class BikeLightsView extends  WatchUi.DataField  {
     var taillightData = new [19];
 
     protected var _errorCode;
+    protected var _errorContext; // [code, affected component, detail]
 
     // Settings
     protected var _separatorWidth;
@@ -172,6 +173,7 @@ class BikeLightsView extends  WatchUi.DataField  {
                 var error = startLightSensor(i, j, firstSensorIndex, null);
                 if (error != null) {
                     _errorCode = error;
+                    _errorContext = [error, "Remote controller", "Controller " + (i + 1) + ", button " + (j - 1) + "."];
                     return;
                 }
             }
@@ -201,6 +203,7 @@ class BikeLightsView extends  WatchUi.DataField  {
                 var error = lightSensors[i].checkChannel();
                 if (error != null) {
                     _errorCode = error;
+                    _errorContext = lightSensors[i].getErrorContext();
                     return;
                 }
             }
@@ -210,6 +213,7 @@ class BikeLightsView extends  WatchUi.DataField  {
             var error = _bikeRadar.checkChannel();
             if (error != null) {
                 _errorCode = error;
+                _errorContext = null;
                 return;
             }
         }
@@ -381,6 +385,7 @@ class BikeLightsView extends  WatchUi.DataField  {
         _invertLights = getPropertyValue("IL");
         AppTheme.load();
         _errorCode = null;
+        _errorContext = null;
         try {
             var hlData = headlightData;
             var tlData = taillightData;
@@ -424,6 +429,7 @@ class BikeLightsView extends  WatchUi.DataField  {
             initializeLights(null);
         } catch (e) {
             _errorCode = 4;
+            _errorContext = null;
         }
     }
 
@@ -503,6 +509,9 @@ class BikeLightsView extends  WatchUi.DataField  {
         // Needed for TestLightNetwork and IndividualLightNetwork
         if (_errorCode == null && _lightNetwork != null && _lightNetwork has :update) {
             _errorCode = _lightNetwork.update();
+            if (_errorCode != null) {
+                _errorContext = _lightNetwork has :getErrorContext ? _lightNetwork.getErrorContext() : null;
+            }
         }
 
         refreshNetworkInBackground();
@@ -625,6 +634,25 @@ class BikeLightsView extends  WatchUi.DataField  {
         return null;
     }
 
+    private function drawError(dc, width, height) {
+        var settings = System.getDeviceSettings();
+        var fullScreen = width == settings.screenWidth && height == settings.screenHeight;
+        var safeWidth = width;
+        var safeHeight = height;
+        // Keep the complete text block inside the curved display boundary.
+        safeWidth = width * 0.7;
+        safeHeight = height * 0.7;
+        if (ErrorDisplay.draw(dc, _errorCode, _errorContext, fullScreen, safeWidth, safeHeight, width / 2, height / 2)) {
+            return true;
+        }
+        // A full-screen explanation may still be too long on smaller devices.
+        return fullScreen && ErrorDisplay.draw(dc, _errorCode, _errorContext, false, safeWidth, safeHeight, width / 2, height / 2);
+    }
+
+    protected function recordModeError(light, mode, source) {
+        _errorContext = [3, light.type == 0 ? "Headlight" : "Taillight", source + " uses unsupported mode " + mode + "."];
+    }
+
     // Data fields do not reliably receive onShow when returning from Garmin UI.
     // Check before recording this draw so a hidden-page gap remains observable.
     protected function refreshNetworkAfterHiddenPage(timer) {
@@ -662,6 +690,9 @@ class BikeLightsView extends  WatchUi.DataField  {
             : null;
         if (text != null) {
             setTextColor(dc, fgColor);
+            if (_errorCode != null && drawError(dc, width, height)) {
+                return;
+            }
             dc.drawText(width / 2, height / 2, 0, text, 1 /* TEXT_JUSTIFY_CENTER */ | 4 /* TEXT_JUSTIFY_VCENTER */);
             return;
         }
@@ -981,6 +1012,7 @@ class BikeLightsView extends  WatchUi.DataField  {
         }
 
         errorCode = null;
+        _errorContext = null;
         var firstTime = _initializedLights == 0;
         releaseLights();
         var lights = lightNetwork.getBikeLights();
@@ -997,6 +1029,7 @@ class BikeLightsView extends  WatchUi.DataField  {
             var lightType = light != null ? light.type : 7;
             if (lightType != 0 && lightType != 2) {
                 errorCode = 1;
+                _errorContext = [1, "Light network", light == null ? "An unknown light was reported." : "Unsupported light type " + lightType + "."];
                 break;
             }
 
@@ -1019,14 +1052,17 @@ class BikeLightsView extends  WatchUi.DataField  {
             // Validate filters light modes
             if (filters != null) {
                 var j = 0;
+                var filterGroup = 1;
                 while (j < filters.size()) {
                     var totalFilters = filters[j + 1];
                     if (capableModes.indexOf(filters[j + 2]) < 0) {
                         errorCode = 3;
+                        recordModeError(light, filters[j + 2], "Filter group " + filterGroup);
                         break;
                     }
 
                     j = j + 5 + (totalFilters * 3);
+                    filterGroup++;
                 }
             }
 
@@ -1266,6 +1302,7 @@ class BikeLightsView extends  WatchUi.DataField  {
         for (var i = 2; i < settings.size(); i += 2) {
             if (capableModes.indexOf(settings[i]) < 0) {
                 _errorCode = 3;
+                recordModeError(light, settings[i], "Light button " + (i / 2));
                 return false;
             }
         }
