@@ -92,6 +92,8 @@ module AppSettings {
             BaseMenu.initialize(null);
             Menu2.setTitle("About");
             Menu2.addItem(new WatchUi.MenuItem("Version", Rez.Strings.AppVersion, 0, null));
+            Menu2.addItem(new WatchUi.MenuItem("Tag", Rez.Strings.AppTag, 1, null));
+            Menu2.addItem(new WatchUi.MenuItem("Commit", Rez.Strings.AppCommit, 2, null));
         }
 
         public function onSelect(index, menuItem) {

@@ -1,6 +1,4 @@
 <strings>
-    <!-- Keep AppVersion in sync with the application version in manifest.xml. -->
-    <string id="AppVersion">0.40.0</string>
     <string id="TH">Theme</string>
     <string id="Violet">Violet</string>
     <string id="Mint">Mint</string>
