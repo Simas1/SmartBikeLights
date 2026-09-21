@@ -93,6 +93,8 @@ class BikeLightsView extends  WatchUi.DataField  {
     private var _headlightPanel;
     private var _taillightPanel;
     private var _panelInitialized = false;
+    private var _configFeedbackTime; // -1 means queued for its first visible draw.
+    private var _pendingConfig; // Preview only; CC is unchanged until the tap is committed.
     private var _configTapTime; // Pending single tap; a second tap within 450 ms opens Settings.
     private var _panelFooter; // [left, top, width, height, configuration name]
     private var _panelIconFont;
@@ -662,10 +664,12 @@ class BikeLightsView extends  WatchUi.DataField  {
         var timer = System.getTimer();
         refreshNetworkAfterHiddenPage(timer);
         if (_configTapTime != null && timer - _configTapTime > 450) {
-            // Clear feedback and commit the switch in the same redraw.
+            // Apply exactly the profile whose name was previewed.
+            var nextConfig = _pendingConfig;
             _configTapTime = null;
+            _pendingConfig = null;
             if (_isFullScreen && _initializedLights > 0 && _errorCode == null && !DataFieldUi.isMenuOpen()) {
-                cycleConfiguration();
+                applyConfiguration(nextConfig);
             }
         }
         if (_updateSettings) {
@@ -907,6 +911,8 @@ class BikeLightsView extends  WatchUi.DataField  {
     function onTap(location) {
         if (!isConfigurationButton(location)) {
             _configTapTime = null;
+            _pendingConfig = null;
+            _configFeedbackTime = null;
         }
         if (DataFieldUi.onTap(location)) {
             if (!DataFieldUi.isMenuOpen()) {
@@ -1210,17 +1216,21 @@ class BikeLightsView extends  WatchUi.DataField  {
             var elapsed = now - _configTapTime;
             if (elapsed <= 450) {
                 _configTapTime = null;
+                _pendingConfig = null;
+                _configFeedbackTime = null;
                 DataFieldUi.pushMenu(new AppSettings.Menu(self));
                 return;
             }
-            // Let the highlighted single tap finish before accepting another switch.
+            // Let the pending single tap finish before accepting another switch.
             return;
         }
+        _pendingConfig = findNextConfiguration();
         _configTapTime = now;
+        _configFeedbackTime = -1;
         WatchUi.requestUpdate();
     }
 
-    private function cycleConfiguration() {
+    private function findNextConfiguration() {
         // A bounded search also handles an unset CC with no saved profiles.
         var currentConfig = getPropertyValue("CC");
         if (currentConfig == null) { currentConfig = 1; }
@@ -1228,11 +1238,21 @@ class BikeLightsView extends  WatchUi.DataField  {
             var nextConfig = ((currentConfig - 1 + attempt) % 3) + 1;
             var configValue = getPropertyValue(nextConfig == 1 ? "LC" : "LC" + nextConfig);
             if (configValue != null && configValue.length() > 0) {
-                Properties.setValue("CC", nextConfig);
-                _updateSettings = true;
-                break;
+                return nextConfig;
             }
         }
+        return null;
+    }
+
+    private function applyConfiguration(nextConfig) {
+        if (nextConfig != null) {
+            Properties.setValue("CC", nextConfig);
+            _updateSettings = true;
+        }
+    }
+
+    private function cycleConfiguration() {
+        applyConfiguration(findNextConfiguration());
     }
 
     protected function onLightPanelModeChange(lightData, lightType, lightMode, controlMode) {
@@ -1928,11 +1948,20 @@ class BikeLightsView extends  WatchUi.DataField  {
         dc.setPenWidth(1);
         dc.drawLine(3, y, dc.getWidth() - 3, y);
         var iconSize = 16;
-        var text = StringHelper.trimTextByWidth(dc, _panelFooter[4], 0, width - iconSize - 10);
+        var configName = _pendingConfig != null ? getPropertyValue("CN" + _pendingConfig) : _panelFooter[4];
+        if (configName == null) { configName = "Config"; }
+        var text = StringHelper.trimTextByWidth(dc, configName, 0, width - iconSize - 10);
         var textWidth = dc.getTextWidthInPixels(text, 0);
         var left = x + (width - textWidth - iconSize - 6) / 2;
-        // Feedback and double-tap detection share the same pending tap.
-        var pressed = _configTapTime != null;
+        // A delayed redraw must still show feedback, even after the switch.
+        // Keep it for one second from its first draw, independently of tap detection.
+        var now = System.getTimer();
+        if (_configFeedbackTime == -1) {
+            _configFeedbackTime = now;
+        } else if (_configFeedbackTime != null && now - _configFeedbackTime >= 1000) {
+            _configFeedbackTime = null;
+        }
+        var pressed = _configFeedbackTime != null;
         if (pressed) {
             setTextColor(dc, AppTheme.accent);
             dc.fillRoundedRectangle(x + 2, y + 2, width - 4, height - 4, 4);
