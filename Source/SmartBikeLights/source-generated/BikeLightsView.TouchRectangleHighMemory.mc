@@ -1836,6 +1836,8 @@ class BikeLightsView extends  WatchUi.DataField  {
 
                 var graphics = mode > 0 ? LightPanelGraphics.parseTitle(modeTitle) : null;
                 if (graphics != null) {
+                    // Match the two-pixel face margins used by drawLightPanel.
+                    LightPanelGraphics.includeMode(dc, graphics, buttonWidth - 4, buttonHeight - 4);
                     titleFont = -1; // Rich mode data instead of pre-laid-out title parts.
                     titleParts = graphics;
                     if (graphics[1] != null && graphics[1] > maxLumens) { maxLumens = graphics[1]; }

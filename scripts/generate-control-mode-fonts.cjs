@@ -9,16 +9,19 @@ const app = path.resolve(__dirname, '../Source/SmartBikeLights');
 const glyphs = [['M', 'manual'], ['N', 'network'], ['S', 'smart'], ['P', 'power']];
 // Existing filenames describe historical font sizes, not bitmap heights.
 const fonts = {ControlMode12: 12, ControlMode18: 19, ControlMode32: 19,
-    ControlMode54: 32, PanelControl24: 24, PanelControl40: 40, ModeIcons12: 12, ModeIcons18: 18, ModeIcons22: 22};
+    ControlMode54: 32, PanelControl24: 24, PanelControl40: 40, ModeIcons12: 12, ModeIcons18: 18, ModeIcons22: 22, ModeIcons28: 28};
+// Optional --font=ModeIcons28 regenerates just one atlas.
+const selectedFont = process.argv.find(arg => arg.startsWith('--font='))?.slice(7);
 const powerOfTwo = n => 2 ** Math.ceil(Math.log2(n));
 
 async function main() {
     const webIcons = path.resolve(app, '../light-configurator/src/icons/light-modes');
     fs.mkdirSync(webIcons, {recursive: true});
-    for (const icon of (process.argv.includes('--panel-only') ? [] : ['headlight', 'taillight', 'headlight-high', 'headlight-medium', 'headlight-low', 'taillight-high', 'taillight-medium', 'taillight-low', 'night', 'flash', 'sun'])) {
+    for (const icon of ((process.argv.includes('--panel-only') || selectedFont) ? [] : ['headlight', 'taillight', 'headlight-high', 'headlight-medium', 'headlight-low', 'taillight-high', 'taillight-medium', 'taillight-low', 'night', 'flash', 'sun'])) {
         fs.copyFileSync(path.join(app, 'assets/button-icons', icon + '.svg'), path.join(webIcons, icon + '.svg'));
     }
     for (const [name, size] of Object.entries(fonts)) {
+        if (selectedFont && name !== selectedFont) { continue; }
         if (process.argv.includes('--panel-only') && name !== 'PanelControl24') { continue; }
         const modeFont = name.startsWith('ModeIcons');
         const fontGlyphs = modeFont ? [['H', 'headlight-high'], ['h', 'headlight-medium'], ['L', 'headlight-low'], ['T', 'taillight-high'], ['t', 'taillight-medium'], ['l', 'taillight-low'], ['N', 'night'], ['F', 'flash'], ['S', 'sun'], ['C', 'time']] : glyphs;
@@ -61,7 +64,7 @@ async function main() {
         fs.writeFileSync(path.join(app, 'resources/fonts', name + '.fnt'), fnt);
         console.log(`${name}: ${size}px, ${fontGlyphs.map(([char]) => char).join("/")}`);
     }
-    if (!process.argv.includes('--panel-only')) {
+    if (!process.argv.includes('--panel-only') && !selectedFont) {
         const layers = [];
         let top = 0;
         // Show actual runtime glyph pixels, in the README's display order.
