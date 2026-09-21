@@ -3,6 +3,8 @@ using Toybox.Test;
 (:test)
 class NetworkModeFixture {
     var mode = 0;
+    var lights = null;
+    function getBikeLights() { return lights; }
     function getNetworkMode() { return mode; }
 }
 
@@ -16,6 +18,7 @@ class NetworkModeView extends BikeLightsView {
         _lightNetwork = network;
     }
     function poll() { refreshNetworkMode(); }
+    function backgroundTick() { refreshNetworkInBackground(); }
     function drawAt(timer) { refreshNetworkAfterHiddenPage(timer); }
     function onShow() { refreshCount++; }
     protected function initializeLights(mode) {
@@ -54,5 +57,23 @@ function networkRefreshAfterHiddenPageTest(logger) {
     Test.assert(view.refreshCount == 1);
     view.drawAt(11000);
     Test.assert(view.refreshCount == 1);
+    return true;
+}
+
+(:test)
+function backgroundStartupWithoutFormedCallbackTest(logger) {
+    var view = new NetworkModeView();
+    view.backgroundTick(); // Network has not supplied lights yet.
+    Test.assert(view.changes.size() == 0);
+    view.network.lights = [];
+    view.backgroundTick();
+    Test.assert(view.changes.size() == 0);
+    view.network.lights = [1]; // Lights become available without a callback.
+    view.backgroundTick();
+    Test.assert(view.changes.size() == 1);
+    Test.assert(view.changes[0] == null); // Preserve saved control mode.
+    view.backgroundTick();
+    Test.assert(view.changes.size() == 1); // No repeated initialization.
+    Test.assert(view.refreshCount == 0); // No page navigation required.
     return true;
 }

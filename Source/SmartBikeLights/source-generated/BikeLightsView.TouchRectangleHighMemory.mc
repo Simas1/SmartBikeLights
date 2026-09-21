@@ -93,7 +93,6 @@ class BikeLightsView extends  WatchUi.DataField  {
     private var _headlightPanel;
     private var _taillightPanel;
     private var _panelInitialized = false;
-    private var _configHighlightTime; // -1 until first painted; then visible for at least one second.
     private var _configTapTime; // Pending single tap; a second tap within 450 ms opens Settings.
     private var _panelFooter; // [left, top, width, height, configuration name]
     private var _panelIconFont;
@@ -530,9 +529,7 @@ class BikeLightsView extends  WatchUi.DataField  {
             _errorCode = _lightNetwork.update();
         }
 
-        if (_initializedLights > 0 && _lightNetwork != null) {
-            refreshNetworkMode();
-        }
+        refreshNetworkInBackground();
         var initializedLights = _initializedLights;
         if (initializedLights == 0 || _errorCode != null) {
             return null;
@@ -664,11 +661,9 @@ class BikeLightsView extends  WatchUi.DataField  {
     function onUpdate(dc) {
         var timer = System.getTimer();
         refreshNetworkAfterHiddenPage(timer);
-        if (_configTapTime != null && _configHighlightTime != null && _configHighlightTime >= 0 &&
-            timer - _configHighlightTime >= 1000) {
+        if (_configTapTime != null && timer - _configTapTime > 450) {
             // Clear feedback and commit the switch in the same redraw.
             _configTapTime = null;
-            _configHighlightTime = null;
             if (_isFullScreen && _initializedLights > 0 && _errorCode == null && !DataFieldUi.isMenuOpen()) {
                 cycleConfiguration();
             }
@@ -747,6 +742,24 @@ class BikeLightsView extends  WatchUi.DataField  {
             return;
         }
 
+        refreshNetworkMode();
+    }
+
+    protected function refreshNetworkInBackground() {
+        if (_lightNetwork == null || _errorCode != null) {
+            return;
+        }
+        if (_initializedLights == 0) {
+            // A formed callback can arrive before lights are available, or be
+            // missed when attaching to an existing network. Retry from compute
+            // so recovery does not require displaying this data field.
+            var lights = _lightNetwork.getBikeLights();
+            if (lights == null || lights.size() == 0) {
+                return;
+            }
+            // Apply the same startup grace period as the formed callback.
+            _lastLightNetworkFormedTime = System.getTimer();
+        }
         refreshNetworkMode();
     }
 
@@ -894,7 +907,6 @@ class BikeLightsView extends  WatchUi.DataField  {
     function onTap(location) {
         if (!isConfigurationButton(location)) {
             _configTapTime = null;
-            _configHighlightTime = null;
         }
         if (DataFieldUi.onTap(location)) {
             if (!DataFieldUi.isMenuOpen()) {
@@ -1199,7 +1211,6 @@ class BikeLightsView extends  WatchUi.DataField  {
             var elapsed = now - _configTapTime;
             if (elapsed <= 450) {
                 _configTapTime = null;
-                _configHighlightTime = null;
                 DataFieldUi.pushMenu(new AppSettings.Menu(self));
                 return;
             }
@@ -1207,7 +1218,6 @@ class BikeLightsView extends  WatchUi.DataField  {
             return;
         }
         _configTapTime = now;
-        _configHighlightTime = -1;
         WatchUi.requestUpdate();
     }
 
@@ -1922,13 +1932,8 @@ class BikeLightsView extends  WatchUi.DataField  {
         var text = StringHelper.trimTextByWidth(dc, _panelFooter[4], 0, width - iconSize - 10);
         var textWidth = dc.getTextWidthInPixels(text, 0);
         var left = x + (width - textWidth - iconSize - 6) / 2;
-        // Start feedback duration when actually painted, not when the tap arrives.
-        // A slow data-field redraw may occur after the double-tap window expires.
-        var now = System.getTimer();
-        if (_configHighlightTime == -1) {
-            _configHighlightTime = now;
-        }
-        var pressed = _configHighlightTime != null;
+        // Feedback and double-tap detection share the same pending tap.
+        var pressed = _configTapTime != null;
         if (pressed) {
             setTextColor(dc, AppTheme.accent);
             dc.fillRoundedRectangle(x + 2, y + 2, width - 4, height - 4, 4);
