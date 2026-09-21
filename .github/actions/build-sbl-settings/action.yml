@@ -2,7 +2,7 @@ name: Build SBL Settings
 description: Test the settings serializer and generate a verified SmartBikeLights.SET file.
 inputs:
   settings:
-    description: JSON object containing all ten SmartBikeLights settings.
+    description: JSON object containing all eleven SmartBikeLights settings.
     required: true
 runs:
   using: composite

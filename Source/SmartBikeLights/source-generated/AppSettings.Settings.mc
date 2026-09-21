@@ -201,6 +201,9 @@ module AppSettings {
             _values = values;
             _names = names;
             _nameKeys = nameKeys;
+            if (key.equals("TH")) {
+                Menu2.addItem(new WatchUi.ToggleMenuItem(Rez.Strings.TO, null, -1, Properties.getValue("TO") == true, null));
+            }
             for (var i = 0; i < values.size(); i++) {
                 var value = values[i];
                 var name = nameKeys != null ? Properties.getValue(nameKeys[i]) : null;
@@ -214,6 +217,13 @@ module AppSettings {
         }
 
         public function onSelect(newValue, menuItem) {
+            if (_key.equals("TH") && newValue == -1) {
+                var enabled = Properties.getValue("TO") != true;
+                Properties.setValue("TO", enabled);
+                menuItem.setEnabled(enabled);
+                Application.getApp().onSettingsChanged();
+                return;
+            }
             var oldValue = Properties.getValue(_key);
             if (oldValue == newValue) {
                 close();

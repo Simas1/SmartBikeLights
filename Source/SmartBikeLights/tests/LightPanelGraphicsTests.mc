@@ -40,6 +40,18 @@ function graphicsBrightnessAndRuntimeTest(logger) {
     Test.assert(LightPanelGraphics.runtimeText(144).equals("~2h24"));
     Test.assert(LightPanelGraphics.runtimeText(0.5).equals("~<1m"));
     Test.assert(LightPanelGraphics.runtimeText(null).equals("--"));
+    // Full-charge maxima stay fixed: AT1600 12h, Flare RT 15h.
+    Test.assert(LightPanelGraphics.runtimeFillWidth(LightPanelGraphics.remainingMinutes(12, 4), 720, 120) == 30);
+    Test.assert(LightPanelGraphics.runtimeFillWidth(60, 720, 120) == 10);
+    Test.assert(LightPanelGraphics.runtimeFillWidth(30, 720, 120) == 5);
+    Test.assert(LightPanelGraphics.runtimeFillWidth(LightPanelGraphics.remainingMinutes(15, 2), 900, 120) == 90);
+    Test.assert(LightPanelGraphics.runtimeFillWidth(540, 900, 120) == 72);
+    Test.assert(LightPanelGraphics.runtimeFillWidth(720, 720, 120) == 120);
+    Test.assert(LightPanelGraphics.runtimeFillWidth(1000, 900, 120) == 120);
+    Test.assert(LightPanelGraphics.runtimeFillWidth(null, 180, 120) == 0);
+    Test.assert(LightPanelGraphics.runtimeFillWidth(30, null, 120) == 0);
+    Test.assert(LightPanelGraphics.runtimeFillWidth(30, 0, 120) == 0);
+    Test.assert(LightPanelGraphics.runtimeFillWidth(0, 180, 120) == 0);
     return true;
 }
 

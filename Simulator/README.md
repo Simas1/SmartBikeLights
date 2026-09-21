@@ -97,7 +97,7 @@ device selection.
 
 `--settings PATH` accepts a partial JSON object or Garmin `.SET` file. Omit it to
 use application defaults. To use the complete workflow defaults, pass
-`Simulator/settings.example.json` explicitly. It contains all ten parameters
+`Simulator/settings.example.json` explicitly. It contains all eleven parameters
 from `.github/workflows/build-sbl-settings.yml`, including the three full configurations.
 
 Use `--list-settings` to display defaults and accepted choices. Keys are `LC`, `LC2`,

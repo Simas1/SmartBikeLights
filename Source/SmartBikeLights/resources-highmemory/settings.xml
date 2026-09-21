@@ -1,5 +1,8 @@
 <resources>
     <settings>
+        <setting propertyKey="@Properties.TO" title="@Strings.TO">
+            <settingConfig type="boolean" />
+        </setting>
         <setting propertyKey="@Properties.TH" title="@Strings.TH">
             <settingConfig type="list">
                 <listEntry value="0">@Strings.Blue</listEntry>

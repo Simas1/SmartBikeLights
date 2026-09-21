@@ -203,9 +203,35 @@ module LightPanelGraphics {
         if (dc has :setAntiAlias) { dc.setAntiAlias(false); }
     }
 
+    // Each panel scales to its longest FULL-charge mode runtime. Only the
+    // numerator decreases with battery; unknown readings have no fill.
+    function runtimeFillWidth(minutes, maxMinutes, width) {
+        if (minutes == null || minutes <= 0 || maxMinutes == null || maxMinutes <= 0) { return 0; }
+        return Math.floor(width * (minutes >= maxMinutes ? 1.0 : minutes.toFloat() / maxMinutes)).toNumber();
+    }
+
+    function drawRuntimeFill(dc, data, status, x, y, width, height, radius, bg, maxHours) {
+        var fillWidth = runtimeFillWidth(remainingMinutes(data[2], status), maxHours * 60, width);
+        if (fillWidth <= 0) { return; }
+        dc.setClip(x, y, fillWidth, height);
+        dc.setColor(bg == 0x000000 ? 0x333F4C : 0xDDE3EA, -1);
+        dc.fillRoundedRectangle(x, y, width, height, radius);
+        dc.clearClip();
+    }
+
     function drawMode(dc, data, maxLumens, status, x, y, width, height, selected, fg, bg) {
         var pad = width >= 150 ? 10 : 6;
-        var color = selected ? WHITE : fg;
+        var color = fg;
+        // Bottom-right placement leaves the shared mode-title width unchanged.
+        var selectionSize = width >= 150 ? 14 : 10;
+        if (selected) {
+            dc.setColor(bg == 0x000000 ? AppTheme.onDark : AppTheme.accent, -1);
+            if (dc has :setAntiAlias) { dc.setAntiAlias(true); }
+            dc.fillCircle(x+width-pad-selectionSize/2,
+                y+height-pad-selectionSize/2, selectionSize/2);
+            if (dc has :setAntiAlias) { dc.setAntiAlias(false); }
+            dc.setPenWidth(1);
+        }
         var iconSize = _modeTitleIconSize;
         var hasIcon = !data[3].equals("none");
         var nameWidth = width - pad * 2 - (hasIcon ? iconSize + 5 : 0);
@@ -235,7 +261,7 @@ module LightPanelGraphics {
         var lit = brightnessSteps(data[1], maxLumens);
         var stepHeight = 7;
         for (var i=0; i<6 && stepWidth>=1; i++) {
-            dc.setColor(i<lit ? selected?WHITE:(bg==0x000000?AppTheme.onDark:AppTheme.accent) : selected?AppTheme.muted:bg==0x000000?0x444444:0xCCCCCC, -1);
+            dc.setColor(i<lit ? (bg==0x000000?AppTheme.onDark:AppTheme.accent) : bg==0x000000?0x555555:0xBBBBBB, -1);
             dc.fillRectangle(x+pad+i*(stepWidth+2),brightnessY+dc.getFontHeight(0)/2-stepHeight/2,stepWidth,stepHeight);
         }
         dc.setColor(color,-1);
@@ -244,14 +270,10 @@ module LightPanelGraphics {
         var time = runtimeText(minutes);
         var timeY = brightnessY + dc.getFontHeight(0) + 2;
         var timeHeight = y+height-pad-timeY;
-        var timeFont = fitFont(dc,time,width-pad*2-iconSize-7,timeHeight,titleFont);
+        var timeFont = fitFont(dc,time,width-pad*2-iconSize-7-selectionSize-4,timeHeight,titleFont);
         if (timeHeight < dc.getFontHeight(0)) { return; }
         var warning = minutes != null && minutes < 30;
-        if (warning && selected) {
-            dc.setColor(0xFFF0F0,-1);
-            dc.fillRoundedRectangle(x+pad-2,timeY,width-pad*2+4,dc.getFontHeight(timeFont),3);
-        }
-        dc.setColor(warning ? (!selected && bg==0x000000 ? 0xFF6666 : RED) : color,-1);
+        dc.setColor(warning ? (bg==0x000000 ? 0xFF6666 : RED) : color,-1);
         dc.drawText(x+pad+iconSize/2, timeY+(dc.getFontHeight(timeFont)-iconSize)/2,
             width >= 150 ? _modeIconsLarge : _modeIconsSmall, "C", Graphics.TEXT_JUSTIFY_CENTER);
         dc.drawText(x+pad+iconSize+7,timeY,timeFont,time,Graphics.TEXT_JUSTIFY_LEFT);
