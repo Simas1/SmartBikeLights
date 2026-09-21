@@ -221,7 +221,6 @@ module LightPanelGraphics {
 
     function drawMode(dc, data, maxLumens, status, x, y, width, height, selected, fg, bg) {
         var pad = width >= 150 ? 10 : 6;
-        var color = fg;
         // Bottom-right placement leaves the shared mode-title width unchanged.
         var selectionSize = width >= 150 ? 14 : 10;
         if (selected) {
@@ -234,10 +233,9 @@ module LightPanelGraphics {
         }
         var iconSize = _modeTitleIconSize;
         var hasIcon = !data[3].equals("none");
-        var nameWidth = width - pad * 2 - (hasIcon ? iconSize + 5 : 0);
         var titleFont = _modeTitleFont;
-        var name = StringHelper.trimTextByWidth(dc, data[0], titleFont, nameWidth);
-        dc.setColor(color, -1);
+        var name = StringHelper.trimTextByWidth(dc, data[0], titleFont, width - pad * 2 - (hasIcon ? iconSize + 5 : 0));
+        dc.setColor(fg, -1);
         dc.drawText(x+pad+(hasIcon?iconSize+5:0), y+pad, titleFont, name, Graphics.TEXT_JUSTIFY_LEFT);
         if (hasIcon) {
             // Draw directly: no extra icon/font wrapper frame on the Edge VM stack.
@@ -251,30 +249,36 @@ module LightPanelGraphics {
         }
         // Keep runtime icons at their original size.
         iconSize = width >= 150 ? 18 : 12;
-        if (data[1] == null || height < 65 || width < 80) { return; }
+        if (data[1] == null) { return; }
         var brightnessY = y + pad + dc.getFontHeight(titleFont) + 3;
         var lumens = data[1].format("%g") + " lm";
-        var lumensFont = 0;
-        var lumensWidth = dc.getTextWidthInPixels(lumens, lumensFont);
-        var stepsWidth = width - pad * 2 - lumensWidth - 8;
-        var stepWidth = (stepsWidth - 5 * 2) / 6;
-        var lit = brightnessSteps(data[1], maxLumens);
-        var stepHeight = 7;
-        for (var i=0; i<6 && stepWidth>=1; i++) {
-            dc.setColor(i<lit ? (bg==0x000000?AppTheme.onDark:AppTheme.accent) : bg==0x000000?0x555555:0xBBBBBB, -1);
-            dc.fillRectangle(x+pad+i*(stepWidth+2),brightnessY+dc.getFontHeight(0)/2-stepHeight/2,stepWidth,stepHeight);
-        }
-        dc.setColor(color,-1);
-        dc.drawText(x+width-pad,brightnessY,lumensFont,lumens,Graphics.TEXT_JUSTIFY_RIGHT);
+        var stepWidth = (width - pad * 2 - dc.getTextWidthInPixels(lumens, 0) - 18) / 6;
         var minutes = remainingMinutes(data[2], status);
         var time = runtimeText(minutes);
-        var timeY = brightnessY + dc.getFontHeight(0) + 2;
+        var timeWidth = width-pad*2-iconSize-7-selectionSize-4;
+        var minimumTimeHeight = dc.getFontHeight(0);
+        if (minimumTimeHeight < iconSize) { minimumTimeHeight = iconSize; }
+        // Keep the title, then runtime. Brightness is the first row to drop.
+        var timeY = brightnessY;
+        if (stepWidth >= 1 &&
+            y+height-pad-(brightnessY+dc.getFontHeight(0)+2) >= minimumTimeHeight &&
+            dc.getTextWidthInPixels(time, 0) <= timeWidth) {
+            var lit = brightnessSteps(data[1], maxLumens);
+            for (var i=0; i<6; i++) {
+                dc.setColor(i<lit ? (bg==0x000000?AppTheme.onDark:AppTheme.accent) : bg==0x000000?0x555555:0xBBBBBB, -1);
+                dc.fillRectangle(x+pad+i*(stepWidth+2),brightnessY+dc.getFontHeight(0)/2-7/2,stepWidth,7);
+            }
+            dc.setColor(fg,-1);
+            dc.drawText(x+width-pad,brightnessY,0,lumens,Graphics.TEXT_JUSTIFY_RIGHT);
+            timeY += dc.getFontHeight(0) + 2;
+        }
         var timeHeight = y+height-pad-timeY;
-        var timeFont = fitFont(dc,time,width-pad*2-iconSize-7-selectionSize-4,timeHeight,titleFont);
-        if (timeHeight < dc.getFontHeight(0)) { return; }
+        if (timeHeight < minimumTimeHeight || dc.getTextWidthInPixels(time, 0) > timeWidth) { return; }
+        var timeFont = fitFont(dc,time,timeWidth,timeHeight,titleFont);
         var warning = minutes != null && minutes < 30;
-        dc.setColor(warning ? (bg==0x000000 ? 0xFF6666 : RED) : color,-1);
-        dc.drawText(x+pad+iconSize/2, timeY+(dc.getFontHeight(timeFont)-iconSize)/2,
+        dc.setColor(warning ? (bg==0x000000 ? 0xFF6666 : RED) : fg,-1);
+        // Align with visible text ascent, as for mode icons, excluding descender space.
+        dc.drawText(x+pad+iconSize/2, timeY+(Graphics.getFontAscent(timeFont)-iconSize)/2,
             width >= 150 ? _modeIconsLarge : _modeIconsSmall, "C", Graphics.TEXT_JUSTIFY_CENTER);
         dc.drawText(x+pad+iconSize+7,timeY,timeFont,time,Graphics.TEXT_JUSTIFY_LEFT);
     }
