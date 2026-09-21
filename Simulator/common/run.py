@@ -210,6 +210,8 @@ def prepare(args):
     output.mkdir(parents=True, exist_ok=True)
     work = Path(tempfile.mkdtemp(prefix=f'{args.device}-', dir=output))
     shutil.copytree(app, work, dirs_exist_ok=True, ignore=shutil.ignore_patterns('bin', '.git', 'node_modules', 'networkKeys'))
+    subprocess.run([sys.executable, str(ROOT / 'scripts/write-build-info.py'),
+                    '--source', str(app), '--output', str(work / 'resources-highmemory/build-info.xml')], check=True)
     cfg_path = work / 'preprocess.config.json'
     cfg = json.loads(cfg_path.read_text())
     cfg['includeSymbols']['ANT_NETWORK'] = 'TestNetwork.TestLightNetwork'

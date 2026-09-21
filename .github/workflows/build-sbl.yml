@@ -31,6 +31,8 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Build sideloadable data field
         uses: ./.github/actions/build-sbl

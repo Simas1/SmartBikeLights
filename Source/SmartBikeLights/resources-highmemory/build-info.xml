@@ -1,0 +1,6 @@
+<!-- Build scripts replace this fallback with the manifest version and Git metadata. -->
+<strings>
+    <string id="AppVersion">Unknown</string>
+    <string id="AppCommit">Unknown</string>
+    <string id="AppTag">--</string>
+</strings>

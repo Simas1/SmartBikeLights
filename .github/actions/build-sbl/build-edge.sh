@@ -13,6 +13,8 @@ image='ghcr.io/matco/connectiq-tester@sha256:64958e8fd2925d0c4986d72a9aa9d8e2101
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 output_dir="$repo_root/Build/$device"
 mkdir -p "$output_dir"
+python3 "$repo_root/scripts/write-build-info.py" \
+  --source "$repo_root/Source/SmartBikeLights" --output "$output_dir/build-info.xml"
 
 docker run --rm --platform linux/amd64 \
   --network none \
@@ -22,6 +24,7 @@ docker run --rm --platform linux/amd64 \
   "$image" -euo pipefail -c '
     cp -R /source /tmp/SmartBikeLights
     cd /tmp/SmartBikeLights
+    cp /output/build-info.xml resources-highmemory/build-info.xml
 
     # This generated file is gitignored. Its only preprocessing directive
     # includes the private ANT key for TransmitR remotes. The supplied light

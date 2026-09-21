@@ -174,3 +174,25 @@ Tests:
 ```bash
 python3 -m unittest discover -s Simulator/common -p 'test_*.py'
 ```
+
+The app's **Settings → About → Commit** shows the source checkout's short Git
+revision. `-dirty` means tracked files had local changes when the build was prepared.
+Simulator and `build-edge.sh` builds stamp this automatically. Direct IDE builds
+show `Unknown` unless you first run:
+
+```bash
+python3 scripts/write-build-info.py --source Source/SmartBikeLights --output Source/SmartBikeLights/resources-highmemory/build-info.xml
+```
+
+Keep the checked-in `build-info.xml` fallback unchanged; stamp a copied build
+folder when possible.
+
+**About → Tag** shows a Git tag pointing exactly at the source commit, or `--`
+when there is no exact tag (or Git metadata is unavailable). Both lightweight
+and annotated tags are supported. A tagged checkout with local modifications
+still shows its tag; the Commit row retains the `-dirty` suffix.
+
+**About → Version** is read from the application version in `manifest.xml`
+at build time by the same script. Bump only that manifest attribute for future
+versions. Direct IDE builds must run the command above first to populate Version
+and Commit; otherwise both show `Unknown`.

@@ -215,9 +215,7 @@ class BikeLightsView extends  WatchUi.DataField  {
     function compute(activityInfo) {
         restoreControlAfterSleep(System.getTimer());
         //System.println("usedMemory=" + System.getSystemStats().usedMemory);
-        if (_initializedLights > 0 && _lightNetwork != null) {
-            refreshNetworkMode();
-        }
+        refreshNetworkInBackground();
         var initializedLights = _initializedLights;
         if (initializedLights == 0 || _errorCode != null) {
             return null;
@@ -379,6 +377,24 @@ class BikeLightsView extends  WatchUi.DataField  {
             return;
         }
 
+        refreshNetworkMode();
+    }
+
+    protected function refreshNetworkInBackground() {
+        if (_lightNetwork == null || _errorCode != null) {
+            return;
+        }
+        if (_initializedLights == 0) {
+            // A formed callback can arrive before lights are available, or be
+            // missed when attaching to an existing network. Retry from compute
+            // so recovery does not require displaying this data field.
+            var lights = _lightNetwork.getBikeLights();
+            if (lights == null || lights.size() == 0) {
+                return;
+            }
+            // Apply the same startup grace period as the formed callback.
+            _lastLightNetworkFormedTime = System.getTimer();
+        }
         refreshNetworkMode();
     }
 

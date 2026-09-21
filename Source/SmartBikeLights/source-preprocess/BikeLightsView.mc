@@ -91,7 +91,8 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
     private var _headlightPanel;
     private var _taillightPanel;
     private var _panelInitialized = false;
-    private var _configHighlightTime; // -1 until first painted; then visible for at least one second.
+    private var _configFeedbackTime; // -1 means queued for its first visible draw.
+    private var _pendingConfig; // Preview only; CC is unchanged until the tap is committed.
     private var _configTapTime; // Pending single tap; a second tap within 450 ms opens Settings.
     private var _panelFooter; // [left, top, width, height, configuration name]
     private var _panelIconFont;
@@ -576,9 +577,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
         }
   // #endif
 
-        if (_initializedLights > 0 && _lightNetwork != null) {
-            refreshNetworkMode();
-        }
+        refreshNetworkInBackground();
         var initializedLights = _initializedLights;
         if (initializedLights == 0 || _errorCode != null) {
             return null;
@@ -716,13 +715,13 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
         var timer = System.getTimer();
         refreshNetworkAfterHiddenPage(timer);
 // #if touchScreen && dataField
-        if (_configTapTime != null && _configHighlightTime != null && _configHighlightTime >= 0 &&
-            timer - _configHighlightTime >= 1000) {
-            // Clear feedback and commit the switch in the same redraw.
+        if (_configTapTime != null && timer - _configTapTime > 450) {
+            // Apply exactly the profile whose name was previewed.
+            var nextConfig = _pendingConfig;
             _configTapTime = null;
-            _configHighlightTime = null;
+            _pendingConfig = null;
             if (_isFullScreen && _initializedLights > 0 && _errorCode == null && !DataFieldUi.isMenuOpen()) {
-                cycleConfiguration();
+                applyConfiguration(nextConfig);
             }
         }
 // #endif
@@ -816,6 +815,26 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
 
         refreshNetworkMode();
     }
+
+// #if dataField
+    protected function refreshNetworkInBackground() {
+        if (_lightNetwork == null || _errorCode != null) {
+            return;
+        }
+        if (_initializedLights == 0) {
+            // A formed callback can arrive before lights are available, or be
+            // missed when attaching to an existing network. Retry from compute
+            // so recovery does not require displaying this data field.
+            var lights = _lightNetwork.getBikeLights();
+            if (lights == null || lights.size() == 0) {
+                return;
+            }
+            // Apply the same startup grace period as the formed callback.
+            _lastLightNetworkFormedTime = System.getTimer();
+        }
+        refreshNetworkMode();
+    }
+// #endif
 
     protected function refreshNetworkMode() {
         var networkMode = _lightNetwork.getNetworkMode();
@@ -968,7 +987,8 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
     function onTap(location) {
         if (!isConfigurationButton(location)) {
             _configTapTime = null;
-            _configHighlightTime = null;
+            _pendingConfig = null;
+            _configFeedbackTime = null;
         }
   // #if dataField
         if (DataFieldUi.onTap(location)) {
@@ -1416,22 +1436,24 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
             var elapsed = now - _configTapTime;
             if (elapsed <= 450) {
                 _configTapTime = null;
-                _configHighlightTime = null;
+                _pendingConfig = null;
+                _configFeedbackTime = null;
                 DataFieldUi.pushMenu(new AppSettings.Menu(self));
                 return;
             }
-            // Let the highlighted single tap finish before accepting another switch.
+            // Let the pending single tap finish before accepting another switch.
             return;
         }
+        _pendingConfig = findNextConfiguration();
         _configTapTime = now;
-        _configHighlightTime = -1;
+        _configFeedbackTime = -1;
         WatchUi.requestUpdate();
   // #else
         cycleConfiguration();
   // #endif
     }
 
-    private function cycleConfiguration() {
+    private function findNextConfiguration() {
         // A bounded search also handles an unset CC with no saved profiles.
         var currentConfig = getPropertyValue("CC");
         if (currentConfig == null) { currentConfig = 1; }
@@ -1439,11 +1461,21 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
             var nextConfig = ((currentConfig - 1 + attempt) % 3) + 1;
             var configValue = getPropertyValue(nextConfig == 1 ? "LC" : "LC" + nextConfig);
             if (configValue != null && configValue.length() > 0) {
-                Properties.setValue("CC", nextConfig);
-                _updateSettings = true;
-                break;
+                return nextConfig;
             }
         }
+        return null;
+    }
+
+    private function applyConfiguration(nextConfig) {
+        if (nextConfig != null) {
+            Properties.setValue("CC", nextConfig);
+            _updateSettings = true;
+        }
+    }
+
+    private function cycleConfiguration() {
+        applyConfiguration(findNextConfiguration());
     }
 
     protected function onLightPanelModeChange(lightData, lightType, lightMode, controlMode) {
@@ -2185,16 +2217,20 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
         dc.setPenWidth(1);
         dc.drawLine(3, y, dc.getWidth() - 3, y);
         var iconSize = 16;
-        var text = StringHelper.trimTextByWidth(dc, _panelFooter[4], 0, width - iconSize - 10);
+        var configName = _pendingConfig != null ? getPropertyValue("CN" + _pendingConfig) : _panelFooter[4];
+        if (configName == null) { configName = "Config"; }
+        var text = StringHelper.trimTextByWidth(dc, configName, 0, width - iconSize - 10);
         var textWidth = dc.getTextWidthInPixels(text, 0);
         var left = x + (width - textWidth - iconSize - 6) / 2;
-        // Start feedback duration when actually painted, not when the tap arrives.
-        // A slow data-field redraw may occur after the double-tap window expires.
+        // A delayed redraw must still show feedback, even after the switch.
+        // Keep it for one second from its first draw, independently of tap detection.
         var now = System.getTimer();
-        if (_configHighlightTime == -1) {
-            _configHighlightTime = now;
+        if (_configFeedbackTime == -1) {
+            _configFeedbackTime = now;
+        } else if (_configFeedbackTime != null && now - _configFeedbackTime >= 1000) {
+            _configFeedbackTime = null;
         }
-        var pressed = _configHighlightTime != null;
+        var pressed = _configFeedbackTime != null;
         if (pressed) {
             setTextColor(dc, AppTheme.accent);
             dc.fillRoundedRectangle(x + 2, y + 2, width - 4, height - 4, 4);
