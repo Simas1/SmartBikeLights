@@ -2163,6 +2163,8 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
             y += buttonHeight;
         }
 
+        if (AppTheme.textOnly) { LightPanelGraphics.unifyTextFonts(dc, panelData, fontTopPaddings); }
+
         // The footer has two outer light summaries and one shared cycle target.
         x = position == 2 ? width * 0.15 : position == 1 ? width * 0.15 : width * 0.85;
         panelData[1] = StringHelper.trimTextByWidth(dc, panelSettings[2], 0, width * 0.28);

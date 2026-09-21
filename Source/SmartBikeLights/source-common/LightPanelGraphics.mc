@@ -162,6 +162,38 @@ module LightPanelGraphics {
         return 0.5;
     }
 
+    // Each text-only light panel uses the largest font that fits every mode.
+    function unifyTextFonts(dc, panel, fontTopPaddings) {
+        var font = 4;
+        var group = 9;
+        for (var i = 0; i < panel[0]; i++) {
+            for (var j = 0; j < panel[group]; j++) {
+                var button = group + 1 + j * 8;
+                if (panel[button] > 0 && panel[button + 2] < font) {
+                    font = panel[button + 2];
+                }
+            }
+            group += 1 + panel[group] * 8;
+        }
+        group = 9;
+        for (var i = 0; i < panel[0]; i++) {
+            for (var j = 0; j < panel[group]; j++) {
+                var button = group + 1 + j * 8;
+                if (panel[button] <= 0) { continue; }
+                var parts = panel[button + 3];
+                var fontHeight = dc.getFontHeight(font);
+                var topPadding = StringHelper.getFontTopPadding(font, fontTopPaddings);
+                var titleY = panel[button + 5] + (panel[button + 7] - parts.size() / 2 * fontHeight - topPadding) / 2 + 2;
+                panel[button + 2] = font;
+                for (var k = 1; k < parts.size(); k += 2) {
+                    parts[k] = titleY;
+                    titleY += fontHeight;
+                }
+            }
+            group += 1 + panel[group] * 8;
+        }
+    }
+
     function fitFont(dc, text, width, height, maximum) {
         var font = maximum;
         while (font > 0 && (dc.getTextWidthInPixels(text, font) > width || dc.getFontHeight(font) > height)) { font--; }
