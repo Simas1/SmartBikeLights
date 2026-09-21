@@ -48,6 +48,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
     protected var _lightNetwork;
     protected var _lightNetworkListener;
     protected var _networkMode;
+    protected var _lastNetworkRefreshTime = null;
     protected var _initializedLights = 0;
 
     // Light data:
@@ -506,6 +507,11 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
             return;
         }
 
+        if (_lastNetworkRefreshTime != null && timer - _lastNetworkRefreshTime < 1500) {
+            return;
+        }
+        _lastNetworkRefreshTime = timer;
+
         // In case the user modifies the network mode outside the data field by using the built-in Garmin lights menu,
         // the LightNetwork mode will not be updated (LightNetwork.getNetworkMode). The only way to update it is to
         // create a new LightNetwork.
@@ -570,6 +576,9 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
         }
   // #endif
 
+        if (_initializedLights > 0 && _lightNetwork != null) {
+            refreshNetworkMode();
+        }
         var initializedLights = _initializedLights;
         if (initializedLights == 0 || _errorCode != null) {
             return null;
@@ -694,8 +703,18 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
     }
 // #endif
 
+    // Data fields do not reliably receive onShow when returning from Garmin UI.
+    // Check before recording this draw so a hidden-page gap remains observable.
+    protected function refreshNetworkAfterHiddenPage(timer) {
+        if (_lastUpdateTime > 0 && timer - _lastUpdateTime >= 1500) {
+            onShow();
+        }
+        _lastUpdateTime = timer;
+    }
+
     function onUpdate(dc) {
         var timer = System.getTimer();
+        refreshNetworkAfterHiddenPage(timer);
 // #if touchScreen && dataField
         if (_configTapTime != null && _configHighlightTime != null && _configHighlightTime >= 0 &&
             timer - _configHighlightTime >= 1000) {
@@ -795,17 +814,22 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
             return;
         }
 
+        refreshNetworkMode();
+    }
+
+    protected function refreshNetworkMode() {
         var networkMode = _lightNetwork.getNetworkMode();
         if (networkMode == null) {
-            networkMode = 3; // TRAIL
+            networkMode = 3; // TRAIL (legacy Garmin API behavior)
         }
 
-        // In case the user changes the network mode outside the application, set the default to network control mode
-        var newNetworkMode = _networkMode != null && networkMode != _networkMode ? networkMode : null;
+        var changed = _networkMode != null && networkMode != _networkMode;
         _networkMode = networkMode;
-
-        // Initialize lights
-        initializeLights(newNetworkMode);
+        // Garmin can update the mode without another network-formed callback.
+        // Reinitialize only on a change, preserving controls on ordinary polls.
+        if (_initializedLights == 0 || changed) {
+            initializeLights(changed ? networkMode : null);
+        }
     }
 
     function updateLight(light, mode) {
