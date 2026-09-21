@@ -11,13 +11,19 @@ module LightPanelGraphics {
     var _modeIconsSmall;
     var _modeIconsLarge;
     var _modeIconsWide;
+    var _modeIconsExtra;
+    var _modeTitleFont = 2;
+    var _modeTitleIconSize = 18;
+    var _modeTitleIconY = 0;
 
     // Load during panel setup, never inside the nested button drawing path.
     function initializeFonts() {
+        _modeTitleFont = 2;
         if (_modeIconsSmall == null) {
             _modeIconsSmall = WatchUi.loadResource(Rez.Fonts.modeIconsSmall);
             _modeIconsLarge = WatchUi.loadResource(Rez.Fonts.modeIconsLarge);
             _modeIconsWide = WatchUi.loadResource(Rez.Fonts.modeIconsWide);
+            _modeIconsExtra = WatchUi.loadResource(Rez.Fonts.modeIconsExtra);
         }
     }
 
@@ -162,6 +168,26 @@ module LightPanelGraphics {
         return font;
     }
 
+    // Measure every rich mode in both panels before drawing either panel.
+    // A shared font prevents long rear-light labels from shrinking on their own.
+    function includeMode(dc, data, width, height) {
+        var pad = width >= 150 ? 10 : 6;
+        var font = _modeTitleFont;
+        var size = 18;
+        while (true) {
+            // Artwork fills about 5/6 of its cell. Match visible capital height,
+            // excluding the font's descender space, and never use tiny status icons.
+            var ascent = Graphics.getFontAscent(font);
+            size = ascent >= 20 ? 28 : ascent > 16 ? 22 : 18;
+            var available = width - pad * 2 - (data[3].equals("none") ? 0 : size + 5);
+            if (font == 0 || (dc.getTextWidthInPixels(data[0], font) <= available && dc.getFontHeight(font) <= height * 0.3)) { break; }
+            font--;
+        }
+        _modeTitleFont = font;
+        _modeTitleIconSize = size;
+        _modeTitleIconY = (Graphics.getFontAscent(font) - size) / 2;
+    }
+
     // Only the configuration-switch arrows remain procedural.
     function drawIcon(dc, icon, x, y, size, background) {
         if (!icon.equals("cycle") && !icon.equals("cycle-flipped")) { return; }
@@ -180,17 +206,17 @@ module LightPanelGraphics {
     function drawMode(dc, data, maxLumens, status, x, y, width, height, selected, fg, bg) {
         var pad = width >= 150 ? 10 : 6;
         var color = selected ? WHITE : fg;
-        var iconSize = width >= 150 ? 22 : 18;
+        var iconSize = _modeTitleIconSize;
         var hasIcon = !data[3].equals("none");
         var nameWidth = width - pad * 2 - (hasIcon ? iconSize + 5 : 0);
-        var titleFont = fitFont(dc, data[0], nameWidth, height * 0.3, 2);
+        var titleFont = _modeTitleFont;
         var name = StringHelper.trimTextByWidth(dc, data[0], titleFont, nameWidth);
         dc.setColor(color, -1);
         dc.drawText(x+pad+(hasIcon?iconSize+5:0), y+pad, titleFont, name, Graphics.TEXT_JUSTIFY_LEFT);
         if (hasIcon) {
             // Draw directly: no extra icon/font wrapper frame on the Edge VM stack.
-            dc.drawText(x+pad+iconSize/2, y+pad+(dc.getFontHeight(titleFont)-iconSize)/2,
-                width >= 150 ? _modeIconsWide : _modeIconsLarge,
+            dc.drawText(x+pad+iconSize/2, y+pad+_modeTitleIconY,
+                iconSize == 28 ? _modeIconsExtra : iconSize == 22 ? _modeIconsWide : _modeIconsLarge,
                 data[3].equals("sun") ? "S" : (data[3].equals("headlight") || data[3].equals("headlight-high")) ? "H"
                 : data[3].equals("headlight-medium") ? "h" : data[3].equals("headlight-low") ? "L"
                 : (data[3].equals("taillight") || data[3].equals("taillight-high")) ? "T"

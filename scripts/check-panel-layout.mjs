@@ -42,7 +42,8 @@ Object.defineProperty(Array.prototype, 'add', { value(item) { this.push(item); r
 Object.defineProperty(Array.prototype, 'addAll', { value(items) { this.push(...items); return this; } });
 
 // SDK api.mir: RIGHT=0, CENTER=1, LEFT=2 (not the usual web ordering).
-const Graphics = { TEXT_JUSTIFY_RIGHT: 0, TEXT_JUSTIFY_CENTER: 1, TEXT_JUSTIFY_LEFT: 2 };
+const Graphics = { TEXT_JUSTIFY_RIGHT: 0, TEXT_JUSTIFY_CENTER: 1, TEXT_JUSTIFY_LEFT: 2, getFontAscent: font => [12,16,20,24,34][font] * metricScale };
+let metricScale = 1;
 // Default Blue theme supplied by AppTheme on the device.
 const AppTheme = { accent: 0x056ABD, onDark: 0x55BBFF, muted: 0x428CCA };
 const StringHelper = new Function(
@@ -50,16 +51,16 @@ const StringHelper = new Function(
   functionBody(stringSource, 'trimTextByWidth') +
   '\nreturn {trimTextByWidth};'
 )();
-const functions = ['initializeFonts', 'batteryPercent', 'remainingMinutes', 'runtimeText', 'brightnessSteps', 'fitFont', 'drawIcon', 'drawMode', 'panelSettings'];
+const functions = ['initializeFonts', 'includeMode', 'batteryPercent', 'remainingMinutes', 'runtimeText', 'brightnessSteps', 'fitFont', 'drawIcon', 'drawMode', 'panelSettings'];
 let resourceLoads = 0;
 const LightPanelGraphics = new Function('Graphics', 'StringHelper', 'WatchUi', 'Rez', 'AppTheme',
-  'let _modeIconsSmall, _modeIconsLarge, _modeIconsWide; const BLUE=0x056ABD, WHITE=0xFFFFFF, RED=0xCC2222;\n' +
+  'let _modeIconsSmall, _modeIconsLarge, _modeIconsWide, _modeIconsExtra, _modeTitleFont=2, _modeTitleIconSize=18, _modeTitleIconY=0; const BLUE=0x056ABD, WHITE=0xFFFFFF, RED=0xCC2222;\n' +
   functions.map(name => functionBody(graphicsSource, name)).join('\n') +
   '\nreturn {BLUE,WHITE,RED,' + functions.join(',') + '};'
-)(Graphics, StringHelper, {loadResource: id => { resourceLoads++; return id; }}, {Fonts: {modeIconsSmall: 'icons12', modeIconsLarge: 'icons18', modeIconsWide: 'icons22'}}, AppTheme);
+)(Graphics, StringHelper, {loadResource: id => { resourceLoads++; return id; }}, {Fonts: {modeIconsSmall: 'icons12', modeIconsLarge: 'icons18', modeIconsWide: 'icons22', modeIconsExtra: 'icons28'}}, AppTheme);
 LightPanelGraphics.initializeFonts();
 LightPanelGraphics.initializeFonts();
-assert.equal(resourceLoads,3,'Fonts load once during setup');
+assert.equal(resourceLoads,4,'Fonts load once during setup');
 resourceLoads=0;
 assert(!functionBody(graphicsSource, 'drawMode').includes('loadResource'));
 assert(!functionBody(graphicsSource, 'drawMode').includes('drawIcon('),'Bitmap glyphs must draw without an extra wrapper');
@@ -77,7 +78,7 @@ const escape = s => String(s).replaceAll('&', '&amp;').replaceAll('<', '&lt;').r
 const color = n => '#' + n.toString(16).padStart(6, '0');
 class Dc {
   constructor(width, height, bg, scale = 1) {
-    this.width = width; this.height = height; this.scale = scale;
+    this.width = width; this.height = height; this.scale = scale; metricScale = scale;
     this.color = '#ffffff'; this.pen = 1; this.texts = []; this.boxes = []; this.icons = [];
     this.elements = [`<rect width="100%" height="100%" fill="${color(bg)}"/>`];
   }
@@ -134,6 +135,35 @@ for (const [height,width,panel,status,expected] of [[32,66,24,12,24],[50,110,40,
     assert(drawn.y >= 2 && drawn.y + drawn.font <= height - 2, 'Control icon exceeds button margin');
   }
 }
+// Measure both columns first, including the smaller four-row rear panel.
+// Verify shared typography, bounds, and a fresh larger size after reconfiguration.
+for (const [width,height,scale] of [[246,322,1],[420,600,1.6],[282,470,1],[480,800,1.6]]) {
+  const dc = new Dc(width,height,0xFFFFFF,scale);
+  const front = [['Low',200,12,'headlight-low'],['Medium',600,4,'headlight-medium'],['High',1200,2,'headlight-high']];
+  const rear = [['Night Flash',5,15,'lightning'],['Day Flash',45,12,'lightning'],['Night Steady',5,13.5,'moon'],['Day Steady',25,4.5,'sun']];
+  const w = width/2-4, available = height-dc.getFontHeight(0)*5-10;
+  LightPanelGraphics.initializeFonts();
+  for (const modes of [front,rear]) for (const data of modes) LightPanelGraphics.includeMode(dc,data,w,available/modes.length-4);
+  const labelHeights=[], iconSizes=[];
+  for (const modes of [front,rear]) for (const data of modes) {
+    dc.texts=[]; dc.icons=[];
+    const h=available/modes.length-4;
+    LightPanelGraphics.drawMode(dc,data,1200,1,0,0,w,h,false,0,0xFFFFFF);
+    labelHeights.push(dc.texts[0].height); iconSizes.push(dc.icons[0].width);
+    assert(dc.icons[0].width >= 18,'Mode icons must never use the tiny status glyph');
+    const font = [0,1,2].find(f => dc.getFontHeight(f) === dc.texts[0].height);
+    assert(Math.abs(dc.icons[0].y + dc.icons[0].height/2 - (dc.texts[0].y + Graphics.getFontAscent(font)/2)) < 0.01, 'Mode icons must center above the baseline, excluding descenders');
+    within(dc.texts[0],0,0,w,h); within(dc.icons[0],0,0,w,h);
+    assert(dc.icons[0].x+dc.icons[0].width<=dc.texts[0].x);
+  }
+  assert.equal(new Set(labelHeights).size,1,'All seven labels must use the same font');
+  assert.equal(new Set(iconSizes).size,1,'All seven mode icons must use the same size');
+  LightPanelGraphics.initializeFonts();
+  LightPanelGraphics.includeMode(dc,front[0],width-4,height-4);
+  dc.texts=[];
+  LightPanelGraphics.drawMode(dc,front[0],1200,1,0,0,width-4,height-4,false,0,0xFFFFFF);
+  assert.equal(dc.texts[0].height,dc.getFontHeight(2),'Panel setup must reset the shared font');
+}
 let cases = 0;
 for (const visibility of [-1, 0, 1, 2, 3, 4]) {
   const settings = [2,2,'Front',0,0xFFFFFF,visibility,1,51,'Low',1,-2,null];
@@ -148,6 +178,8 @@ for (const bg of [0x000000, 0xFFFFFF]) {
     for (const x of [2, 143]) for (const data of [['Low',200,12,'sun'],['Night Steady',5,13.5,'none'],['Long custom mode name',1200,2,'lightning'],['Front',200,12,'headlight'],['Rear',200,12,'taillight'],['Night',200,12,'moon']]) {
       for (const status of [1,4,5,7]) {
         const dc = new Dc(282,470,bg,scale);
+        LightPanelGraphics.initializeFonts();
+        LightPanelGraphics.includeMode(dc,data,137,96);
         LightPanelGraphics.drawMode(dc,data,1200,status,x,44,137,96,selected,fg,selected?LightPanelGraphics.BLUE:bg);
         assert.equal(dc.texts.length,3,'Name, brightness, and runtime must all remain visible');
         dc.texts.forEach(t=>within(t,x,44,137,96));
@@ -218,8 +250,10 @@ for (const icon of ['cycle']) {
 
 for (const icon of ['sun','headlight','taillight','moon','lightning']) {
   const dc = new Dc(480,800,0xFFFFFF);
+  LightPanelGraphics.initializeFonts();
+  LightPanelGraphics.includeMode(dc,['Mode',200,12,icon],230,160);
   LightPanelGraphics.drawMode(dc,['Mode',200,12,icon],1200,1,0,0,230,160,false,0,0xFFFFFF);
-  assert.deepEqual(dc.icons.map(i=>i.width),[22,18]);
+  assert.deepEqual(dc.icons.map(i=>i.width),[28,18]);
   assert.equal(resourceLoads,0,'Wide buttons must reuse loaded fonts');
 }
 
