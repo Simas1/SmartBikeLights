@@ -1,8 +1,8 @@
-# Build and install on Edge 1040 or Edge 1050
+# Build and install on Garmin Edge devices
 
 The manual GitHub Actions workflow (`.github/workflows/build-sbl.yml`) builds a `.prg`
-on a standard Linux runner. Runs are titled `Build SBL (edge1040)` or
-`Build SBL (edge1050)` according to the selected device.
+on a standard Linux runner. Supported devices: **1040, 1050, 850, 550, 840, 540**.
+Runs are titled `Build SBL (<device>)` according to the selected device.
 You do not need Java, Garmin's SDK, VS Code, Docker, or Garmin credentials on
 your Mac. No repository secrets are required.
 
@@ -13,9 +13,9 @@ your Mac. No repository secrets are required.
    GitHub displays its manual run button.
 2. Open the repository's **Actions** tab. If prompted, enable workflows on your fork.
 3. Select **Build SBL**, then **Run workflow** and select your branch.
-   Choose `edge1040` (the default) or `edge1050` from the **Device to build for** dropdown.
+   Choose `edge1040` (the default), `edge1050`, `edge850`, `edge550`, `edge840` or `edge540` from the **Device to build for** dropdown.
 4. Open the completed run. Under **Artifacts**, download
-   **SmartBikeLights-edge1040** or **SmartBikeLights-edge1050**, matching your selection,
+   **SmartBikeLights-<device>**, matching your selection,
    and unzip it. Artifacts expire after seven days.
 5. Connect the selected Edge device with a USB data cable. Copy `SmartBikeLights.prg` into
    `GARMIN/APPS` on the device, then eject and unplug it.
@@ -27,7 +27,7 @@ your Mac. No repository secrets are required.
 The workflows call composite actions after checking out the repository:
 
 - `.github/actions/build-sbl/action.yml` accepts `device` (`edge1040` by default,
-  or `edge1050`) and builds `Build/<device>/SmartBikeLights.prg`. It requires Docker
+  or `edge1050`, `edge850`, `edge550`, `edge840`, `edge540`) and builds `Build/<device>/SmartBikeLights.prg`. It requires Docker
   on Linux.
 - `.github/actions/build-sbl-settings/action.yml` accepts a `settings` JSON object
   containing all ten settings, runs the serializer tests, and creates

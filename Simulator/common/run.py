@@ -11,11 +11,14 @@ import subprocess
 import sys
 import tempfile
 import time
+import uuid
 import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[2]
 APP = ROOT / 'Source/SmartBikeLights'
 SIMULATOR = ROOT / 'Simulator'
+UPSTREAM_URL = 'https://github.com/maca88/SmartBikeLights.git'
+
 CATALOG = json.loads((SIMULATOR / 'lights.json').read_text())
 
 
@@ -25,23 +28,23 @@ def replace_once(text, old, new):
     return text.replace(old, new, 1)
 
 
-def settings_schema():
+def settings_schema(app=APP):
     defaults, definitions = {}, {}
     strings = {}
     for folder in ('resources', 'resources-highmemory'):
-        for item in ET.parse(APP / folder / 'strings.xml').getroot().iter('string'):
+        for item in ET.parse(app / folder / 'strings.xml').getroot().iter('string'):
             strings[item.attrib['id']] = item.text
-        for item in ET.parse(APP / folder / 'properties.xml').getroot().iter('property'):
+        for item in ET.parse(app / folder / 'properties.xml').getroot().iter('property'):
             value = item.text or ''
             kind = item.attrib['type']
             defaults[item.attrib['id']] = int(value) if kind == 'number' else value == 'true' if kind == 'boolean' else value
-        for item in ET.parse(APP / folder / 'settings.xml').getroot().iter('setting'):
+        for item in ET.parse(app / folder / 'settings.xml').getroot().iter('setting'):
             definitions[item.attrib['propertyKey'].split('.')[-1]] = item.find('settingConfig')
     return defaults, definitions, strings
 
 
-def validate_settings(values):
-    defaults, definitions, strings = settings_schema()
+def validate_settings(values, app=APP):
+    defaults, definitions, strings = settings_schema(app)
     for key, value in values.items():
         if key not in defaults:
             raise ValueError(f'Unknown setting {key}; choose from {", ".join(defaults)}')
@@ -107,9 +110,25 @@ def apply_batteries(lights, overrides):
             selected[key]['batteryStatus'] = statuses[value]
 
 
+def upstream_source():
+    """Download into an independent checkout; never change the user's Git refs."""
+    output = ROOT / 'Build/simulator'
+    output.mkdir(parents=True, exist_ok=True)
+    checkout = Path(tempfile.mkdtemp(prefix='upstream-source-', dir=output))
+    subprocess.run(['git', 'clone', '--depth', '1', '--branch', 'master',
+                    UPSTREAM_URL, str(checkout)], check=True)
+    revision = subprocess.check_output(['git', '-C', str(checkout), 'rev-parse', 'HEAD'], text=True).strip()
+    app = checkout / 'Source/SmartBikeLights'
+    if not (app / 'manifest.xml').is_file():
+        raise ValueError('Upstream source layout has changed; missing SmartBikeLights manifest')
+    return app, revision
+
+
 def arguments():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('device', nargs='?', default='edge1040', choices=sorted(p.parent.name for p in SIMULATOR.glob('*/profile.json')))
+    parser.add_argument('--source', choices=['local', 'upstream'], default='local',
+                        help='Current checkout or freshly downloaded maca88 upstream master')
     parser.add_argument('--lights', '-lights', default='at1600,flare-rt',
                         help='Comma-separated IDs from lights.json (default: at1600,flare-rt)')
     parser.add_argument('--battery', action='append', default=[], metavar='LIGHT=VALUE,...',
@@ -118,15 +137,16 @@ def arguments():
     parser.add_argument('--list-lights', action='store_true')
     parser.add_argument('--list-settings', action='store_true')
     parser.add_argument('--build-only', action='store_true')
-    parser.add_argument('--prepare-only', action='store_true', help='Generate inputs without the SDK or downloads')
+    parser.add_argument('--prepare-only', action='store_true', help='Generate inputs without SDK compilation (upstream still downloads source)')
     parser.add_argument('--sdk', type=Path, help='SDK directory (otherwise CIQ_SDK or Garmin active SDK)')
     args = parser.parse_args()
     if args.list_lights:
         for key, light in CATALOG.items():
             print(f'{key:16} {light["name"]} ({"headlight" if light["type"] == 0 else "taillight"})')
         parser.exit()
+    args.app, args.revision = upstream_source() if args.source == 'upstream' else (APP, None)
     if args.list_settings:
-        defaults, definitions, strings = settings_schema()
+        defaults, definitions, strings = settings_schema(args.app)
         for key, value in defaults.items():
             choices = {strings[e.text.split('.')[-1]]: int(e.attrib['value']) for e in definitions[key].findall('listEntry')}
             print(f'{key}: default={json.dumps(value)}' + (f'; choices={choices}' if choices else ''))
@@ -137,13 +157,59 @@ def arguments():
     return args
 
 
+def menu_configuration(value):
+    """Convert touchscreen panel sections to the non-touch settings-menu grammar."""
+    if not value:
+        return value
+    parts = value.split('#')
+    for index in (5, 6):
+        if len(parts) <= index:
+            continue
+        panel = parts[index]
+        header, *groups = panel.split('!')
+        fields = header.split(':')
+        if ',' not in fields[0]:
+            continue  # Already a menu configuration (or no panel).
+        counts = fields[0].split(',')
+        if len(counts) != 2 or not all(item.isdigit() for item in counts) or len(fields) < 2:
+            raise ValueError('Malformed touchscreen light panel')
+        total, group_count = map(int, counts)
+        if len(groups) != group_count:
+            raise ValueError('Touchscreen panel group count does not match its contents')
+        buttons = []
+        parsed = 0
+        for group in groups:
+            count, *entries = group.split(',')
+            if not count.isdigit() or int(count) != len(entries):
+                raise ValueError('Touchscreen panel button count does not match its contents')
+            for entry in entries:
+                title, separator, raw_mode = entry.rpartition(':')
+                if not separator or not re.fullmatch(r'-?\d+', raw_mode):
+                    raise ValueError('Malformed touchscreen light button')
+                mode = int(raw_mode)
+                parsed += 1
+                if mode < 0:
+                    continue  # Touch-only control/configuration buttons are not light modes.
+                lines = re.split(r'\\+n', title)
+                title = ' '.join(line.strip() for line in lines if line.strip() and not line.strip().startswith('@'))
+                buttons.append(f'{title}:{mode}')
+        if parsed != total or len(buttons) > 20:
+            raise ValueError('Unsupported touchscreen light panel button count')
+        parts[index] = f'{len(buttons)}:{fields[1]}' + ''.join('|' + button for button in buttons)
+    return '#'.join(parts)
+
+
 def prepare(args):
     values = read_settings(args.settings) if args.settings else {}
-    settings = validate_settings(values)
+    app = getattr(args, 'app', APP)
+    settings = validate_settings(values, app)
+    if args.profile.get('settingsFormat') == 'menu':
+        for key in ('LC', 'LC2', 'LC3'):
+            settings[key] = menu_configuration(settings[key])
     output = ROOT / 'Build/simulator'
     output.mkdir(parents=True, exist_ok=True)
     work = Path(tempfile.mkdtemp(prefix=f'{args.device}-', dir=output))
-    shutil.copytree(APP, work, dirs_exist_ok=True, ignore=shutil.ignore_patterns('bin', '.git', 'node_modules', 'networkKeys'))
+    shutil.copytree(app, work, dirs_exist_ok=True, ignore=shutil.ignore_patterns('bin', '.git', 'node_modules', 'networkKeys'))
     cfg_path = work / 'preprocess.config.json'
     cfg = json.loads(cfg_path.read_text())
     cfg['includeSymbols']['ANT_NETWORK'] = 'TestNetwork.TestLightNetwork'
@@ -156,8 +222,11 @@ def prepare(args):
     path = work / 'manifest.xml'
     text = re.sub(r'<iq:product id="([^"]+)"\s*/>',
                   lambda match: match[0] if match[1] == args.device else '', path.read_text())
+    preview_id = args.profile['previewAppId']
+    if args.source == 'upstream':
+        preview_id = uuid.uuid5(uuid.UUID(preview_id), 'upstream').hex
     # Separate application identity keeps preview properties/storage away from normal builds.
-    text = re.sub(r'(<iq:application\s+[^>]*?id=")[^"]+', lambda match: match[1] + args.profile['previewAppId'], text)
+    text = re.sub(r'(<iq:application\s+[^>]*?id=")[^"]+', lambda match: match[1] + preview_id, text)
     path.write_text(text)
     path = work / 'source-preprocess/TestLightNetwork.mc'
     text = path.read_text()
@@ -192,8 +261,10 @@ def prepare(args):
     path = work / 'source/SmartBikeLightsApp.mc'
     assignments = '\n'.join(f'        Application.Properties.setValue({json.dumps(key)}, {json.dumps(value, ensure_ascii=False)});' for key, value in settings.items())
     path.write_text(replace_once(path.read_text(), '        AppBase.initialize();', '        AppBase.initialize();\n        Application.Storage.clearValues();\n' + assignments))
-    (work / 'preview.json').write_text(json.dumps({'device': args.device, 'lights': args.lights, 'settings': settings}, indent=2))
+    (work / 'preview.json').write_text(json.dumps({'device': args.device, 'source': args.source, 'upstreamRepository': UPSTREAM_URL if args.source == 'upstream' else None, 'upstreamCommit': args.revision, 'lights': args.lights, 'settings': settings}, indent=2))
     print(f'Preview: {work}', flush=True)
+    if args.source == 'upstream':
+        print(f'Upstream: {UPSTREAM_URL} @ {args.revision}', flush=True)
     print('Lights: ' + ', '.join(light['name'] for light in args.lights), flush=True)
     return work
 

@@ -110,6 +110,119 @@ class PreviewTests(unittest.TestCase):
         finally:
             shutil.rmtree(work)
 
+    def test_edge1050_profile(self):
+        result = subprocess.run([sys.executable, str(Path(__file__).with_name('run.py')),
+            'edge1050', '--prepare-only', '--battery', 'at1600=25,flare-rt=75'],
+            capture_output=True, text=True, check=True)
+        work = Path(result.stdout.splitlines()[0].removeprefix('Preview: '))
+        try:
+            jungle = (work / 'monkey.jungle').read_text()
+            self.assertIn('edge1050.excludeAnnotations = $(rectangleHighResolution)', jungle)
+            self.assertIn('edge1050.resourcePath = resources-highmemory;$(edge1050.resourcePath)', jungle)
+            self.assertNotIn('edge1040.resourcePath', jungle)
+            import xml.etree.ElementTree as ET
+            manifest = ET.parse(work / 'manifest.xml')
+            ns = {'iq': 'http://www.garmin.com/xml/connectiq'}
+            self.assertEqual([node.attrib['id'] for node in manifest.findall('.//iq:product', ns)], ['edge1050'])
+            profile = json.loads((preview.SIMULATOR / 'edge1050/profile.json').read_text())
+            other = json.loads((preview.SIMULATOR / 'edge1040/profile.json').read_text())
+            self.assertNotEqual(profile['previewAppId'], other['previewAppId'])
+            self.assertEqual(manifest.find('iq:application', ns).attrib['id'], profile['previewAppId'])
+            self.assertTrue((work / 'resources-edge1050/resources.xml').is_file())
+            resolved = json.loads((work / 'preview.json').read_text())
+            self.assertEqual(resolved['device'], 'edge1050')
+            self.assertEqual([light['batteryStatus'] for light in resolved['lights']], [4, 2])
+        finally:
+            shutil.rmtree(work)
+
+    def test_additional_edge_profiles_and_pipeline(self):
+        import re
+        expected = {'edge850': 'rectangleHighResolution',
+                    'edge550': 'rectangleNonTouchScreenHighResolution',
+                    'edge840': None, 'edge540': 'rectangleNonTouchScreen'}
+        workflow = (preview.ROOT / '.github/workflows/build-sbl.yml').read_text()
+        script = (preview.ROOT / '.github/actions/build-sbl/build-edge.sh').read_text()
+        identities = [json.loads(path.read_text())['previewAppId'] for path in preview.SIMULATOR.glob('*/profile.json')]
+        self.assertEqual(len(identities), len(set(identities)))
+        for device, annotation in expected.items():
+            with self.subTest(device=device):
+                self.assertIn('          - ' + device, workflow)
+                self.assertIn(device, script.split('case "$device" in')[1].split(')')[0])
+                result = subprocess.run([sys.executable, str(Path(__file__).with_name('run.py')),
+                    device, '--prepare-only'], capture_output=True, text=True, check=True)
+                work = Path(result.stdout.splitlines()[0].removeprefix('Preview: '))
+                try:
+                    jungle = (work / 'monkey.jungle').read_text()
+                    self.assertIn(device + '.resourcePath', jungle)
+                    if annotation:
+                        self.assertIn(f'{device}.excludeAnnotations = $({annotation})', jungle)
+                    else:
+                        self.assertIn('resources-highmemory;resources-touchscreen', jungle)
+                    self.assertNotIn('edge1040.resourcePath', jungle)
+                    products = re.findall(r'<iq:product id="([^"]+)"', (work / 'manifest.xml').read_text())
+                    self.assertEqual(products, [device])
+                finally:
+                    shutil.rmtree(work)
+
+    def test_touchscreen_configuration_converts_to_menu(self):
+        settings = json.loads((preview.SIMULATOR / 'settings.example.json').read_text())
+        for key in ('LC', 'LC2', 'LC3'):
+            original = settings[key]
+            converted = preview.menu_configuration(original)
+            before, after = original.split('#'), converted.split('#')
+            self.assertEqual(before[:5], after[:5])
+            self.assertEqual(before[7:], after[7:])
+            self.assertTrue(after[5].startswith('4:AT 1600|Off:0|Low'))
+            self.assertTrue(after[6].startswith('5:Flare RT|Off:0|Night Flash'))
+            self.assertNotIn('@', after[5] + after[6])
+            self.assertNotIn(':-1', after[5] + after[6])
+            self.assertNotIn(':-2', after[5] + after[6])
+            self.assertEqual(preview.menu_configuration(converted), converted)
+        self.assertEqual(preview.menu_configuration(''), '')
+        for device in ('edge540', 'edge550'):
+            result = subprocess.run([sys.executable, str(Path(__file__).with_name('run.py')),
+                device, '--prepare-only', '--settings', str(preview.SIMULATOR / 'settings.example.json')],
+                capture_output=True, text=True, check=True)
+            work = Path(result.stdout.splitlines()[0].removeprefix('Preview: '))
+            try:
+                resolved = json.loads((work / 'preview.json').read_text())['settings']
+                for key in ('LC', 'LC2', 'LC3'):
+                    self.assertEqual(resolved[key], preview.menu_configuration(settings[key]))
+            finally:
+                shutil.rmtree(work)
+
+    def test_upstream_uses_own_sources_schema_and_identity(self):
+        from unittest.mock import patch
+        import contextlib
+        import io
+        with tempfile.TemporaryDirectory() as fixture:
+            app = Path(fixture) / 'app'
+            shutil.copytree(preview.APP, app)
+            for folder in ('resources', 'resources-highmemory'):
+                for name in ('properties.xml', 'settings.xml', 'strings.xml'):
+                    path = app / folder / name
+                    path.write_text(path.read_text().replace('TH', 'AC'))
+            marker = app / 'source/upstream-marker.mc'
+            marker.write_text('// Only in the upstream fixture')
+            with patch.object(preview, 'upstream_source', return_value=(app, 'a' * 40)), \
+                 patch.object(sys, 'argv', ['run.py', 'edge1040', '--source', 'upstream', '--prepare-only']):
+                args = preview.arguments()
+                with contextlib.redirect_stdout(io.StringIO()):
+                    work = preview.prepare(args)
+            try:
+                resolved = json.loads((work / 'preview.json').read_text())
+                self.assertEqual(resolved['source'], 'upstream')
+                self.assertEqual(resolved['upstreamCommit'], 'a' * 40)
+                self.assertIn('AC', resolved['settings'])
+                self.assertNotIn('TH', resolved['settings'])
+                self.assertTrue((work / 'source/upstream-marker.mc').exists())
+                self.assertNotIn(args.profile['previewAppId'], (work / 'manifest.xml').read_text())
+                self.assertNotIn('TestNetwork.TestLightNetwork', (app / 'source/SmartBikeLightsApp.mc').read_text())
+                with self.assertRaises(ValueError):
+                    preview.validate_settings({'TH': 0}, app)
+            finally:
+                shutil.rmtree(work)
+
     def test_saved_set_file(self):
         spec = importlib.util.spec_from_file_location('codec', preview.ROOT / '.github/actions/build-sbl-settings/create-settings.py')
         codec = importlib.util.module_from_spec(spec)

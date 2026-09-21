@@ -4,9 +4,14 @@ Run from the repository root on macOS. Requires Python 3.9+, Java 17, Node.js/np
 Connect IQ SDK (tested with 9.2.0), and the installed target-device profile.
 The pinned `directive-preprocessor@1.1.1` is downloaded through npx on first use.
 
-Use Simulator launcher with a device argument and optional settings:
+Use the simulator launcher with a device ID and optional settings:
+
+Supported: `edge1040`, `edge1050`, `edge850`, `edge550`, `edge840`, `edge540`.
+Edge 540 and 550 use button controls, not the touchscreen light panel.
 
 ```bash
+./Simulator/run-simulator.sh edge1050 --settings Simulator/settings.example.json
+
 ./Simulator/run-simulator.sh edge1040 --lights at1600,flare-rt --battery at1600=25,flare-rt=25
 
 ./Simulator/run-simulator.sh edge1040 --lights at1600,varia-515,flare-rt
@@ -22,6 +27,37 @@ subject to app/device memory. Multiple network devices do not create extra UI
 panels: the app has headlight and taillight slots. Use configuration serial-number
 filters to choose between lights of the same type. Fixture serials are in the catalog.
 
+## Preview original upstream
+
+```bash
+./Simulator/run-simulator.sh edge1040 --source upstream
+./Simulator/run-simulator.sh edge1040 --source upstream --settings Simulator/settings.upstream.json
+./Simulator/run-simulator.sh edge1050 --source upstream --battery at1600=25,flare-rt=75
+```
+
+`--source local` (the default) uses your current checkout, including uncommitted edits.
+`--source upstream` clones the latest `master` from
+[maca88/SmartBikeLights](https://github.com/maca88/SmartBikeLights) into a fresh ignored
+`Build/simulator/upstream-source-*` directory. It requires Git and network access.
+It never switches branches or adds remotes to your repository. Each build records
+the upstream commit and repository in `preview.json` and prints them in the Terminal.
+The original upstream UI/resources are used; only simulator plumbing (fake lights,
+settings initialization, isolated app identity and device selection) is adapted.
+Upstream and local previews have separate app IDs and storage.
+
+Upstream uses its own property defaults and schema. Do not pass this fork's
+`settings.example.json`: it contains fork-specific properties and visual markers.
+Use `Simulator/settings.upstream.json` for AT1600/Flare RT panels and the three
+Flash/Steady/Break configurations adapted from the fork example. It uses upstream
+`AC` and removes custom icon markers while preserving mode labels and automation.
+For other customized original panels, use a saved JSON/.SET file produced for upstream;
+`--source upstream --list-settings` lists its supported properties (e.g. AC instead
+of this fork's TH). No settings file means upstream defaults and its default panels.
+`--prepare-only --source upstream` still downloads source but skips preprocessing
+and compilation. Both the source checkout and build output are retained for inspection
+and may be deleted afterwards. If upstream changes its source structure, preparation
+fails rather than silently falling back to your fork.
+
 ## File organization
 
 ```text
@@ -35,6 +71,13 @@ Simulator/
   edge1040/
     profile.json            Device-specific qualifiers and preview app identity
     README.md              Edge 1040 usage
+  edge1050/
+    profile.json            High-resolution touchscreen profile and preview app identity
+    README.md              Edge 1050 usage
+  edge850/                 Edge 850 profile and usage (high-resolution touch)
+  edge550/                 Edge 550 profile and usage (high-resolution buttons)
+  edge840/                 Edge 840 profile and usage (medium-resolution touch)
+  edge540/                 Edge 540 profile and usage (medium-resolution buttons)
 ```
 
 The shared runner discovers supported devices from `*/profile.json`. To add Edge
@@ -44,7 +87,13 @@ Generated source and binaries remain under ignored `Build/simulator/`.
 ## Saved settings
 
 Settings are shared across device profiles that support the same app properties;
-only build qualifiers and simulator identity belong to a device profile.
+Device profiles select build qualifiers, simulator identity and settings format.
+For Edge 540/550, touchscreen panel definitions in all three configuration slots
+are converted to mode menus automatically. Touch-only controls and icon markers
+are omitted; light modes, serial filters and automation rules are preserved.
+Already menu-formatted configurations are unchanged. This conversion only affects
+the simulator build; physical-device settings still need the correct configurator
+device selection.
 
 `--settings PATH` accepts a partial JSON object or Garmin `.SET` file. Omit it to
 use application defaults. To use the complete workflow defaults, pass
