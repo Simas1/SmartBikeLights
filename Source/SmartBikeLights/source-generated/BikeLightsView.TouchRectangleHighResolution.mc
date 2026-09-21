@@ -1870,7 +1870,14 @@ class BikeLightsView extends  WatchUi.DataField  {
         dc.setPenWidth(1);
         dc.drawRectangle(left, top, 16, 10);
         dc.fillRectangle(left + 16, top + 3, 2, 4);
-        if (percent != null) { dc.fillRectangle(left + 2, top + 2, percent < 9 ? 1 : 12 * percent / 100, 6); }
+        if (status == 6 /* BATT_STATUS_CHARGE */) {
+            // Draw a lightning bolt inside the existing battery shell.
+            dc.drawLine(left + 10, top + 2, left + 6, top + 5);
+            dc.drawLine(left + 6, top + 5, left + 10, top + 5);
+            dc.drawLine(left + 10, top + 5, left + 6, top + 8);
+        } else if (percent != null) {
+            dc.fillRectangle(left + 2, top + 2, percent < 9 ? 1 : 12 * percent / 100, 6);
+        }
         dc.drawText(left + 22, y, 0, label, Graphics.TEXT_JUSTIFY_LEFT);
     }
 
