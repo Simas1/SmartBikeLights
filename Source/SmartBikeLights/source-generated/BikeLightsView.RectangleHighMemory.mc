@@ -1006,7 +1006,10 @@ class BikeLightsView extends  WatchUi.DataField  {
 
             lightData[0] = light;
             lightData[2] = null; // Force to update light text in case light modes were changed
-            updateLightTextAndMode(lightData, lightMode);
+            // A saved manual selection is a command target, not a status report.
+            // Garmin's light widget may have changed the light while this field
+            // was hidden, without delivering a mode-change callback to us.
+            updateLightTextAndMode(lightData, light.mode);
             var oldControlMode = lightData[4];
             lightData[4] = controlMode;
             // In case of SMART or MANUAL control mode, we have to set the light mode in order to prevent the network mode
