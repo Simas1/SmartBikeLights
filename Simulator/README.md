@@ -109,6 +109,21 @@ The runner validates property types. The app validates configuration grammar and
 supported modes. Match settings to the selected lights; switching to Varia with
 Flare-specific settings may produce a normal app configuration error.
 
+### Preview an error
+
+```bash
+./Simulator/run-simulator.sh edge1040 --settings Simulator/settings.error.json
+```
+
+With the default AT1600 and Flare RT fixtures, this configuration intentionally
+requests unsupported headlight mode `99` in filter group 1. It triggers **Error 3**
+during light initialization, without needing to start an activity. A full-screen
+field shows the affected headlight, filter/mode details, and a suggested fix.
+Smaller fields show the compact explanation or the original error code when space
+is insufficient. Run with `Simulator/settings.example.json` to return to normal.
+A plain string such as `"invalid"` does not reliably trigger Error 4: the parser
+can treat missing configuration sections as defaults.
+
 Every launch clears preview storage and applies selected settings before creating
 the view. Changes made inside the simulator last for that run. Each device profile
 has a separate preview app ID to isolate properties/storage from ordinary builds.

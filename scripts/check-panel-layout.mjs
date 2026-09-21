@@ -43,6 +43,8 @@ Object.defineProperty(Array.prototype, 'addAll', { value(items) { this.push(...i
 
 // SDK api.mir: RIGHT=0, CENTER=1, LEFT=2 (not the usual web ordering).
 const Graphics = { TEXT_JUSTIFY_RIGHT: 0, TEXT_JUSTIFY_CENTER: 1, TEXT_JUSTIFY_LEFT: 2 };
+// Default Blue theme supplied by AppTheme on the device.
+const AppTheme = { accent: 0x056ABD, onDark: 0x55BBFF, muted: 0x428CCA };
 const StringHelper = new Function(
   functionBody(stringSource, 'getLastSpaceIndex') +
   functionBody(stringSource, 'trimTextByWidth') +
@@ -50,11 +52,11 @@ const StringHelper = new Function(
 )();
 const functions = ['initializeFonts', 'batteryPercent', 'remainingMinutes', 'runtimeText', 'brightnessSteps', 'fitFont', 'drawIcon', 'drawMode', 'panelSettings'];
 let resourceLoads = 0;
-const LightPanelGraphics = new Function('Graphics', 'StringHelper', 'WatchUi', 'Rez',
+const LightPanelGraphics = new Function('Graphics', 'StringHelper', 'WatchUi', 'Rez', 'AppTheme',
   'let _modeIconsSmall, _modeIconsLarge, _modeIconsWide; const BLUE=0x056ABD, WHITE=0xFFFFFF, RED=0xCC2222;\n' +
   functions.map(name => functionBody(graphicsSource, name)).join('\n') +
   '\nreturn {BLUE,WHITE,RED,' + functions.join(',') + '};'
-)(Graphics, StringHelper, {loadResource: id => { resourceLoads++; return id; }}, {Fonts: {modeIconsSmall: 'icons12', modeIconsLarge: 'icons18', modeIconsWide: 'icons22'}});
+)(Graphics, StringHelper, {loadResource: id => { resourceLoads++; return id; }}, {Fonts: {modeIconsSmall: 'icons12', modeIconsLarge: 'icons18', modeIconsWide: 'icons22'}}, AppTheme);
 LightPanelGraphics.initializeFonts();
 LightPanelGraphics.initializeFonts();
 assert.equal(resourceLoads,3,'Fonts load once during setup');
@@ -64,11 +66,12 @@ assert(!functionBody(graphicsSource, 'drawMode').includes('drawIcon('),'Bitmap g
 assert(!functionBody(graphicsSource, 'drawIcon').includes('loadResource'));
 assert(!functionBody(graphicsSource, 'drawIcon').includes('drawText'),
   'Mode icons must avoid the custom-font drawing wrapper that overflows on Edge 1040');
-const footer = new Function('Graphics', 'StringHelper', 'LightPanelGraphics',
-  'let _panelFooter; function setTextColor(dc,c){dc.setColor(c,-1);}\n' +
+const footer = new Function('Graphics', 'StringHelper', 'LightPanelGraphics', 'AppTheme', 'System',
+  // Idle footer: no pending configuration switch or tap feedback.
+  'let _panelFooter, _pendingConfig = null, _configFeedbackTime = null; function setTextColor(dc,c){dc.setColor(c,-1);}\n' +
   functionBody(viewSource, 'drawPanelBattery') + functionBody(viewSource, 'drawPanelConfiguration') +
   '\nreturn {drawPanelBattery, drawPanelConfiguration, setFooter(value){_panelFooter=value;}};'
-)(Graphics, StringHelper, LightPanelGraphics);
+)(Graphics, StringHelper, LightPanelGraphics, AppTheme, {getTimer: () => 0});
 
 const escape = s => String(s).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 const color = n => '#' + n.toString(16).padStart(6, '0');

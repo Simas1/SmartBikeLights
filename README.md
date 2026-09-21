@@ -224,10 +224,18 @@ Check the following videos:
 
 ## Error codes
 
+On high-memory devices, fields with enough space show the error code, affected
+component, and a short explanation. A full-screen field also shows available
+context and a suggested fix. For unsupported modes, context identifies the light,
+mode, and panel button or filter group. Individual light channel failures include
+the configured ANT device number; remote failures identify the controller/button.
+If the text does not fit, the field falls back to a compact explanation or the
+original `Error N` display. Low-memory devices retain the original display.
+
 The following errors can be displayed:
 - **Error 1:** A not supported light type is connected, only headlights and taillights are supported.
-- **Error 2:** Two or more lights of the same type are connected to the network, which is not supported.
-- **Error 3:** Light panel contains a light mode that the connected light does not support.
+- **Error 2:** Two or more lights of the same type are connected on a low-memory device. High-memory devices can combine lights of the same type.
+- **Error 3:** A light panel, light button, or filter uses a light mode that the connected light does not support.
 - **Error 4:** Configuration value is invalid.
 - **Error 5:** The device does not have enough free ANT channels to be used by the Individual Light Network. Try to disable some sensors from the Garmin Sensors menu.
 - **Error 6:** One of the ANT channels used by the Individual Light Network could not be opened. Make sure that the lights are removed/disabled from the Garmin Sensors menu.

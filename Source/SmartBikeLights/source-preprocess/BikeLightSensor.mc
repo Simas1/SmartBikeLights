@@ -85,6 +85,10 @@ class BikeLightSensor {
         openMasterChannel();
     }
 
+    function getErrorContext() {
+        return [_errorCode, "Remote controller", "Controller " + (_controllerIndex + 1) + ", button " + (_buttonIndex - 1) + "."];
+    }
+
     function getLightMode() {
         return _lightMode;
     }
