@@ -1,6 +1,10 @@
 <strings>
     <string id="TO">Text Only</string>
+    <string id="HL">Hide Lumens</string>
+    <string id="HR">Hide Runtime</string>
+    <string id="HF">Hide Fill</string>
     <string id="TH">Theme</string>
+    <string id="DisplayOptions">Display Options</string>
     <string id="Violet">Violet</string>
     <string id="Mint">Mint</string>
     <string id="CC">Current Configuration</string>

@@ -3,6 +3,15 @@
         <setting propertyKey="@Properties.TO" title="@Strings.TO">
             <settingConfig type="boolean" />
         </setting>
+        <setting propertyKey="@Properties.HL" title="@Strings.HL">
+            <settingConfig type="boolean" />
+        </setting>
+        <setting propertyKey="@Properties.HR" title="@Strings.HR">
+            <settingConfig type="boolean" />
+        </setting>
+        <setting propertyKey="@Properties.HF" title="@Strings.HF">
+            <settingConfig type="boolean" />
+        </setting>
         <setting propertyKey="@Properties.TH" title="@Strings.TH">
             <settingConfig type="list">
                 <listEntry value="0">@Strings.Blue</listEntry>

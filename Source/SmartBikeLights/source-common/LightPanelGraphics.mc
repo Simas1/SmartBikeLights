@@ -211,6 +211,7 @@ module LightPanelGraphics {
     }
 
     function drawRuntimeFill(dc, data, status, x, y, width, height, radius, bg, maxHours) {
+        if (AppTheme.hideFill) { return; }
         var fillWidth = runtimeFillWidth(remainingMinutes(data[2], status), maxHours * 60, width);
         if (fillWidth <= 0) { return; }
         dc.setClip(x, y, fillWidth, height);
@@ -260,9 +261,10 @@ module LightPanelGraphics {
         if (minimumTimeHeight < iconSize) { minimumTimeHeight = iconSize; }
         // Keep the title, then runtime. Brightness is the first row to drop.
         var timeY = brightnessY;
-        if (stepWidth >= 1 &&
+        if (!AppTheme.hideLumens && stepWidth >= 1 &&
+            (AppTheme.hideRuntime ? y+height-pad-brightnessY >= dc.getFontHeight(0) :
             y+height-pad-(brightnessY+dc.getFontHeight(0)+2) >= minimumTimeHeight &&
-            dc.getTextWidthInPixels(time, 0) <= timeWidth) {
+            dc.getTextWidthInPixels(time, 0) <= timeWidth)) {
             var lit = brightnessSteps(data[1], maxLumens);
             for (var i=0; i<6; i++) {
                 dc.setColor(i<lit ? (bg==0x000000?AppTheme.onDark:AppTheme.accent) : bg==0x000000?0x555555:0xBBBBBB, -1);
@@ -272,6 +274,7 @@ module LightPanelGraphics {
             dc.drawText(x+width-pad,brightnessY,0,lumens,Graphics.TEXT_JUSTIFY_RIGHT);
             timeY += dc.getFontHeight(0) + 2;
         }
+        if (AppTheme.hideRuntime) { return; }
         var timeHeight = y+height-pad-timeY;
         if (timeHeight < minimumTimeHeight || dc.getTextWidthInPixels(time, 0) > timeWidth) { return; }
         var timeFont = fitFont(dc,time,timeWidth,timeHeight,titleFont);

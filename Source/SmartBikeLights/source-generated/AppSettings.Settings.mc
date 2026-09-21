@@ -185,6 +185,25 @@ module AppSettings {
         }
     }
 
+    class DisplayOptionsMenu extends BaseMenu {
+        public function initialize() {
+            BaseMenu.initialize(null);
+            Menu2.setTitle(WatchUi.loadResource(Rez.Strings.DisplayOptions));
+            Menu2.addItem(new WatchUi.ToggleMenuItem(Rez.Strings.TO, null, -1, Properties.getValue("TO") == true, null));
+            Menu2.addItem(new WatchUi.ToggleMenuItem(Rez.Strings.HL, null, -2, Properties.getValue("HL") == true, null));
+            Menu2.addItem(new WatchUi.ToggleMenuItem(Rez.Strings.HR, null, -3, Properties.getValue("HR") == true, null));
+            Menu2.addItem(new WatchUi.ToggleMenuItem(Rez.Strings.HF, null, -4, Properties.getValue("HF") == true, null));
+        }
+
+        public function onSelect(index, menuItem) {
+            var toggleKey = index == -1 ? "TO" : index == -2 ? "HL" : index == -3 ? "HR" : "HF";
+            var enabled = Properties.getValue(toggleKey) != true;
+            Properties.setValue(toggleKey, enabled);
+            menuItem.setEnabled(enabled);
+            Application.getApp().onSettingsChanged();
+        }
+    }
+
     class ListMenu extends BaseMenu {
 
         private var _menuItem;
@@ -202,7 +221,7 @@ module AppSettings {
             _names = names;
             _nameKeys = nameKeys;
             if (key.equals("TH")) {
-                Menu2.addItem(new WatchUi.ToggleMenuItem(Rez.Strings.TO, null, -1, Properties.getValue("TO") == true, null));
+                Menu2.addItem(new WatchUi.MenuItem(Rez.Strings.DisplayOptions, null, -1, null));
             }
             for (var i = 0; i < values.size(); i++) {
                 var value = values[i];
@@ -218,10 +237,7 @@ module AppSettings {
 
         public function onSelect(newValue, menuItem) {
             if (_key.equals("TH") && newValue == -1) {
-                var enabled = Properties.getValue("TO") != true;
-                Properties.setValue("TO", enabled);
-                menuItem.setEnabled(enabled);
-                Application.getApp().onSettingsChanged();
+                openSubMenu(new DisplayOptionsMenu());
                 return;
             }
             var oldValue = Properties.getValue(_key);
