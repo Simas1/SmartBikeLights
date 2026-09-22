@@ -4,7 +4,7 @@ using Toybox.WatchUi;
 using Toybox.Application.Properties as Properties;
 
 (/* #include TARGET */)
-module AppSettings {
+module /* #if touchScreen */ TouchAppSettings /* #else */ AppSettings /* #endif */ {
 
     const themeValues = [0, 1, 2];
     const themeNames = [:Blue, :Violet, :Mint];

@@ -1,5 +1,5 @@
 project.manifest = manifest.xml
-excludeBase=widget;buttonPanel
+excludeBase=widget;buttonPanel;watchPanel
 
 project.optimization = 2
 project.typecheck = 0
@@ -193,7 +193,7 @@ fr265.excludeAnnotations = $(roundHighResolution)
 fr265.resourcePath = $(fr265.resourcePath);resources-highmemory
 fr265s.excludeAnnotations = $(roundHighResolution)
 fr265s.resourcePath = $(fr265s.resourcePath);resources-highmemory
-fr965.excludeAnnotations = $(roundHighResolution)
+fr965.excludeAnnotations = widget;buttonPanel;noWatchPanel;nonTouchScreen;lowMemory;noLightButtons;rectangle;semioctagon;monochromeScreen;mediumResolution
 fr965.resourcePath = $(fr965.resourcePath);resources-highmemory
 fr970.excludeAnnotations = $(roundHighResolution)
 fr970.resourcePath = $(fr970.resourcePath);resources-highmemory

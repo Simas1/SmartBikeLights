@@ -127,8 +127,29 @@
       "files": ["source-preprocess/BikeLightsView.mc"],
       "definedSymbols": ["highMemory", "round", "nonTouchScreen", "highResolution"],
       "includeSymbols": {
-        "TARGET": ":highMemory :round :nonTouchScreen :highResolution",
+        "TARGET": ":highMemory :round :nonTouchScreen :highResolution :noWatchPanel",
 
+        "LIGHT_OFFSET_X": "36",
+        "TITLE_OFFSET_X": "32",
+        "CTRL_MODE_OFFSET_X": "10",
+        "CTRL_MODE_OFFSET_Y": "14",
+        "H_BATTERY_WIDTH": "68"
+      }
+    },
+    {
+      "name": "WatchPanelHighResolution",
+      "files": [
+        "source-preprocess/BikeLightsView.mc"
+      ],
+      "definedSymbols": [
+        "highMemory",
+        "round",
+        "touchScreen",
+        "highResolution",
+        "watchPanel"
+      ],
+      "includeSymbols": {
+        "TARGET": ":highMemory :round :touchScreen :highResolution :watchPanel",
         "LIGHT_OFFSET_X": "36",
         "TITLE_OFFSET_X": "32",
         "CTRL_MODE_OFFSET_X": "10",
@@ -180,7 +201,7 @@
       "files": ["source-preprocess/AppSettings.mc"],
       "definedSymbols": ["touchScreen"],
       "includeSymbols": {
-        "TARGET": ":touchScreen",
+        "TARGET": ":touchScreen :noWatchPanel",
         "UIMODULE": "DataFieldUi."
       }
     },
@@ -199,7 +220,7 @@
       "files": ["source-preprocess/DataFieldUi.mc"],
       "definedSymbols": ["touchScreen", "highResolution"],
       "includeSymbols": {
-        "TARGET": ":touchScreen :highResolution",
+        "TARGET": ":touchScreen :highResolution :noWatchPanel",
         "MENU_CRTL_BAR_HEIGHT": "70",
         "MENU_ITEM_HEIGHT": "120"
       }
