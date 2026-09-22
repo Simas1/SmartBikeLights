@@ -14,7 +14,7 @@ using Toybox.Application.Properties as Properties;
 using Toybox.Attention;
 using Toybox.Graphics;
 
-(:highMemory :rectangle :touchScreen :highResolution)
+(:highMemory :rectangle :nonTouchScreen :mediumResolution :buttonPanel)
 const lightModeCharacters = [
     "S", /* High steady beam */
     "M", /* Medium steady beam */
@@ -24,14 +24,14 @@ const lightModeCharacters = [
     "f"  /* Low flash */
 ];
 
-(:highMemory :rectangle :touchScreen :highResolution)
+(:highMemory :rectangle :nonTouchScreen :mediumResolution :buttonPanel)
 const controlModes = [
     "S", /* SMART */
     "N", /* NETWORK */
     "M"  /* MANUAL */
 ];
 
-(:highMemory :rectangle :touchScreen :highResolution)
+(:highMemory :rectangle :nonTouchScreen :mediumResolution :buttonPanel)
 const networkModes = [
     "INDV", /* LIGHT_NETWORK_MODE_INDIVIDUAL */
     "AUTO", /* LIGHT_NETWORK_MODE_AUTO */
@@ -39,7 +39,7 @@ const networkModes = [
     "TRAIL"
 ];
 
-(:highMemory :rectangle :touchScreen :highResolution)
+(:highMemory :rectangle :nonTouchScreen :mediumResolution :buttonPanel)
 class BikeLightsView extends  WatchUi.DataField  {
 
     // Fonts
@@ -111,7 +111,7 @@ class BikeLightsView extends  WatchUi.DataField  {
     // Pre-calculated fields
     protected var _isFullScreen;
     protected var _fieldWidth;
-    protected var _batteryWidth = 68;
+    protected var _batteryWidth = 49;
     protected var _batteryY;
     protected var _lightY;
     protected var _titleY;
@@ -689,15 +689,6 @@ class BikeLightsView extends  WatchUi.DataField  {
     function onUpdate(dc) {
         var timer = System.getTimer();
         refreshNetworkAfterHiddenPage(timer);
-        if (_configTapTime != null && timer - _configTapTime > 450) {
-            // Apply exactly the profile whose name was previewed.
-            var nextConfig = _pendingConfig;
-            _configTapTime = null;
-            _pendingConfig = null;
-            if (_isFullScreen && _initializedLights > 0 && _errorCode == null && !DataFieldUi.isMenuOpen()) {
-                applyConfiguration(nextConfig);
-            }
-        }
         if (_updateSettings) {
             _updateSettings = false;
             onSettingsChanged(true);
@@ -720,10 +711,6 @@ class BikeLightsView extends  WatchUi.DataField  {
             preCalculate(dc, width, height);
         }
 
-        if (_isFullScreen && DataFieldUi.onUpdate(dc, fgColor, bgColor)) {
-            return;
-        }
-
         var text = _errorCode != null ? "Error " + _errorCode
             : _initializedLights == 0 ? "No network"
             : null;
@@ -736,10 +723,6 @@ class BikeLightsView extends  WatchUi.DataField  {
             return;
         }
 
-        if (_isFullScreen) {
-            drawLightPanels(dc, width, height, fgColor, bgColor);
-            return;
-        }
         // One field, internally divided. Never substitute the legacy icon layout.
         if (width >= System.getDeviceSettings().screenWidth && activeCardsFit(dc, width, height)) {
             drawActiveLightCards(dc, width, height, fgColor, bgColor);
@@ -934,59 +917,6 @@ class BikeLightsView extends  WatchUi.DataField  {
         }
     }
 
-    private function isConfigurationButton(location) {
-        return _isFullScreen && _panelInitialized && _panelFooter != null &&
-            location[0] >= _panelFooter[0] && location[0] < _panelFooter[0] + _panelFooter[2] &&
-            location[1] >= _panelFooter[1] && location[1] < _panelFooter[1] + _panelFooter[3];
-    }
-
-    function onTap(location) {
-        if (!isConfigurationButton(location)) {
-            _configTapTime = null;
-            _pendingConfig = null;
-            _configFeedbackTime = null;
-        }
-        if (DataFieldUi.onTap(location)) {
-            if (!DataFieldUi.isMenuOpen()) {
-                // Call onSettingsChanged in next onUpdate call. We don't want to call the method here in order to prevent Stack Overflow Error.
-                _updateSettings = true;
-            }
-
-            return true;
-        }
-
-        if (_fieldWidth == null || _initializedLights == 0 || _errorCode != null) {
-            if (_isFullScreen) {
-                DataFieldUi.pushMenu(new AppSettings.Menu(self));
-                return true;
-            }
-
-            return false;
-        }
-
-        // Find which light was tapped
-        var lightData = getLightData(_initializedLights == 1 ? null
-          : (_fieldWidth / 2) > location[0] ? (_invertLights ? 2 : 0)
-          : (_invertLights ? 0 : 2));
-        // Configuration switching does not require the tapped light to be connected.
-        if (isConfigurationButton(location)) {
-            onConfigurationTap();
-            return true;
-        }
-        if (getLightBatteryStatus(lightData) > 7 /* Invalid */) {
-            return false; // Battery is disconnected
-        }
-
-        var light = lightData[0];
-        var lightType = light.type;
-        var controlMode = lightData[4];
-        if (_isFullScreen) {
-            return onLightPanelTap(location, lightData, lightType, controlMode);
-        }
-
-        return onActiveCardTap(location, lightData);
-    }
-
     function getLightData(lightType) {
         return lightType == null
             ? headlightData[0] != null ? headlightData : taillightData
@@ -1012,48 +942,6 @@ class BikeLightsView extends  WatchUi.DataField  {
         return new MultiBikeLight(currentLight, light);
     }
 
-    private function onActiveCardTap(location, lightData) {
-        var lightType = lightData[0].type;
-        var bounds = _cardTapBounds[lightType == 0 ? 0 : 1];
-        if (bounds == null || location[0] < bounds[0] || location[0] >= bounds[0] + bounds[2] ||
-            location[1] < bounds[1] || location[1] >= bounds[1] + bounds[3]) { return false; }
-        var currentMode = lightData[7] != null ? lightData[7] : lightData[2];
-        if (location[0] >= bounds[4] && location[1] >= bounds[5]) {
-            // Share fullscreen behavior, including skipping Smart without filters.
-            onLightPanelModeChange(lightData, lightType, -1, lightData[4]);
-            return true;
-        }
-        var modes = configuredTapModes(lightType, getLightModes(lightData[0], lightData[17]));
-        // Off always follows the last configured non-Off mode.
-        modes.removeAll(0);
-        modes.add(0);
-        var index = modes.indexOf(currentMode);
-        var nextMode = modes[index == null || index < 0 ? 0 : (index + 1) % modes.size()];
-        setLightAndControlMode(lightData, lightType, nextMode, 2 /* MANUAL */);
-        return true;
-    }
-
-    private function configuredTapModes(lightType, supportedModes) {
-        var settings = lightType == 0 ? headlightPanelSettings : taillightPanelSettings;
-        var modes = [];
-        if (settings == null) { return modes; }
-        var index = 6;
-        for (var group = 0; group < settings[1]; group++) {
-            var count = settings[index];
-            index++;
-            for (var button = 0; button < count; button++) {
-                var mode = settings[index];
-                index += 2;
-                // Exclude control/configuration actions and unsupported modes.
-                // Repeated buttons retain their first position in the sequence.
-                if (mode >= 0 && supportedModes.indexOf(mode) >= 0 && modes.indexOf(mode) < 0) {
-                    modes.add(mode);
-                }
-            }
-        }
-        return modes;
-    }
-
     private function applyTapBehavior(lightData, tapBehavior) {
         var light = lightData[0];
         if (light == null) {
@@ -1073,8 +961,7 @@ class BikeLightsView extends  WatchUi.DataField  {
         var newControlMode = null;
         var controlModeIndex = controlModes.indexOf(controlMode);
         var lightModes = getLightModes(light, lightData[17]);
-        // The card represents configured buttons, not the light's raw capabilities.
-        var allowedLightModes = configuredTapModes(lightType, lightModes);
+        var allowedLightModes = tapBehavior[1] != null ? tapBehavior[1] : lightModes;
         var lightModeIndex = allowedLightModes.indexOf(lightData[7] != null ? lightData[7] : lightData[2]);
         var newLightModeIndex = lightModeIndex + 1;
         if (controlMode == 2 /* MANUAL */ && controlModeIndex >= 0 && lightModeIndex >= 0 && newLightModeIndex < allowedLightModes.size()) {
@@ -1107,8 +994,6 @@ class BikeLightsView extends  WatchUi.DataField  {
 
     protected function preCalculate(dc, width, height) {
         _fieldWidth = width;
-        var deviceSettings = System.getDeviceSettings();
-        _isFullScreen = width == deviceSettings.screenWidth && height == deviceSettings.screenHeight;
         _lightY = 0;
     }
     protected function initializeLights(newNetworkMode) {
@@ -1220,100 +1105,7 @@ class BikeLightsView extends  WatchUi.DataField  {
 
         _errorCode = errorCode;
         _initializedLights = errorCode == null ? initializedLights : 0;
-    }
-
-    protected function onLightPanelTap(location, lightData, lightType, controlMode) {
-        if (!_panelInitialized) {
-            return false;
-        }
-
-        var panelData = lightType == 0 /* LIGHT_TYPE_HEADLIGHT */ ? _headlightPanel : _taillightPanel;
-        var tapX = location[0];
-        var tapY = location[1];
-        if (isConfigurationButton(location)) {
-            onConfigurationTap();
-            return true;
-        }
-        var groupIndex = 9;
-        while (groupIndex < panelData.size()) {
-            var totalButtons = panelData[groupIndex];
-            // All buttons in the group have the same y and height, take the first one
-            var topY = panelData[groupIndex + 6];
-            var height = panelData[groupIndex + 8];
-            if (tapY >= topY && tapY < (topY + height)) {
-                for (var j = 0; j < totalButtons; j++) {
-                    var buttonIndex = groupIndex + 1 + (j * 8);
-                    var leftX = panelData[buttonIndex + 4];
-                    var width = panelData[buttonIndex + 6];
-                    if (tapX >= leftX && tapX < (leftX + width)) {
-                        var newMode = panelData[buttonIndex];
-                        onLightPanelModeChange(lightData, lightType, newMode, controlMode);
-                        return true;
-                    }
-                }
-            }
-
-            groupIndex += 1 + (totalButtons * 8);
-        }
-
-        return false;
-    }
-
-    private function onConfigurationTap() {
-        var now = System.getTimer();
-        if (_configTapTime != null) {
-            var elapsed = now - _configTapTime;
-            if (elapsed <= 450) {
-                _configTapTime = null;
-                _pendingConfig = null;
-                _configFeedbackTime = null;
-                DataFieldUi.pushMenu(new AppSettings.Menu(self));
-                return;
-            }
-            // Let the pending single tap finish before accepting another switch.
-            return;
-        }
-        _pendingConfig = findNextConfiguration();
-        _configTapTime = now;
-        _configFeedbackTime = -1;
-        WatchUi.requestUpdate();
-    }
-
-    private function findNextConfiguration() {
-        // A bounded search also handles an unset CC with no saved profiles.
-        var currentConfig = getPropertyValue("CC");
-        if (currentConfig == null) { currentConfig = 1; }
-        for (var attempt = 1; attempt <= 3; attempt++) {
-            var nextConfig = ((currentConfig - 1 + attempt) % 3) + 1;
-            var configValue = getPropertyValue(nextConfig == 1 ? "LC" : "LC" + nextConfig);
-            if (configValue != null && configValue.length() > 0) {
-                return nextConfig;
-            }
-        }
-        return null;
-    }
-
-    private function applyConfiguration(nextConfig) {
-        if (nextConfig != null) {
-            Properties.setValue("CC", nextConfig);
-            _updateSettings = true;
-        }
-    }
-
-    private function cycleConfiguration() {
-        applyConfiguration(findNextConfiguration());
-    }
-
-    protected function onLightPanelModeChange(lightData, lightType, lightMode, controlMode) {
-        if (lightMode == -2) {
-            cycleConfiguration();
-            return;
-        }
-
-        var newControlMode = lightMode < 0 ? controlMode != 0 /* SMART */ && lightData[18] /* Filters */ != null ? 0 : 1 /* NETWORK */
-            : controlMode != 2 /* MANUAL */ ? 2
-            : null;
-        setLightAndControlMode(lightData, lightType, lightMode, newControlMode);
+        _lightY = null; // Force to pre-calculate again to update icon fonts
     }
 
     protected function setLightMode(lightData, mode, title, force) {
@@ -1596,26 +1388,36 @@ class BikeLightsView extends  WatchUi.DataField  {
         setupHighMemoryConfiguration(configuration, setupSensors);
     }
 
+    (:settings)
     private function setupLightButtons(configuration, setupSensors) {
         _panelInitialized = false;
         headlightPanelSettings = configuration[11];
         taillightPanelSettings = configuration[12];
+        headlightSettings = panelMenuSettings(headlightPanelSettings);
+        taillightSettings = panelMenuSettings(taillightPanelSettings);
         setupHighMemoryConfiguration(configuration, setupSensors);
-        var lightsTapBehavior = configuration[15];
-        if (lightsTapBehavior != null) {
-            headlightIconTapBehavior = lightsTapBehavior[0];
-            taillightIconTapBehavior = lightsTapBehavior[1];
-        } else {
-            headlightIconTapBehavior = null;
-            taillightIconTapBehavior = null;
-        }
     }
 
-    (:settings)
-    private function setupLightButtons(configuration, setupSensors) {
-        headlightSettings = configuration[11];
-        taillightSettings = configuration[12];
-        setupHighMemoryConfiguration(configuration, setupSensors);
+    private function panelMenuSettings(panel) {
+        if (panel == null) { return null; }
+        var result = [panel[2]];
+        var index = 6;
+        for (var g = 0; g < panel[1]; g++) {
+            var count = panel[index];
+            index++;
+            for (var b = 0; b < count; b++) {
+                var mode = panel[index];
+                index++;
+                var title = panel[index];
+                index++;
+                if (mode >= 0) {
+                    var graphics = LightPanelGraphics.parseTitle(title);
+                    result.add(graphics == null ? title : graphics[0]);
+                    result.add(mode);
+                }
+            }
+        }
+        return result;
     }
 
     private function setupHighMemoryConfiguration(configuration, setupSensors) {
@@ -1680,7 +1482,6 @@ class BikeLightsView extends  WatchUi.DataField  {
         var cards = [activeCardData(headlightData, headlightPanelSettings),
             activeCardData(taillightData, taillightPanelSettings)];
         LightPanelGraphics.initializeFonts();
-        LightPanelGraphics.prominentModeIcons = true;
         for (var c = 0; c < cards.size(); c++) {
             if (cards[c] != null) {
                 LightPanelGraphics.includeMode(dc, cards[c][1], cellWidth - (_initializedLights > 1 ? 6 : 8), contentHeight);
@@ -1722,7 +1523,6 @@ class BikeLightsView extends  WatchUi.DataField  {
         var controlFont = WatchUi.loadResource(Rez.Fonts.panelControlFont);
         var contentHeight = cardHeight - dc.getFontHeight(controlFont) - 4;
         LightPanelGraphics.initializeFonts();
-        LightPanelGraphics.prominentModeIcons = true;
         if (head != null) { LightPanelGraphics.includeMode(dc, head[1], cellWidth - (_initializedLights > 1 ? 6 : 8), contentHeight); }
         if (tail != null) { LightPanelGraphics.includeMode(dc, tail[1], cellWidth - (_initializedLights > 1 ? 6 : 8), contentHeight); }
         var left = _invertLights ? tail : head;
@@ -1769,384 +1569,6 @@ class BikeLightsView extends  WatchUi.DataField  {
                 Graphics.FONT_XTINY, status, Graphics.TEXT_JUSTIFY_LEFT);
         }
         dc.drawText(x + w - 8, statusY, controlFont, controlIcon, Graphics.TEXT_JUSTIFY_RIGHT);
-        // Include a small touch margin around the bottom-right control icon.
-        _cardTapBounds[lightData[0].type == 0 ? 0 : 1] = [x, y, w, height,
-            x + w - 16 - dc.getTextWidthInPixels(controlIcon, controlFont), statusY - 4];
-    }
-
-    private function drawLightPanels(dc, width, height, fgColor, bgColor) {
-        if (!_panelInitialized) {
-            initializeLightPanels(dc, width, height);
-        }
-
-        // In case the initialization was not successful, skip drawing
-        if (_errorCode != null) {
-            return;
-        }
-
-        dc.setPenWidth(2);
-        if (_initializedLights == 1) {
-            var lightData = getLightData(null);
-            drawLightPanel(dc, lightData, lightData[0].type == 0 /* LIGHT_TYPE_HEADLIGHT */ ? _headlightPanel : _taillightPanel, width, height, fgColor, bgColor);
-            drawPanelConfiguration(dc, fgColor, bgColor);
-            return;
-        }
-
-        drawLightPanel(dc, headlightData, _headlightPanel, width, height, fgColor, bgColor);
-        drawLightPanel(dc, taillightData, _taillightPanel, width, height, fgColor, bgColor);
-        drawPanelConfiguration(dc, fgColor, bgColor);
-    }
-
-    private function getDefaultLightPanelSettings(lightType, capableModes) {
-        var totalButtonGroups = capableModes.size();
-        var data = [];
-        data.add(totalButtonGroups); // Total buttons
-        data.add(totalButtonGroups); // Total button groups
-        data.add(lightType == 0 /* LIGHT_TYPE_HEADLIGHT */ ? "Headlight" : "Taillight"); // Light name
-        data.add(0 /* Theme */); // Button color
-        data.add(0xFFFFFF /* White */); // Button text color
-        data.add(-1 /* Do not display */); // Display group name text size
-        for (var i = 0; i < totalButtonGroups; i++) {
-            var mode = capableModes[i];
-            var totalGroupButtons = mode == 0 /* Off */ ? 2 : 1; // Number of buttons;
-            data.add(totalGroupButtons); // Total buttons in the group
-            data.add(mode == 0 ? -1 : mode); // Light mode
-            data.add(mode == 0 ? null : mode.toString()); // Mode name
-            if (mode == 0 /* Off */) {
-                data[0]++;
-                data.add(mode);
-                data.add("Off");
-            }
-        }
-
-        return data;
-    }
-
-    private function initializeLightPanels(dc, width, height) {
-        LightPanelGraphics.initializeFonts();
-        _panelIconFont = WatchUi.loadResource(Rez.Fonts[:panelControlLargeFont]);
-        var footerHeight = dc.getFontHeight(0) * 2 + 10;
-        var currentConfig = getPropertyValue("CC");
-        var configName = getPropertyValue("CN" + (currentConfig == null ? 1 : currentConfig));
-        if (configName == null) { configName = "Config"; }
-        _panelFooter = [width * 0.3, height - footerHeight, width * 0.4, footerHeight, configName];
-        if (_initializedLights == 1) {
-            initializeLightPanel(dc, getLightData(null), 2, width, height);
-        } else {
-            initializeLightPanel(dc, headlightData, _invertLights ? 3 : 1, width, height);
-            initializeLightPanel(dc, taillightData, _invertLights ? 1 : 3, width, height);
-        }
-
-        _panelInitialized = true;
-    }
-
-    private function initializeLightPanel(dc, lightData, position, width, height) {
-        var x = position < 3 ? 0 : (width / 2); // Left x
-        var y = 0;
-        var buttonGroupWidth = (position != 2 /* Center */ ? width / 2 : width);
-        var capableModes = getLightModes(lightData[0], lightData[17]);
-        var fontTopPaddings = WatchUi.loadResource(Rez.JsonData.FontTopPaddings)[0];
-        var panelSettings = lightData[0].type == 0 /* LIGHT_TYPE_HEADLIGHT */ ? headlightPanelSettings : taillightPanelSettings;
-        if (panelSettings == null) {
-            panelSettings = getDefaultLightPanelSettings(lightData[0].type, capableModes);
-        }
-
-        panelSettings = LightPanelGraphics.panelSettings(panelSettings);
-        // This is the active automation/filter group, not a light-type heading.
-        var groupName = null;
-        if (panelSettings[5] >= 0) {
-            var groupFont = panelSettings[5];
-            y = dc.getFontHeight(groupFont) + 4;
-            groupName = [x + buttonGroupWidth / 2, 2, groupFont, buttonGroupWidth - 8];
-        }
-        if (lightData[0].type == 0) { _headlightGroupName = groupName; }
-        else { _taillightGroupName = groupName; }
-
-        var i;
-        var totalButtonGroups = panelSettings[1];
-        // [:TotalButtonGroups:, :LightName:, :ButtonColor:, :ButtonTextColor:, :LightNameX:, :LightNameY:, :BatteryX:, :BatteryY:, :ModeScales [max lumens, max full-charge hours]:, (<ButtonGroup>)+]
-        // <ButtonGroup> := [:NumberOfButtons:, :Mode:, :TitleX:, :TitleFont:, (<TitlePart>)+, :ButtonLeftX:, :ButtonTopY:, :ButtonWidth:, :ButtonHeight:){:NumberOfButtons:} ]
-        // <TitlePart> := [(:Title:, :TitleY:)+]
-        var panelData = new [9 + (8 * panelSettings[0]) + totalButtonGroups];
-        panelData[0] = totalButtonGroups;
-        var footerHeight = _panelFooter[3];
-        var compactGroups = 0;
-        var weightIndex = 6;
-        for (var g = 0; g < totalButtonGroups; g++) {
-            if (LightPanelGraphics.groupWeight(panelSettings, weightIndex) < 1) { compactGroups++; }
-            weightIndex += 1 + panelSettings[weightIndex] * 2;
-        }
-        var availableHeight = height - footerHeight - y;
-        var compactHeight = dc.getFontHeight(0) * 3;
-        if (totalButtonGroups > 0 && compactHeight > availableHeight / totalButtonGroups) {
-            compactHeight = availableHeight / totalButtonGroups;
-        }
-        var normalGroups = totalButtonGroups - compactGroups;
-        var normalHeight = normalGroups > 0 ? (availableHeight - compactGroups * compactHeight) / normalGroups : 0;
-        var buttonHeight = 0;
-        var maxLumens = [0, 0];
-        var fontResult = [0];
-        var textPadding = 4 * 4;
-        var groupIndex = 9;
-        var settingsGroupIndex = 6;
-        for (i = 0; i < totalButtonGroups; i++) {
-            buttonHeight = LightPanelGraphics.groupWeight(panelSettings, settingsGroupIndex) < 1 ? compactHeight : normalHeight;
-            var totalButtons = panelSettings[settingsGroupIndex];
-            var buttonWidth = buttonGroupWidth / totalButtons;
-            panelData[groupIndex] = totalButtons; // Buttons in group
-            var titleParts = null;
-            for (var j = 0; j < totalButtons; j++) {
-                var buttonIndex = groupIndex + 1 + (j * 8);
-                var modeIndex = settingsGroupIndex + 1 + (j * 2);
-                var buttonX = x + (buttonWidth * j);
-                var mode = panelSettings[modeIndex];
-                if (mode > 0 && capableModes.indexOf(mode) < 0) {
-                    _errorCode = 3;
-                    recordModeError(lightData[0], mode, "Panel group " + (i + 1) + ", button " + (j + 1));
-                    return;
-                }
-
-                var modeTitle;
-                if (mode == -2) {
-                    var currentConfig = getPropertyValue("CC");
-                    var currentConfigName = getPropertyValue("CN" + (currentConfig == null ? 1 : currentConfig));
-                    modeTitle = currentConfigName == null ? "" : currentConfigName;
-                } else if (mode < 0) {
-                    modeTitle = "M";
-                } else {
-                    modeTitle = panelSettings[modeIndex + 1];
-                }
-
-                var graphics = mode > 0 ? LightPanelGraphics.parseTitle(modeTitle) : null;
-                if (AppTheme.textOnly && graphics != null) {
-                    // Keep only the display name; saved metadata remains intact.
-                    modeTitle = graphics[0];
-                    graphics = null;
-                }
-                var textStack = StringHelper.getTextStack(modeTitle, buttonHeight - textPadding);
-                var titleList = StringHelper.trimText(dc, textStack, 4, buttonWidth - textPadding, fontTopPaddings, fontResult);
-                var titleFont = fontResult[0];
-                //System.println("TF=" + titleFont + " TL=" + titleList);
-                var titleFontHeight = dc.getFontHeight(titleFont);
-                var titleFontTopPadding = StringHelper.getFontTopPadding(titleFont, fontTopPaddings);
-                var titleY = y + (buttonHeight - (titleList.size() * titleFontHeight) - titleFontTopPadding) / 2 + 4;
-                titleParts = new [2 * titleList.size()];
-                for (var k = 0; k < titleList.size(); k++) {
-                   var partIndex = k * 2;
-                   titleParts[partIndex] = titleList[k];
-                   titleParts[partIndex + 1] = titleY;
-                   titleY += titleFontHeight;
-                }
-
-                if (graphics != null) {
-                    // Match the two-pixel face margins used by drawLightPanel.
-                    LightPanelGraphics.includeMode(dc, graphics, buttonWidth - 4, buttonHeight - 4);
-                    titleFont = -1; // Rich mode data instead of pre-laid-out title parts.
-                    titleParts = graphics;
-                    if (graphics[1] != null && graphics[1] > maxLumens[0]) { maxLumens[0] = graphics[1]; }
-                    if (graphics[2] != null && graphics[2] > maxLumens[1]) { maxLumens[1] = graphics[2]; }
-                }
-                // Set data
-                panelData[buttonIndex] = mode; // Light mode
-                panelData[buttonIndex + 1] = buttonX + (buttonWidth / 2); // Title x
-                panelData[buttonIndex + 2] = titleFont; // Title font
-                panelData[buttonIndex + 3] = titleParts; // Title parts
-                panelData[buttonIndex + 4] = buttonX; // Button left x
-                panelData[buttonIndex + 5] = y; // Button top y
-                panelData[buttonIndex + 6] = buttonWidth; // Button width
-                panelData[buttonIndex + 7] = buttonHeight; // Button height
-            }
-
-            groupIndex += 1 + (totalButtons * 8);
-            settingsGroupIndex += 1 + (totalButtons * 2);
-            y += buttonHeight;
-        }
-
-        if (AppTheme.textOnly) { LightPanelGraphics.unifyTextFonts(dc, panelData, fontTopPaddings); }
-
-        // The footer has two outer light summaries and one shared cycle target.
-        x = position == 2 ? width * 0.15 : position == 1 ? width * 0.15 : width * 0.85;
-        panelData[1] = StringHelper.trimTextByWidth(dc, panelSettings[2], 0, width * 0.28);
-        panelData[2] = AppTheme.accent;
-        panelData[3] = LightPanelGraphics.WHITE;
-        panelData[4] = x;
-        panelData[5] = _panelFooter[1] + 4;
-        panelData[6] = x;
-        panelData[7] = _panelFooter[1] + dc.getFontHeight(0) + 5;
-        panelData[8] = maxLumens;
-
-        if (lightData[0].type == 0 /* LIGHT_TYPE_HEADLIGHT */) {
-            _headlightPanel = panelData;
-        } else {
-            _taillightPanel = panelData;
-        }
-    }
-
-    private function drawLightPanel(dc, lightData, panelData, width, height, fgColor, bgColor) {
-        var controlMode = lightData[4];
-        var nextLightMode = lightData[7];
-        var lightMode = nextLightMode != null ? nextLightMode : lightData[2];
-        var margin = 2;
-        var buttonPadding = margin * 2;
-        var batteryStatus = getLightBatteryStatus(lightData);
-        if (batteryStatus > 7 /* Varia eRTL615 - Invalid */) {
-            return;
-        }
-
-        var groupName = lightData[0].type == 0 ? _headlightGroupName : _taillightGroupName;
-        if (groupName != null && lightData[5] != null) {
-            setTextColor(dc, fgColor);
-            var groupTitle = StringHelper.trimTextByWidth(dc, lightData[5], groupName[2], groupName[3]);
-            dc.drawText(groupName[0], groupName[1], groupName[2], groupTitle, Graphics.TEXT_JUSTIFY_CENTER);
-        }
-
-        // [:TotalButtonGroups:, :LightName:, :ButtonColor:, :ButtonTextColor:, :LightNameX:, :LightNameY:, :BatteryX:, :BatteryY:, :ModeScales [max lumens, max full-charge hours]:, (<ButtonGroup>)+]
-        // <ButtonGroup> := [:NumberOfButtons:, :Mode:, :TitleX:, :TitleFont:, (<TitlePart>)+, :ButtonLeftX:, :ButtonTopY:, :ButtonWidth:, :ButtonHeight:){:NumberOfButtons:} ]
-        // <TitlePart> := [(:Title:, :TitleY:)+]
-        var totalButtonGroups = panelData[0];
-        var groupIndex = 9;
-        for (var i = 0; i < totalButtonGroups; i++) {
-            var totalButtons = panelData[groupIndex];
-            for (var j = 0; j < totalButtons; j++) {
-                var buttonIndex = groupIndex + 1 + (j * 8);
-                var mode = panelData[buttonIndex];
-                var titleX = panelData[buttonIndex + 1];
-                var titleFont = panelData[buttonIndex + 2];
-                var titleParts = panelData[buttonIndex + 3];
-                var buttonX = panelData[buttonIndex + 4] + margin;
-                var buttonY = panelData[buttonIndex + 5] + margin;
-                var buttonWidth = panelData[buttonIndex + 6] - buttonPadding;
-                var buttonHeight = panelData[buttonIndex + 7] - buttonPadding;
-                var isSelected = lightMode == mode;
-
-                // Runtime-filled cards use an outline; other buttons use a solid selection face.
-                var isModeCard = titleFont == -1 && mode > 0 && !AppTheme.hideFill;
-                var faceColor = isSelected && !isModeCard ? panelData[2] : bgColor;
-                var radius = buttonWidth >= 180 ? 18 : 12;
-                if (radius > buttonHeight / 3) { radius = buttonHeight / 3; }
-                if (radius > buttonWidth / 3) { radius = buttonWidth / 3; }
-                dc.setPenWidth(isSelected ? 2 : 1);
-                setTextColor(dc, faceColor);
-                dc.fillRoundedRectangle(buttonX, buttonY, buttonWidth, buttonHeight, radius);
-                if (isModeCard) {
-                    LightPanelGraphics.drawRuntimeFill(dc, titleParts, batteryStatus, buttonX, buttonY, buttonWidth, buttonHeight, radius, bgColor, panelData[8][1]);
-                }
-                dc.setPenWidth(isSelected && isModeCard ? 3 : isSelected ? 2 : 1);
-                setTextColor(dc, isSelected && isModeCard ? (bgColor == 0x000000 ? AppTheme.onDark : AppTheme.accent) : isSelected ? panelData[2] : fgColor);
-                dc.drawRoundedRectangle(buttonX, buttonY, buttonWidth, buttonHeight, radius);
-                setTextColor(dc, isSelected && !isModeCard ? panelData[3] : fgColor);
-                if (mode == -3) {
-                    drawButtonBattery(dc, fgColor, bgColor, buttonX, buttonY, buttonWidth, buttonHeight, batteryStatus);
-                } else if (mode == -1 || mode == 0) {
-                    // Fit the square icon inside the face, keeping a two-pixel margin.
-                    var iconSize = (buttonHeight < buttonWidth ? buttonHeight : buttonWidth) - 4;
-                    var icon = mode == 0 ? "P" : $.controlModes[controlMode];
-                    var iconFont = dc.getFontHeight(_panelIconFont) <= iconSize ? _panelIconFont : _controlModeFont;
-                    dc.drawText(titleX, buttonY + (buttonHeight - dc.getFontHeight(iconFont)) / 2, iconFont, icon, 1 /* TEXT_JUSTIFY_CENTER */);
-                } else if (titleFont == -1) {
-                    LightPanelGraphics.drawMode(dc, titleParts, panelData[8][0], batteryStatus, buttonX, buttonY, buttonWidth, buttonHeight, isSelected, isSelected && !isModeCard ? panelData[3] : fgColor, faceColor);
-                } else {
-                    for (var k = 0; k < titleParts.size(); k += 2) {
-                        dc.drawText(titleX, titleParts[k + 1], titleFont, titleParts[k], 1 /* TEXT_JUSTIFY_CENTER */);
-                    }
-                }
-            }
-
-            groupIndex += 1 + (totalButtons * 8);
-        }
-
-        setTextColor(dc, fgColor);
-        if (panelData[1] != null) {
-            dc.drawText(panelData[4], panelData[5], 0, panelData[1], 1 /* TEXT_JUSTIFY_CENTER */);
-        }
-
-        drawPanelBattery(dc, panelData[6], panelData[7], batteryStatus, fgColor);
-    }
-
-    private function drawPanelBattery(dc, x, y, status, fgColor) {
-        var percent = LightPanelGraphics.batteryPercent(status);
-        var label = percent == null ? status == 6 ? "Chg" : "--" : "~" + percent + "%";
-        var labelWidth = dc.getTextWidthInPixels(label, 0);
-        var left = x - (labelWidth + 22) / 2;
-        var top = y + dc.getFontHeight(0) / 2 - 5;
-        setTextColor(dc, percent != null && percent <= 25 ? (fgColor == 0xFFFFFF ? 0xFF6666 : LightPanelGraphics.RED) : fgColor);
-        dc.setPenWidth(1);
-        dc.drawRectangle(left, top, 16, 10);
-        dc.fillRectangle(left + 16, top + 3, 2, 4);
-        if (status == 6 /* BATT_STATUS_CHARGE */) {
-            // Draw a lightning bolt inside the existing battery shell.
-            dc.drawLine(left + 10, top + 2, left + 6, top + 5);
-            dc.drawLine(left + 6, top + 5, left + 10, top + 5);
-            dc.drawLine(left + 10, top + 5, left + 6, top + 8);
-        } else if (percent != null) {
-            dc.fillRectangle(left + 2, top + 2, percent < 9 ? 1 : 12 * percent / 100, 6);
-        }
-        dc.drawText(left + 22, y, 0, label, Graphics.TEXT_JUSTIFY_LEFT);
-    }
-
-    private function drawPanelConfiguration(dc, fgColor, bgColor) {
-        if (_panelFooter == null) { return; }
-        var x = _panelFooter[0];
-        var y = _panelFooter[1];
-        var width = _panelFooter[2];
-        var height = _panelFooter[3];
-        setTextColor(dc, fgColor);
-        dc.setPenWidth(1);
-        dc.drawLine(3, y, dc.getWidth() - 3, y);
-        var iconSize = 16;
-        var configName = _pendingConfig != null ? getPropertyValue("CN" + _pendingConfig) : _panelFooter[4];
-        if (configName == null) { configName = "Config"; }
-        var text = StringHelper.trimTextByWidth(dc, configName, 0, width - iconSize - 10);
-        var textWidth = dc.getTextWidthInPixels(text, 0);
-        var left = x + (width - textWidth - iconSize - 6) / 2;
-        // A delayed redraw must still show feedback, even after the switch.
-        // Keep it for one second from its first draw, independently of tap detection.
-        var now = System.getTimer();
-        if (_configFeedbackTime == -1) {
-            _configFeedbackTime = now;
-        } else if (_configFeedbackTime != null && now - _configFeedbackTime >= 1000) {
-            _configFeedbackTime = null;
-        }
-        var pressed = _configFeedbackTime != null;
-        if (pressed) {
-            setTextColor(dc, AppTheme.accent);
-            dc.fillRoundedRectangle(x + 2, y + 2, width - 4, height - 4, 4);
-        }
-        setTextColor(dc, pressed ? LightPanelGraphics.WHITE : bgColor == 0x000000 ? AppTheme.onDark : AppTheme.accent);
-        LightPanelGraphics.drawIcon(dc, pressed ? "cycle-flipped" : "cycle", left + iconSize / 2, y + height / 2, iconSize, pressed ? AppTheme.accent : bgColor);
-        dc.drawText(left + iconSize + 6, y + (height - dc.getFontHeight(0)) / 2, 0, text, Graphics.TEXT_JUSTIFY_LEFT);
-    }
-
-    private function drawButtonBattery(dc, fgColor, bgColor, buttonX, buttonY, buttonWidth, buttonHeight, batteryStatus) {
-        var maxBatteryWidth = buttonWidth > buttonHeight * 2
-            ? ((buttonHeight * 0.8) * 2).toNumber()
-            : (((buttonWidth / 2 - buttonWidth / 8 /* battery top */) * 0.8) * 2).toNumber();
-        var padding =  maxBatteryWidth > 180 ? 5
-            : maxBatteryWidth > 90 ? 4
-            : maxBatteryWidth > 45 ? 3
-            : 2;
-        var totalPadding = padding * 6;
-        var diff = (maxBatteryWidth - totalPadding) % 5;
-        var batteryWidth = maxBatteryWidth - diff;
-        var batteryHeight = batteryWidth / 2;
-        var x = buttonX + buttonWidth / 2 - (batteryWidth / 2) - (batteryHeight / 8) /* battery top */;
-        var y = buttonY + buttonHeight / 2 - (batteryHeight / 2);
-        var barWidth = (batteryWidth - totalPadding) / 5;
-        var barHeight = batteryHeight - ((padding + 1) * 2) - 1;
-        var topHeight = batteryHeight - batteryHeight / 3;
-        var color = batteryStatus == 6 /* BATT_STATUS_CHARGE */ ? fgColor
-            : batteryStatus == 5 /* BATT_STATUS_CRITICAL */ ? 0xFF0000 /* COLOR_RED */
-            : batteryStatus > 2 /* BATT_STATUS_GOOD */ ? 0xFF5500 /* COLOR_ORANGE */
-            : 0x00AA00; /* COLOR_DK_GREEN */
-        //System.println("h=" + batteryHeight + " bw=" + barWidth + " bh" + barHeight + " th=" + topHeight);
-        dc.setPenWidth(2);
-        dc.drawRectangle(x, y, batteryWidth + 3, batteryHeight);
-        dc.drawRectangle(x + batteryWidth + 2, y + batteryHeight / 6, batteryHeight / 4, topHeight);
-        dc.setColor(color, bgColor);
-
-        for (var i = 0; i < (6 - batteryStatus); i++) {
-            dc.fillRectangle(x + (1 + padding) + (barWidth + padding) * i, y + (1 + padding), barWidth, barHeight);
-        }
     }
 
     (:lightButtons)
@@ -2448,7 +1870,7 @@ class BikeLightsView extends  WatchUi.DataField  {
             parseLightButtons(chars, null, filterResult),      // Taillight panel/settings buttons
             parseIndividualNetwork(chars, null, filterResult), // Individual network settings
             parseForceSmartMode(chars, null, filterResult),    // Force smart mode
-            parseLightsTapBehavior(chars, null, filterResult), // Light icons tap behavior
+            null,
             parseSeparatorColor(chars, null, filterResult),    // Separator color
             parseRemoteControllers(chars, null, filterResult), // Remote controllers
             parseBikeRadarNumber(chars, null, filterResult)    // Bike radar number
@@ -2528,7 +1950,7 @@ class BikeLightsView extends  WatchUi.DataField  {
     // <Button> := <ModeTitle>:<LightMode>
     // Example: 6:Ion Pro RT|Off:0|High:1|Medium:2|Low:5|Night Flash:62|Day Flash:63
     (:settings)
-    private function parseLightButtons(chars, i, filterResult) {
+    private function parseMenuLightButtons(chars, i, filterResult) {
         var totalButtons = parse(1 /* NUMBER */, chars, i, filterResult);
         if (totalButtons == null || totalButtons > 20) {
             return null;
@@ -2559,11 +1981,22 @@ class BikeLightsView extends  WatchUi.DataField  {
     // <Button> := <ModeTitle>:<LightMode>
     // Example: 7,6:Ion Pro RT|2,:-1,Off:0|1,High:1|1,Medium:2|1,Low:5|1,Night Flash:62|1,Day Flash:63
     private function parseLightButtons(chars, i, filterResult) {
+        var startCursor = filterResult[0];
         var totalButtons = parse(1 /* NUMBER */, chars, i, filterResult);
         if (totalButtons == null) {
             return null;
         }
 
+        if (chars[filterResult[0]] == ':') {
+            filterResult[0] = startCursor;
+            var legacy = parseMenuLightButtons(chars, i, filterResult);
+            if (legacy == null) { throw new Lang.Exception(); }
+            var panel = [totalButtons, totalButtons, legacy[0], 0, 0xFFFFFF, -1];
+            for (var n = 1; n < legacy.size(); n += 2) {
+                panel.add(1); panel.add(legacy[n + 1]); panel.add(legacy[n]);
+            }
+            return panel;
+        }
         var totalButtonGroups = parse(1 /* NUMBER */, chars, null, filterResult);
         // [:TotalButtons:, :TotalButtonGroups:, :LightName:, :ButtonColor:, :ButtonTextColor:, :ModeScales [max lumens, max full-charge hours]:, (<ButtonGroup>)+]
         // <ButtonGroup> = :NumberOfButtons:, (<Button>){:NumberOfButtons:})

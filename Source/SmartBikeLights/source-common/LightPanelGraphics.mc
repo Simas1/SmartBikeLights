@@ -2,9 +2,9 @@ using Toybox.Math;
 using Toybox.Graphics;
 using Toybox.WatchUi;
 
-// Kept out of non-touch builds. Metadata lives in the existing title field so
+// Shared by touch panels and button-device display panels. Metadata lives in the title so
 // old configurations and the configuration parser retain their wire format.
-(:touchScreen)
+(:highMemory)
 module LightPanelGraphics {
     const WHITE = 0xFFFFFF;
     const RED = 0xCC2222;
@@ -12,6 +12,8 @@ module LightPanelGraphics {
     var _modeIconsLarge;
     var _modeIconsWide;
     var _modeIconsExtra;
+    var _modeIconsXL;
+    var prominentModeIcons = false;
     var _modeTitleFont = 2;
     var _modeTitleIconSize = 18;
     var _modeTitleIconY = 0;
@@ -19,6 +21,7 @@ module LightPanelGraphics {
     // Load during panel setup, never inside the nested button drawing path.
     function initializeFonts() {
         _modeTitleFont = 2;
+        prominentModeIcons = false;
         if (_modeIconsSmall == null) {
             _modeIconsSmall = WatchUi.loadResource(Rez.Fonts.modeIconsSmall);
             _modeIconsLarge = WatchUi.loadResource(Rez.Fonts.modeIconsLarge);
@@ -241,6 +244,13 @@ module LightPanelGraphics {
             // excluding the font's descender space, and never use tiny status icons.
             var ascent = Graphics.getFontAscent(font);
             size = ascent >= 20 ? 28 : ascent > 16 ? 22 : 18;
+            if (prominentModeIcons) {
+                // Preserve the 540's prominent icon-to-text ratio on the 550.
+                size = ascent * 1.5 > 28 ? 36 : 28;
+                if (size == 36 && _modeIconsXL == null) {
+                    _modeIconsXL = WatchUi.loadResource(Rez.Fonts.modeIconsXL);
+                }
+            }
             var available = width - pad * 2 - (data[3].equals("none") ? 0 : size + 5);
             if (font == 0 || (titleWidth(dc, lines, font) <= available && dc.getFontHeight(font) * lines.size() <= height * 0.3)) { break; }
             font--;
@@ -375,7 +385,7 @@ module LightPanelGraphics {
         if (hasIcon) {
             // Draw directly: no extra icon/font wrapper frame on the Edge VM stack.
             dc.drawText(layout[1]+iconSize/2, layout[2]+_modeTitleIconY,
-                iconSize == 28 ? _modeIconsExtra : iconSize == 22 ? _modeIconsWide : _modeIconsLarge,
+                iconSize == 36 ? _modeIconsXL : iconSize == 28 ? _modeIconsExtra : iconSize == 22 ? _modeIconsWide : _modeIconsLarge,
                 data[3].equals("sun") ? "S" : (data[3].equals("headlight") || data[3].equals("headlight-high")) ? "H"
                 : data[3].equals("headlight-medium") ? "h" : data[3].equals("headlight-low") ? "L"
                 : (data[3].equals("taillight") || data[3].equals("taillight-high")) ? "T"

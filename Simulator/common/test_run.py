@@ -215,8 +215,8 @@ class PreviewTests(unittest.TestCase):
     def test_additional_edge_profiles_and_pipeline(self):
         import re
         expected = {'edge850': 'rectangleHighResolution',
-                    'edge550': 'rectangleNonTouchScreenHighResolution',
-                    'edge840': None, 'edge540': 'rectangleNonTouchScreen'}
+                    'edge550': 'rectangleButtonPanelHighResolution',
+                    'edge840': None, 'edge540': 'rectangleButtonPanel'}
         workflow = (preview.ROOT / '.github/workflows/build-sbl.yml').read_text()
         script = (preview.ROOT / '.github/actions/build-sbl/build-edge.sh').read_text()
         identities = [json.loads(path.read_text())['previewAppId'] for path in preview.SIMULATOR.glob('*/profile.json')]
@@ -264,7 +264,7 @@ class PreviewTests(unittest.TestCase):
             try:
                 resolved = json.loads((work / 'preview.json').read_text())['settings']
                 for key in ('LC', 'LC2', 'LC3'):
-                    self.assertEqual(resolved[key], preview.menu_configuration(settings[key]))
+                    self.assertEqual(resolved[key], settings[key])
             finally:
                 shutil.rmtree(work)
 

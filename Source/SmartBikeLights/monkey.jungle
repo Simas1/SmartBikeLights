@@ -1,5 +1,5 @@
 project.manifest = manifest.xml
-excludeBase=widget
+excludeBase=widget;buttonPanel
 
 project.optimization = 2
 project.typecheck = 0
@@ -20,6 +20,12 @@ rectangleNoSettings = $(excludeBase);touchScreen;lowMemory;settings;lightButtons
 rectangleNonTouchScreen = $(excludeBase);touchScreen;lowMemory;noLightButtons;round;semioctagon;monochromeScreen;highResolution
 rectangleHighResolution = $(excludeBase);nonTouchScreen;lowMemory;noLightButtons;round;semioctagon;settings;monochromeScreen;mediumResolution
 rectangleNonTouchScreenHighResolution = $(excludeBase);touchScreen;lowMemory;noLightButtons;round;semioctagon;monochromeScreen;mediumResolution
+
+rectangleButtonPanel = widget;touchScreen;lowMemory;noLightButtons;round;semioctagon;monochromeScreen;highResolution;noButtonPanel
+
+rectangleButtonPanelHighResolution = widget;touchScreen;lowMemory;noLightButtons;round;semioctagon;monochromeScreen;mediumResolution;noButtonPanel
+
+cardResources = resources/properties.xml;resources/settings.xml;resources/fitfields.xml;resources/data.xml;resources/strings.xml;resources-highmemory/panel-icons.xml;resources-highmemory/build-info.xml;resources-highmemory/strings.xml;resources-highmemory/properties.xml;resources-highmemory/settings.xml
 
 # maps default
 rectangle.excludeAnnotations = $(excludeBase);nonTouchScreen;lowMemory;noLightButtons;round;semioctagon;settings;monochromeScreen;highResolution
@@ -76,8 +82,8 @@ edge520plus.excludeAnnotations = $(rectangleNoSettings)
 edge520plus.resourcePath = $(edge520plus.resourcePath);resources-highmemory
 edge530.excludeAnnotations = $(rectangleNonTouchScreen)
 edge530.resourcePath = $(edge530.resourcePath);resources-highmemory
-edge540.excludeAnnotations = $(rectangleNonTouchScreen)
-edge540.resourcePath = $(edge540.resourcePath);resources-highmemory
+edge540.excludeAnnotations = $(rectangleButtonPanel)
+edge540.resourcePath = $(cardResources);resources-edge540
 edgemtb.excludeAnnotations = $(rectangleNonTouchScreen)
 edgemtb.resourcePath = $(edgemtb.resourcePath);resources-highmemory
 
@@ -100,8 +106,8 @@ edge850.resourcePath = resources-highmemory;$(edge850.resourcePath)
 edge850.excludeAnnotations = $(rectangleHighResolution)
 
 # Rectangle non touch screen devices with high resolution
-edge550.resourcePath = resources-highmemory;$(edge550.resourcePath)
-edge550.excludeAnnotations = $(rectangleNonTouchScreenHighResolution)
+edge550.resourcePath = $(cardResources);resources-edge550
+edge550.excludeAnnotations = $(rectangleButtonPanelHighResolution)
 venux1.resourcePath = resources-highmemory;$(venux1.resourcePath)
 venux1.excludeAnnotations = $(rectangleNonTouchScreenHighResolution)
 
