@@ -724,16 +724,21 @@ class BikeLightsView extends  WatchUi.DataField  {
         }
 
         // One field, internally divided. Never substitute the legacy icon layout.
-        if (activeCardsFit(dc, width, height)) {
+        if (width >= System.getDeviceSettings().screenWidth && activeCardsFit(dc, width, height)) {
             drawActiveLightCards(dc, width, height, fgColor, bgColor);
         } else {
             var font = Graphics.FONT_XTINY;
             var lineHeight = dc.getFontHeight(font);
-            var hint = !AppTheme.textOnly && (!AppTheme.hideLumens || !AppTheme.hideRuntime);
-            dc.drawText(width / 2, height / 2 - lineHeight, font, "Too small", Graphics.TEXT_JUSTIFY_CENTER);
-            dc.drawText(width / 2, height / 2, font, hint ? "Hide details" : "Enlarge field", Graphics.TEXT_JUSTIFY_CENTER);
-            if (hint) {
-                dc.drawText(width / 2, height / 2 + lineHeight, font, "in Settings", Graphics.TEXT_JUSTIFY_CENTER);
+            if (width < System.getDeviceSettings().screenWidth) {
+                dc.drawText(width / 2, height / 2 - lineHeight, font, "Use full-width", Graphics.TEXT_JUSTIFY_CENTER);
+                dc.drawText(width / 2, height / 2, font, "field", Graphics.TEXT_JUSTIFY_CENTER);
+            } else {
+                var hint = !AppTheme.textOnly && (!AppTheme.hideLumens || !AppTheme.hideRuntime);
+                dc.drawText(width / 2, height / 2 - lineHeight, font, "Too small", Graphics.TEXT_JUSTIFY_CENTER);
+                dc.drawText(width / 2, height / 2, font, hint ? "Hide details" : "Enlarge field", Graphics.TEXT_JUSTIFY_CENTER);
+                if (hint) {
+                    dc.drawText(width / 2, height / 2 + lineHeight, font, "in Settings", Graphics.TEXT_JUSTIFY_CENTER);
+                }
             }
         }
         return;
