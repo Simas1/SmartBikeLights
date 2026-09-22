@@ -1,4 +1,4 @@
-(:touchScreen)
+(:highMemory)
 module StringHelper {
 
     public function getTextStack(text, maxHeight) {

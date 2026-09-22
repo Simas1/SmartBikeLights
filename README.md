@@ -11,7 +11,8 @@ Smart Bike Lights is a [data field](https://developer.garmin.com/connect-iq/conn
 - Smart mode that control lights based on the configured filters
 - Records lights modes that are displayed in Garmin Connect
 - Configurable full screen light panel for fast switching modes (only for Edge devices with touch screen)
-- Support up to one headlight and one taillight that can be displayed on the smallest data field
+- Edge 540/550 show the active headlight and taillight mode cards in one sufficiently large data field, with neutral Off cards and physical-button control through native menus
+- Support up to one headlight and one taillight in one data field; Edge 540/550 require enough space for the mode cards and show “Field too small” otherwise
 - Switching light mode by tapping on the light icon (only for Edge devices with touch screen)
 - Switching modes by holding the up/menu button (only for devices without touch screen that have CIQ 3.2+ and with more than 32KB memory)
 - Has an alternative light network implementation that can be used for lights with partial ANT+ support (only for devices with more than 32KB memory)

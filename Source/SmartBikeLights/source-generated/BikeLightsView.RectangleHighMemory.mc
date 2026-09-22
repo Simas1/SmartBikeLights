@@ -14,7 +14,7 @@ using Toybox.Application.Properties as Properties;
 using Toybox.Attention;
 using Toybox.Graphics;
 
-(:highMemory :rectangle :nonTouchScreen :mediumResolution)
+(:highMemory :rectangle :nonTouchScreen :mediumResolution :noButtonPanel)
 const lightModeCharacters = [
     "S", /* High steady beam */
     "M", /* Medium steady beam */
@@ -24,14 +24,14 @@ const lightModeCharacters = [
     "f"  /* Low flash */
 ];
 
-(:highMemory :rectangle :nonTouchScreen :mediumResolution)
+(:highMemory :rectangle :nonTouchScreen :mediumResolution :noButtonPanel)
 const controlModes = [
     "S", /* SMART */
     "N", /* NETWORK */
     "M"  /* MANUAL */
 ];
 
-(:highMemory :rectangle :nonTouchScreen :mediumResolution)
+(:highMemory :rectangle :nonTouchScreen :mediumResolution :noButtonPanel)
 const networkModes = [
     "INDV", /* LIGHT_NETWORK_MODE_INDIVIDUAL */
     "AUTO", /* LIGHT_NETWORK_MODE_AUTO */
@@ -39,7 +39,7 @@ const networkModes = [
     "TRAIL"
 ];
 
-(:highMemory :rectangle :nonTouchScreen :mediumResolution)
+(:highMemory :rectangle :nonTouchScreen :mediumResolution :noButtonPanel)
 class BikeLightsView extends  WatchUi.DataField  {
 
     // Fonts
@@ -1268,6 +1268,7 @@ class BikeLightsView extends  WatchUi.DataField  {
         setTextColor(dc, color);
         dc.drawText(x, y, _batteryFont, batteryStatus.toString(), 1 /* TEXT_JUSTIFY_CENTER */);
     }
+
 
     protected function getSecondsOfDay(value) {
         value = value.toNumber();

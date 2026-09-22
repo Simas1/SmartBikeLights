@@ -78,7 +78,7 @@
       "files": ["source-preprocess/BikeLightsView.mc"],
       "definedSymbols": ["highMemory", "rectangle", "nonTouchScreen", "highResolution"],
       "includeSymbols": {
-        "TARGET": ":highMemory :rectangle :nonTouchScreen :highResolution",
+        "TARGET": ":highMemory :rectangle :nonTouchScreen :highResolution :noButtonPanel",
         "T_LIGHT_FONT_OFFSET_X": "4",
         "LIGHT_OFFSET_X": "36",
         "TITLE_OFFSET_X": "32",
@@ -103,7 +103,7 @@
       "files": ["source-preprocess/BikeLightsView.mc"],
       "definedSymbols": ["highMemory", "rectangle", "nonTouchScreen", "mediumResolution"],
       "includeSymbols": {
-        "TARGET": ":highMemory :rectangle :nonTouchScreen :mediumResolution"
+        "TARGET": ":highMemory :rectangle :nonTouchScreen :mediumResolution :noButtonPanel"
       }
     },
     {
@@ -211,6 +211,55 @@
     {
       "name": "TestNetwork",
       "files": ["source-preprocess/TestLightNetwork.mc"]
+    },
+    {
+      "name": "PanelRectangleHighMemory",
+      "files": [
+        "source-preprocess/BikeLightsView.mc"
+      ],
+      "definedSymbols": [
+        "highMemory",
+        "rectangle",
+        "nonTouchScreen",
+        "mediumResolution",
+        "buttonPanel"
+      ],
+      "includeSymbols": {
+        "TARGET": ":highMemory :rectangle :nonTouchScreen :mediumResolution :buttonPanel"
+      }
+    },
+    {
+      "name": "PanelRectangleHighResolution",
+      "files": [
+        "source-preprocess/BikeLightsView.mc"
+      ],
+      "definedSymbols": [
+        "highMemory",
+        "rectangle",
+        "nonTouchScreen",
+        "highResolution",
+        "buttonPanel"
+      ],
+      "includeSymbols": {
+        "TARGET": ":highMemory :rectangle :nonTouchScreen :highResolution :buttonPanel",
+        "T_LIGHT_FONT_OFFSET_X": "4",
+        "LIGHT_OFFSET_X": "36",
+        "TITLE_OFFSET_X": "32",
+        "CTRL_MODE_OFFSET_X": "10",
+        "CTRL_MODE_OFFSET_Y": "14",
+        "H_BATTERY_WIDTH": "68",
+        "H_BATTERY_HEIGHT": "26",
+        "LIGHT_HEIGHT": "48",
+        "T_LIGHT_L_FONT_OFFSET_X": "2",
+        "LIGHT_L_HEIGHT": "85",
+        "LIGHT_L_WIDTH": "116",
+        "V_BATTERY_L_WIDTH": "36",
+        "CTRL_MODE_L_OFFSET_X": "21",
+        "CTRL_MODE_L_OFFSET_Y": "26",
+        "LIGHT_L_V_BATTERY_OFFSET_X": "102",
+        "LIGHT_PANEL_MARGIN": "4",
+        "LIGHT_PANEL_FOOTER_HEIGHT": "30"
+      }
     }
   ]
 }

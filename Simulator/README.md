@@ -7,7 +7,7 @@ The pinned `directive-preprocessor@1.1.1` is downloaded through npx on first use
 Use the simulator launcher with a device ID and optional settings:
 
 Supported: `edge1040`, `edge1050`, `edge850`, `edge550`, `edge840`, `edge540`.
-Edge 540 and 550 use button controls, not the touchscreen light panel.
+Edge 540 and 550 show active-mode cards and use native menus for button controls.
 
 ```bash
 ./Simulator/run-simulator.sh edge1050 --settings Simulator/settings.example.json
@@ -105,12 +105,10 @@ Generated source and binaries remain under ignored `Build/simulator/`.
 
 Settings are shared across device profiles that support the same app properties;
 Device profiles select build qualifiers, simulator identity and settings format.
-For Edge 540/550, touchscreen panel definitions in all three configuration slots
-are converted to mode menus automatically. Touch-only controls and icon markers
-are omitted; light modes, serial filters and automation rules are preserved.
-Already menu-formatted configurations are unchanged. This conversion only affects
-the simulator build; physical-device settings still need the correct configurator
-device selection.
+Edge 540/550 retain panel definitions in all three configuration slots so the
+active-mode cards can show brightness and runtime metadata. Legacy menu-format
+configurations remain supported. The `--source upstream` preview still converts
+panel definitions to menus for compatibility with the upstream application.
 
 `--settings PATH` accepts a partial JSON object or Garmin `.SET` file. Omit it to
 use application defaults. To use the complete workflow defaults, pass
