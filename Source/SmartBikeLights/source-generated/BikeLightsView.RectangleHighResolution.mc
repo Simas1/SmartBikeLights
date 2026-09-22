@@ -942,6 +942,7 @@ class BikeLightsView extends  WatchUi.DataField  {
             }
 
             if (newControlMode == 2 /* MANUAL */) {
+                if (allowedLightModes.size() == 0) { return false; }
                 newMode = allowedLightModes[0];
             } else if (controlMode == newControlMode) {
                 return false;

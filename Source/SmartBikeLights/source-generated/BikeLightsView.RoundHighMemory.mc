@@ -945,6 +945,7 @@ class BikeLightsView extends  WatchUi.DataField  {
             }
 
             if (newControlMode == 2 /* MANUAL */) {
+                if (allowedLightModes.size() == 0) { return false; }
                 newMode = allowedLightModes[0];
             } else if (controlMode == newControlMode) {
                 return false;
@@ -1281,6 +1282,7 @@ class BikeLightsView extends  WatchUi.DataField  {
         setTextColor(dc, color);
         dc.drawText(x, y, _batteryFont, batteryStatus.toString(), 1 /* TEXT_JUSTIFY_CENTER */);
     }
+
 
     protected function getSecondsOfDay(value) {
         value = value.toNumber();

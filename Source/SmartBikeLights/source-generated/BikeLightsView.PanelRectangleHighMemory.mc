@@ -97,6 +97,7 @@ class BikeLightsView extends  WatchUi.DataField  {
     private var _configFeedbackTime; // -1 means queued for its first visible draw.
     private var _pendingConfig; // Preview only; CC is unchanged until the tap is committed.
     private var _configTapTime; // Pending single tap; a second tap within 450 ms opens Settings.
+    private var _cardTapBounds = [null, null];
     private var _panelFooter; // [left, top, width, height, configuration name]
     private var _panelIconFont;
     private var _headlightGroupName;
@@ -704,6 +705,8 @@ class BikeLightsView extends  WatchUi.DataField  {
 
         dc.setColor(fgColor, bgColor);
         dc.clear();
+        _cardTapBounds[0] = null;
+        _cardTapBounds[1] = null;
         if (_lightY == null) {
             preCalculate(dc, width, height);
         }
@@ -965,6 +968,7 @@ class BikeLightsView extends  WatchUi.DataField  {
             }
 
             if (newControlMode == 2 /* MANUAL */) {
+                if (allowedLightModes.size() == 0) { return false; }
                 newMode = allowedLightModes[0];
             } else if (controlMode == newControlMode) {
                 return false;
@@ -984,8 +988,7 @@ class BikeLightsView extends  WatchUi.DataField  {
     }
 
     protected function preCalculate(dc, width, height) {
-        var settings = WatchUi.loadResource(Rez.JsonData.Settings);
-        _separatorWidth = settings[0];
+        _fieldWidth = width;
         _lightY = 0;
     }
     protected function initializeLights(newNetworkMode) {

@@ -97,6 +97,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
     private var _configFeedbackTime; // -1 means queued for its first visible draw.
     private var _pendingConfig; // Preview only; CC is unchanged until the tap is committed.
     private var _configTapTime; // Pending single tap; a second tap within 450 ms opens Settings.
+    private var _cardTapBounds = [null, null];
     private var _panelFooter; // [left, top, width, height, configuration name]
     private var _panelIconFont;
     private var _headlightGroupName;
@@ -785,6 +786,10 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
 
         dc.setColor(fgColor, bgColor);
         dc.clear();
+// #if touchScreen || buttonPanel
+        _cardTapBounds[0] = null;
+        _cardTapBounds[1] = null;
+// #endif
         if (_lightY == null) {
             preCalculate(dc, width, height);
         }
@@ -813,7 +818,13 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
             return;
         }
 
-// #if buttonPanel
+// #if touchScreen
+        if (_isFullScreen) {
+            drawLightPanels(dc, width, height, fgColor, bgColor);
+            return;
+        }
+// #endif
+// #if buttonPanel || touchScreen
         // One field, internally divided. Never substitute the legacy icon layout.
         if (activeCardsFit(dc, width, height)) {
             drawActiveLightCards(dc, width, height, fgColor, bgColor);
@@ -829,13 +840,6 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
         }
         return;
 // #else
-// #if touchScreen
-        if (_isFullScreen) {
-            drawLightPanels(dc, width, height, fgColor, bgColor);
-            return;
-        }
-// #endif
-
         if (_initializedLights == 1) {
             drawLight(getLightData(null), 2, dc, width, fgColor, bgColor);
 // #if highMemory
@@ -1099,12 +1103,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
   // #if widget
         return false;
   // #else
-        var tapBehavior = lightType == 0 ? headlightIconTapBehavior : taillightIconTapBehavior;
-        if (tapBehavior == null) {
-            tapBehavior = defaultLightIconTapBehavior;
-        }
-
-        return applyTapBehavior(lightData, tapBehavior);
+        return onActiveCardTap(location, lightData);
   // #endif
     }
 // #endif
@@ -1136,6 +1135,50 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
     }
 
   // #if dataField
+// #if touchScreen
+    private function onActiveCardTap(location, lightData) {
+        var lightType = lightData[0].type;
+        var bounds = _cardTapBounds[lightType == 0 ? 0 : 1];
+        if (bounds == null || location[0] < bounds[0] || location[0] >= bounds[0] + bounds[2] ||
+            location[1] < bounds[1] || location[1] >= bounds[1] + bounds[3]) { return false; }
+        var currentMode = lightData[7] != null ? lightData[7] : lightData[2];
+        if (location[0] >= bounds[4] && location[1] >= bounds[5]) {
+            // Share fullscreen behavior, including skipping Smart without filters.
+            onLightPanelModeChange(lightData, lightType, -1, lightData[4]);
+            return true;
+        }
+        var modes = configuredTapModes(lightType, getLightModes(lightData[0], lightData[17]));
+        // Off always follows the last configured non-Off mode.
+        modes.removeAll(0);
+        modes.add(0);
+        var index = modes.indexOf(currentMode);
+        var nextMode = modes[index == null || index < 0 ? 0 : (index + 1) % modes.size()];
+        setLightAndControlMode(lightData, lightType, nextMode, 2 /* MANUAL */);
+        return true;
+    }
+
+    private function configuredTapModes(lightType, supportedModes) {
+        var settings = lightType == 0 ? headlightPanelSettings : taillightPanelSettings;
+        var modes = [];
+        if (settings == null) { return modes; }
+        var index = 6;
+        for (var group = 0; group < settings[1]; group++) {
+            var count = settings[index];
+            index++;
+            for (var button = 0; button < count; button++) {
+                var mode = settings[index];
+                index += 2;
+                // Exclude control/configuration actions and unsupported modes.
+                // Repeated buttons retain their first position in the sequence.
+                if (mode >= 0 && supportedModes.indexOf(mode) >= 0 && modes.indexOf(mode) < 0) {
+                    modes.add(mode);
+                }
+            }
+        }
+        return modes;
+    }
+// #endif
+
     private function applyTapBehavior(lightData, tapBehavior) {
         var light = lightData[0];
         if (light == null) {
@@ -1155,7 +1198,12 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
         var newControlMode = null;
         var controlModeIndex = controlModes.indexOf(controlMode);
         var lightModes = getLightModes(light, lightData[17]);
+// #if touchScreen
+        // The card represents configured buttons, not the light's raw capabilities.
+        var allowedLightModes = configuredTapModes(lightType, lightModes);
+// #else
         var allowedLightModes = tapBehavior[1] != null ? tapBehavior[1] : lightModes;
+// #endif
         var lightModeIndex = allowedLightModes.indexOf(lightData[7] != null ? lightData[7] : lightData[2]);
         var newLightModeIndex = lightModeIndex + 1;
         if (controlMode == 2 /* MANUAL */ && controlModeIndex >= 0 && lightModeIndex >= 0 && newLightModeIndex < allowedLightModes.size()) {
@@ -1167,6 +1215,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
             }
 
             if (newControlMode == 2 /* MANUAL */) {
+                if (allowedLightModes.size() == 0) { return false; }
                 newMode = allowedLightModes[0];
             } else if (controlMode == newControlMode) {
                 return false;
@@ -1199,10 +1248,13 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
         _isFullScreen = true;
   // #endif
     }
-// #elif buttonPanel
+// #elif buttonPanel || touchScreen
     protected function preCalculate(dc, width, height) {
-        var settings = WatchUi.loadResource(Rez.JsonData.Settings);
-        _separatorWidth = settings[0];
+        _fieldWidth = width;
+// #if touchScreen
+        var deviceSettings = System.getDeviceSettings();
+        _isFullScreen = width == deviceSettings.screenWidth && height == deviceSettings.screenHeight;
+// #endif
         _lightY = 0;
     }
 // #elif rectangle
@@ -1697,7 +1749,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
 // #endif
     }
 
-// #if !buttonPanel
+// #if !buttonPanel && !touchScreen
 // #if widget
     protected function drawLight(lightData, position, dc, width, fgColor, bgColor) {
     }
@@ -2026,7 +2078,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
     }
 // #endif
 
-// #if buttonPanel
+// #if buttonPanel || touchScreen
     // [name, active mode graphics, maximum lumens, maximum full-charge hours]
     private function activeCardData(lightData, settings) {
         if (lightData[0] == null) { return null; }
@@ -2179,6 +2231,11 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
                 Graphics.FONT_XTINY, status, Graphics.TEXT_JUSTIFY_LEFT);
         }
         dc.drawText(x + w - 8, statusY, controlFont, controlIcon, Graphics.TEXT_JUSTIFY_RIGHT);
+// #if touchScreen && dataField
+        // Include a small touch margin around the bottom-right control icon.
+        _cardTapBounds[lightData[0].type == 0 ? 0 : 1] = [x, y, w, height,
+            x + w - 16 - dc.getTextWidthInPixels(controlIcon, controlFont), statusY - 4];
+// #endif
     }
 // #endif
 
