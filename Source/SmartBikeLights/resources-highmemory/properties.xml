@@ -6,10 +6,6 @@
         <property id="ShowBrightness" type="boolean">true</property>
         <property id="ShowRuntime" type="boolean">true</property>
         <property id="ShowRuntimeFill" type="boolean">true</property>
-        <!-- Legacy hide preferences, consumed once by AppTheme.load(). -->
-        <property id="HL" type="boolean">false</property>
-        <property id="HR" type="boolean">false</property>
-        <property id="HF" type="boolean">false</property>
         <!-- Configuration -->
         <property id="CC" type="number">1</property>
         <property id="LC2" type="string"></property>

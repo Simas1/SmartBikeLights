@@ -4,16 +4,23 @@ module StringHelper {
     public function getTextStack(text, maxHeight) {
         var stack = [];
         var totalLines = 1;
-        var newLineIndex = text.find("\\n");
-        while (newLineIndex != null) {
-            totalLines++;
-            stack.add([text.substring(0, newLineIndex), maxHeight]);
-            text = text.substring(newLineIndex + 2, text.length());
-            newLineIndex = text.find("\\n");
-            if (newLineIndex == null) {
-                stack.add([text, maxHeight]);
+        // Names can contain ~br markers or real newlines from JSON input.
+        // Split both before measuring, so drawText cannot add uncounted rows.
+        while (true) {
+            var marker = text.find("~br");
+            var newline = text.find("\n");
+            var index = marker;
+            var length = 3;
+            if (newline != null && (index == null || newline < index)) {
+                index = newline;
+                length = 1;
             }
+            if (index == null) { break; }
+            stack.add([text.substring(0, index), maxHeight]);
+            totalLines++;
+            text = text.substring(index + length, text.length());
         }
+        if (stack.size() > 0) { stack.add([text, maxHeight]); }
 
         if (stack.size() > 0) {
             for (var i = 0; i < stack.size(); i++) {

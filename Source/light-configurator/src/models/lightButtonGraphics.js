@@ -1,4 +1,4 @@
-// Keep the existing panel wire format. Older apps display these as label lines.
+// ~br separates name lines; ~n separates graphics metadata.
 // Icons are explicit metadata, never inferred from a user-editable mode name.
 export const buttonIcons = [
   { id: 'none', name: 'None' },
@@ -18,7 +18,7 @@ export const buttonIcons = [
 export function parseButtonGraphics(value) {
   const result = { name: value, lumens: null, runtimeHours: null, icon: 'none' };
   if (!value) return result;
-  const lines = value.split('\\n');
+  const lines = value.split('~n');
   const icon = lines[lines.length - 1];
   if (buttonIcons.some(item => `@${item.id}` === icon)) {
     result.icon = lines.pop().slice(1);
@@ -29,16 +29,16 @@ export function parseButtonGraphics(value) {
     result.runtimeHours = Number(ratings[2]);
     lines.pop();
   }
-  result.name = lines.join('\\n').trim();
+  result.name = lines.join('~n').trim();
   return result;
 }
 
 export function serializeButtonGraphics(button) {
-  let value = button.name ?? '';
+  let value = (button.name ?? '').replace(/\\n|\r?\n/g, '~br');
   if (Number.isFinite(button.lumens) && button.lumens > 0 &&
       Number.isFinite(button.runtimeHours) && button.runtimeHours > 0) {
-    value += `\\n${button.lumens}lm-${button.runtimeHours}h`;
+    value += `~n${button.lumens}lm-${button.runtimeHours}h`;
   }
-  if (button.icon && button.icon !== 'none') value += `\\n@${button.icon}`;
+  if (button.icon && button.icon !== 'none') value += `~n@${button.icon}`;
   return value;
 }

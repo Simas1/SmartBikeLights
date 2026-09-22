@@ -1,5 +1,6 @@
 import importlib.util
 import json
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -13,6 +14,22 @@ SPEC.loader.exec_module(preview)
 
 
 class PreviewTests(unittest.TestCase):
+    def test_simulator_flattens_grouped_settings_for_save(self):
+        with tempfile.TemporaryDirectory() as directory:
+            binary = Path(directory) / 'preview.prg'
+            settings = binary.with_name('preview-settings.json')
+            entries = [{'key': 'CC'}, {'key': 'ShowBrightness', 'defaultValue': True},
+                       {'key': 'TH'}]
+            metadata = {'settings': [entries[0], {'group': {'id': 'Theme',
+                'entries': entries[1:]}}], 'languages': {'valyrian': {'TH': 'Theme'}}}
+            settings.write_text(json.dumps(metadata))
+            preview.simulator_command(Path('/sdk'), binary, 'edge1040')
+            result = json.loads(settings.read_text())
+            self.assertEqual(result['settings'], entries)
+            self.assertEqual(result['languages'], metadata['languages'])
+            preview.simulator_command(Path('/sdk'), binary, 'edge1040')
+            self.assertEqual(json.loads(settings.read_text()), result)
+
     def test_settings_revision_identity(self):
         namespace = '12345678123456781234567812345678'
         with tempfile.TemporaryDirectory() as directory:
@@ -40,8 +57,27 @@ class PreviewTests(unittest.TestCase):
             settings = binary.with_name('SmartBikeLights-sim-settings.json')
             settings.write_text('{}')
             self.assertEqual(preview.simulator_command(Path('/sdk'), binary, 'edge1040'),
-                ['/sdk/bin/monkeydo', str(binary), 'edge1040', '-a',
+                ['java', '-classpath', '/sdk/bin/monkeybrains.jar',
+                 'com.garmin.monkeybrains.monkeydodeux.MonkeyDoDeux',
+                 '-f', str(binary), '-d', 'edge1040', '-s', str(binary.parent / 'simulator-shell'), '-a',
                  f'{settings}:GARMIN/Settings/SMARTBIKELIGHTS-SIM-settings.json'])
+
+    def test_transfer_progress_does_not_block_unread_pipe(self):
+        with tempfile.TemporaryDirectory(prefix='preview shell ') as directory:
+            work = Path(directory)
+            (work / 'bin').mkdir()
+            shell = work / 'bin/shell'
+            shell.write_text('#!/bin/sh\nif [ "$1" = push ]; then\n'
+                             '  dd if=/dev/zero bs=1024 count=256 2>/dev/null\n'
+                             '  exit 7\nfi\necho "Shell Version test"\n')
+            shell.chmod(0o755)
+            wrapper = preview.simulator_shell(work, work)
+            with subprocess.Popen([str(wrapper), 'push', 'file with spaces'],
+                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
+                self.assertEqual(process.wait(timeout=5), 7)
+                self.assertEqual(process.stdout.read(), b'')
+            self.assertEqual((work / 'simulator-transfer.log').stat().st_size, 262144)
+            self.assertEqual(subprocess.check_output([str(wrapper)]), b'Shell Version test\n')
 
     def test_settings_types_and_choices(self):
         self.assertEqual(preview.validate_settings({'TH': 'Violet', 'IL': True})['TH'], 1)
@@ -72,6 +108,14 @@ class PreviewTests(unittest.TestCase):
             self.assertNotIn('(:glance)', network)
             app = (work / 'source/SmartBikeLightsApp.mc').read_text()
             self.assertIn('Application.Storage.clearValues();', app)
+            guard = app.index('if (previewSeed == null || !previewSeed.equals(')
+            reset = app.index('Application.Storage.clearValues();')
+            save = app.index('Application.Storage.setValue("SBLPreviewSeed",')
+            self.assertLess(guard, reset)
+            self.assertLess(reset, save)
+            for assignment in re.finditer(r'Application\.Properties\.setValue\(', app):
+                self.assertLess(guard, assignment.start())
+                self.assertLess(assignment.start(), save)
             self.assertIn(r'Quote \" slash \\', app)
             config = json.loads((work / 'preprocess.config.json').read_text())
             self.assertNotIn('LightSensor', [t['name'] for t in config['targets']])

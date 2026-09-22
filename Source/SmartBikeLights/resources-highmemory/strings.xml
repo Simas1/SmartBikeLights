@@ -21,7 +21,12 @@
     <string id="Violet">Violet</string>
     <string id="Mint">Mint</string>
 
+    <string id="SettingsTextOnly">Theme &gt; Display Options &gt; Text Only</string>
+    <string id="SettingsBrightness">Theme &gt; Display Options &gt; Brightness</string>
+    <string id="SettingsRuntime">Theme &gt; Display Options &gt; Runtime</string>
+    <string id="SettingsRuntimeFill">Theme &gt; Display Options &gt; Runtime Fill</string>
+    <string id="SettingsColors">Theme &gt; Colors</string>
+
     <string id="RemoteControllers">Remote Controllers</string>
     <string id="ShortAppName">SBL</string>
 </strings>
-

@@ -28,6 +28,13 @@ panels: the app has headlight and taillight slots. Use configuration serial-numb
 filters to choose between lights of the same type. Fixture serials are in the catalog.
 
 The launcher also transfers the generated settings definition to the simulator.
+The SDK settings editor displays groups but ignores edits to grouped controls
+when saving. The launcher flattens groups in the generated simulator metadata,
+preserving control order and labels but omitting group headings/separators.
+The application's source settings XML retains its groups.
+Initial preview values are applied once per build. Restarting that same build
+preserves settings saved through Connect IQ or the SBL menu; a newly built preview
+starts with the requested defaults or `--settings` values.
 Open **File → Edit Persistent Storage → Edit Application.Properties data** to
 edit the Connect IQ app settings while the preview is running.
 Settings resource changes produce a new preview app ID and matching executable
@@ -191,6 +198,10 @@ ignored `Build/` if you do not want to commit them.
 - If simulator startup takes longer than three seconds, wait for its window and run
   `"$CIQ_SDK/bin/monkeydo" "/absolute/path/to/SmartBikeLights-sim.prg" edge1040` again.
 - The launcher icon scaling warning is harmless for panel previews.
+- The launcher works around the SDK 9.2 app-transfer deadlock by writing shell
+  transfer progress to `simulator-transfer.log` in the preview folder. The SDK
+  waits for transfers without reading their output; large transfers can otherwise
+  leave a blank simulator window. Interactive app output is still shown normally.
 - Private `networkKeys` is excluded; the copied sensor source retains the commented
   key directive, following the existing repository build script.
 
@@ -221,3 +232,9 @@ still shows its tag; the Commit row retains the `-dirty` suffix.
 at build time by the same script. Bump only that manifest attribute for future
 versions. Direct IDE builds must run the command above first to populate Version
 and Commit; otherwise both show `Unknown`.
+
+Light-button names use `~br` for a forced line break. Graphics metadata uses
+`~n`, for example `Night~brFlash~n5lm-15h~n@lightning`. Both markers survive
+Connect IQ settings saves. The configurator converts pasted literal `\n` and
+actual newlines in names to `~br` when exporting. Legacy metadata separators
+must still be changed to `~n`.

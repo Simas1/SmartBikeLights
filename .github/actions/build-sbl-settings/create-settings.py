@@ -53,7 +53,7 @@ def validate(inputs):
             if len(value.encode('utf-8')) + 1 > 65535:
                 raise ValueError(f'{key}: exceeds the SET string limit of 65534 UTF-8 bytes')
             if key.startswith('LC') and ('\n' in value or '\r' in value):
-                raise ValueError(f'{key}: paste a single-line configurator value with literal \\n markers')
+                raise ValueError(f'{key}: paste a single-line configurator value with ~n markers')
         result[key] = value
     return result
 

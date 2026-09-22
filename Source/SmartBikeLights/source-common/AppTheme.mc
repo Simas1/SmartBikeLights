@@ -10,19 +10,8 @@ module AppTheme {
     var onDark = 0x55BBFF;
     var muted = 0x428CCA;
 
-    // Consume old hide flags once; subsequent changes use positive show flags.
-    function migrateDisplayOption(legacyKey, showKey) {
-        if (Properties.getValue(legacyKey) == true) {
-            Properties.setValue(showKey, false);
-            Properties.setValue(legacyKey, false);
-        }
-    }
-
     // Older installations have no theme preference and start with Blue.
     function load() {
-        migrateDisplayOption("HL", "ShowBrightness");
-        migrateDisplayOption("HR", "ShowRuntime");
-        migrateDisplayOption("HF", "ShowRuntimeFill");
         var theme = Properties.getValue("TH");
         textOnly = Properties.getValue("TO") == true;
         hideLumens = Properties.getValue("ShowBrightness") != true;
