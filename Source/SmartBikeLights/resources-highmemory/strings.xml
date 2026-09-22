@@ -1,7 +1,4 @@
 <strings>
-    <string id="TH">Theme</string>
-    <string id="Violet">Violet</string>
-    <string id="Mint">Mint</string>
     <string id="CC">Current Configuration</string>
     <string id="LC2">Secondary Lights Configuration</string>
     <string id="LC3">Tertiary Lights Configuration</string>
@@ -14,19 +11,22 @@
     <string id="Secondary">Secondary</string>
     <string id="Tertiary">Tertiary</string>
 
-    <string id="Red">Red</string>
-    <string id="DarkRed">Dark Red</string>
-    <string id="Orange">Orange</string>
-    <string id="Yellow">Yellow</string>
-    <string id="Green">Green</string>
-    <string id="DarkGreen">Dark Green</string>
+    <string id="TH">Theme</string>
+    <string id="DisplayOptions">Display Options</string>
+    <string id="TO">Text Only</string>
+    <string id="Brightness">Brightness</string>
+    <string id="Runtime">Runtime</string>
+    <string id="RuntimeFill">Runtime Fill</string>
     <string id="Blue">Blue</string>
-    <string id="DarkBlue">Dark Blue</string>
-    <string id="Purple">Purple</string>
-    <string id="Pink">Pink</string>
+    <string id="Violet">Violet</string>
+    <string id="Mint">Mint</string>
+
+    <string id="SettingsTextOnly">Theme &gt; Display Options &gt; Text Only</string>
+    <string id="SettingsBrightness">Theme &gt; Display Options &gt; Brightness</string>
+    <string id="SettingsRuntime">Theme &gt; Display Options &gt; Runtime</string>
+    <string id="SettingsRuntimeFill">Theme &gt; Display Options &gt; Runtime Fill</string>
+    <string id="SettingsColors">Theme &gt; Colors</string>
 
     <string id="RemoteControllers">Remote Controllers</string>
     <string id="ShortAppName">SBL</string>
 </strings>
-
-

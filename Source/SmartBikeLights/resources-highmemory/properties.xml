@@ -1,7 +1,11 @@
 <resources>
     <properties>
-        <!-- Theme: Blue, Violet, Mint -->
+        <!-- Theme: 0 Blue, 1 Violet, 2 Mint -->
         <property id="TH" type="number">0</property>
+        <property id="TO" type="boolean">false</property>
+        <property id="ShowBrightness" type="boolean">true</property>
+        <property id="ShowRuntime" type="boolean">true</property>
+        <property id="ShowRuntimeFill" type="boolean">true</property>
         <!-- Configuration -->
         <property id="CC" type="number">1</property>
         <property id="LC2" type="string"></property>

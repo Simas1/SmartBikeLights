@@ -30,7 +30,7 @@ The workflows call composite actions after checking out the repository:
   or `edge1050`, `edge850`, `edge550`, `edge840`, `edge540`) and builds `Build/<device>/SmartBikeLights.prg`. It requires Docker
   on Linux.
 - `.github/actions/build-sbl-settings/action.yml` accepts a `settings` JSON object
-  containing all ten settings, runs the serializer tests, and creates
+  containing all eleven settings, runs the serializer tests, and creates
   `Build/settings/SmartBikeLights.SET`. It requires Python 3.
 
 Helper scripts are stored beside each action's `action.yml`. With Docker
@@ -64,7 +64,7 @@ Existing saved settings override the defaults compiled into the application.
    `GARMIN/APPS/SETTINGS`. Its basename must match `SmartBikeLights.prg`.
 6. Safely disconnect and restart the Garmin.
 
-This workflow replaces all ten saved settings; it does not compile or install
+This workflow replaces all eleven saved settings; it does not compile or install
 an application. Use **Build SBL** separately for application changes.
 The script uses Python's standard library and checks the generated binary by
 reading it back. It preserves literal configuration text, including icon markers.

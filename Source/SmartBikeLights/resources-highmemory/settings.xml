@@ -1,12 +1,5 @@
 <resources>
     <settings>
-        <setting propertyKey="@Properties.TH" title="@Strings.TH">
-            <settingConfig type="list">
-                <listEntry value="0">@Strings.Blue</listEntry>
-                <listEntry value="1">@Strings.Violet</listEntry>
-                <listEntry value="2">@Strings.Mint</listEntry>
-            </settingConfig>
-        </setting>
         <setting propertyKey="@Properties.CC" title="@Strings.CC">
             <settingConfig type="list">
                 <listEntry value="1">@Strings.Primary</listEntry>
@@ -31,6 +24,25 @@
         </setting>
         <setting propertyKey="@Properties.CN3" title="@Strings.CN3">
             <settingConfig type="alphaNumeric" maxLength="20" />
+        </setting>
+        <setting propertyKey="@Properties.TO" title="@Strings.SettingsTextOnly">
+            <settingConfig type="boolean" />
+        </setting>
+        <setting propertyKey="@Properties.ShowBrightness" title="@Strings.SettingsBrightness">
+            <settingConfig type="boolean" />
+        </setting>
+        <setting propertyKey="@Properties.ShowRuntime" title="@Strings.SettingsRuntime">
+            <settingConfig type="boolean" />
+        </setting>
+        <setting propertyKey="@Properties.ShowRuntimeFill" title="@Strings.SettingsRuntimeFill">
+            <settingConfig type="boolean" />
+        </setting>
+        <setting propertyKey="@Properties.TH" title="@Strings.SettingsColors">
+            <settingConfig type="list">
+                <listEntry value="0">@Strings.Blue</listEntry>
+                <listEntry value="1">@Strings.Violet</listEntry>
+                <listEntry value="2">@Strings.Mint</listEntry>
+            </settingConfig>
         </setting>
     </settings>
 </resources>

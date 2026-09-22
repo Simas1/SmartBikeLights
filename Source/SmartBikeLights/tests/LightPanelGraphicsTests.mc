@@ -2,25 +2,25 @@ using Toybox.Test;
 
 (:test, :touchScreen)
 function graphicsLegacyTitleTest(logger) {
-    var data = LightPanelGraphics.parseTitle("Low \\n 200lm-12h");
+    var data = LightPanelGraphics.parseTitle("Low ~n 200lm-12h");
     Test.assert(data[1] == 200);
     Test.assert(data[2] == 12);
     Test.assert(data[3].equals("none"));
-    data = LightPanelGraphics.parseTitle("Custom name\\n5lm-13.5h\\n@lightning");
+    data = LightPanelGraphics.parseTitle("Custom name~n5lm-13.5h~n@lightning");
     Test.assert(data[1] == 5);
     Test.assert(data[2] == 13.5);
     Test.assert(data[3].equals("lightning"));
     var icons = ["headlight", "taillight", "moon", "lightning", "headlight-high", "headlight-medium", "headlight-low", "taillight-high", "taillight-medium", "taillight-low"];
     for (var i = 0; i < icons.size(); i++) {
-        var named = LightPanelGraphics.parseTitle("Custom mode\\n@" + icons[i]);
+        var named = LightPanelGraphics.parseTitle("Custom mode~n@" + icons[i]);
         Test.assert(named[0].equals("Custom mode"));
         Test.assert(named[1] == null);
         Test.assert(named[3].equals(icons[i]));
     }
     Test.assert(LightPanelGraphics.parseTitle("Night Flash") == null);
-    Test.assert(LightPanelGraphics.parseTitle("Low\\n200lm-badh") == null);
-    Test.assert(LightPanelGraphics.parseTitle("Low\\n200lm-0h") == null);
-    Test.assert(LightPanelGraphics.parseTitle("Low\\n200lm-12hjunk") == null);
+    Test.assert(LightPanelGraphics.parseTitle("Low~n200lm-badh") == null);
+    Test.assert(LightPanelGraphics.parseTitle("Low~n200lm-0h") == null);
+    Test.assert(LightPanelGraphics.parseTitle("Low~n200lm-12hjunk") == null);
     return true;
 }
 
@@ -40,6 +40,18 @@ function graphicsBrightnessAndRuntimeTest(logger) {
     Test.assert(LightPanelGraphics.runtimeText(144).equals("~2h24"));
     Test.assert(LightPanelGraphics.runtimeText(0.5).equals("~<1m"));
     Test.assert(LightPanelGraphics.runtimeText(null).equals("--"));
+    // Full-charge maxima stay fixed: AT1600 12h, Flare RT 15h.
+    Test.assert(LightPanelGraphics.runtimeFillWidth(LightPanelGraphics.remainingMinutes(12, 4), 720, 120) == 30);
+    Test.assert(LightPanelGraphics.runtimeFillWidth(60, 720, 120) == 10);
+    Test.assert(LightPanelGraphics.runtimeFillWidth(30, 720, 120) == 5);
+    Test.assert(LightPanelGraphics.runtimeFillWidth(LightPanelGraphics.remainingMinutes(15, 2), 900, 120) == 90);
+    Test.assert(LightPanelGraphics.runtimeFillWidth(540, 900, 120) == 72);
+    Test.assert(LightPanelGraphics.runtimeFillWidth(720, 720, 120) == 120);
+    Test.assert(LightPanelGraphics.runtimeFillWidth(1000, 900, 120) == 120);
+    Test.assert(LightPanelGraphics.runtimeFillWidth(null, 180, 120) == 0);
+    Test.assert(LightPanelGraphics.runtimeFillWidth(30, null, 120) == 0);
+    Test.assert(LightPanelGraphics.runtimeFillWidth(30, 0, 120) == 0);
+    Test.assert(LightPanelGraphics.runtimeFillWidth(0, 180, 120) == 0);
     return true;
 }
 
@@ -56,5 +68,43 @@ function graphicsOptionalButtonsTest(logger) {
     Test.assert(result[0] == 1 && result[1] == 1 && result[6] == 1 && result[7] == 51);
     result = LightPanelGraphics.panelSettings([1,1,"Front",0,0,2,1,51,"Low"]);
     Test.assert(result[5] == 2); // Preserve the configured automation-name font.
+    return true;
+}
+
+(:test, :touchScreen)
+function graphicsSafeSettingsSeparatorTest(logger) {
+    Test.assert(LightPanelGraphics.parseTitle("Low\\n200lm-12h\\n@headlight-low") == null);
+    var safe = "Low~n200lm-12h~n@headlight-low";
+    var parsed = LightPanelGraphics.parseTitle(safe);
+    Test.assert(parsed[0].equals("Low"));
+    Test.assert(parsed[1] == 200 && parsed[2] == 12);
+    Test.assert(parsed[3].equals("headlight-low"));
+    return true;
+}
+
+
+(:test, :touchScreen)
+function graphicsNameLineBreakTest(logger) {
+    var data = LightPanelGraphics.parseTitle("Night~brFlash~n5lm-15h~n@lightning");
+    Test.assert(data[0].equals("Night~brFlash"));
+    var lines = LightPanelGraphics.titleLines(data[0]);
+    Test.assert(lines.size() == 2);
+    Test.assert(lines[0].equals("Night") && lines[1].equals("Flash"));
+    var plain = StringHelper.getTextStack("Night~brFlash", 100);
+    Test.assert(plain.size() == 2 && plain[1][0].equals("Flash"));
+    Test.assert(StringHelper.getTextStack("Night~nFlash", 100).size() == 1);
+    return true;
+}
+
+
+(:test, :touchScreen)
+function graphicsActualNameNewlineTest(logger) {
+    var data = LightPanelGraphics.parseTitle("Night\nFlash~n5lm-15h~n@lightning");
+    var lines = LightPanelGraphics.titleLines(data[0]);
+    Test.assert(lines.size() == 2);
+    Test.assert(lines[0].equals("Night") && lines[1].equals("Flash"));
+    var mixed = StringHelper.getTextStack("A\nB~brC", 90);
+    Test.assert(mixed.size() == 3 && mixed[2][0].equals("C"));
+    Test.assert(mixed[0][1] == 30);
     return true;
 }

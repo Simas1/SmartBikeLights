@@ -184,6 +184,24 @@ module AppSettings {
         }
     }
 
+    class DisplayOptionsMenu extends BaseMenu {
+        public function initialize() {
+            BaseMenu.initialize(null);
+            Menu2.setTitle(WatchUi.loadResource(Rez.Strings.DisplayOptions));
+            Menu2.addItem(new DataFieldUi.ToggleMenuItem(Rez.Strings.TO, null, -1, Properties.getValue("TO") == true, null));
+            Menu2.addItem(new DataFieldUi.ToggleMenuItem(Rez.Strings.Brightness, null, -2, Properties.getValue("ShowBrightness") == true, null));
+            Menu2.addItem(new DataFieldUi.ToggleMenuItem(Rez.Strings.Runtime, null, -3, Properties.getValue("ShowRuntime") == true, null));
+            Menu2.addItem(new DataFieldUi.ToggleMenuItem(Rez.Strings.RuntimeFill, null, -4, Properties.getValue("ShowRuntimeFill") == true, null));
+        }
+
+        public function onSelect(index, menuItem) {
+            var toggleKey = index == -1 ? "TO" : index == -2 ? "ShowBrightness" : index == -3 ? "ShowRuntime" : "ShowRuntimeFill";
+            var enabled = Properties.getValue(toggleKey) != true;
+            Properties.setValue(toggleKey, enabled);
+            menuItem.setEnabled(enabled);
+        }
+    }
+
     class ListMenu extends BaseMenu {
 
         private var _menuItem;
@@ -200,6 +218,9 @@ module AppSettings {
             _values = values;
             _names = names;
             _nameKeys = nameKeys;
+            if (key.equals("TH")) {
+                Menu2.addItem(new DataFieldUi.MenuItem(Rez.Strings.DisplayOptions, null, -1, null));
+            }
             for (var i = 0; i < values.size(); i++) {
                 var value = values[i];
                 var name = nameKeys != null ? Properties.getValue(nameKeys[i]) : null;
@@ -213,6 +234,10 @@ module AppSettings {
         }
 
         public function onSelect(newValue, menuItem) {
+            if (_key.equals("TH") && newValue == -1) {
+                openSubMenu(new DisplayOptionsMenu());
+                return;
+            }
             var oldValue = Properties.getValue(_key);
             if (oldValue == newValue) {
                 close();

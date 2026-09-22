@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """Build an isolated Garmin preview with simulated lights."""
 import argparse
+import hashlib
 import importlib.util
 import json
 import os
 from pathlib import Path
 import re
 import shutil
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -61,7 +63,7 @@ def validate_settings(values, app=APP):
         elif not isinstance(value, str) or '\0' in value or len(value) > int(definition.attrib['maxLength']):
             raise ValueError(f'{key}: invalid text or exceeds maximum length')
         if key in ('LC', 'LC2', 'LC3') and ('\n' in value or '\r' in value):
-            raise ValueError(f'{key}: use a single-line configurator string with literal \\n markers')
+            raise ValueError(f'{key}: use a single-line configurator string with ~n markers')
         defaults[key] = value
     return defaults
 
@@ -190,13 +192,32 @@ def menu_configuration(value):
                 parsed += 1
                 if mode < 0:
                     continue  # Touch-only control/configuration buttons are not light modes.
-                lines = re.split(r'\\+n', title)
+                lines = re.split(r'~br|~n', title)
                 title = ' '.join(line.strip() for line in lines if line.strip() and not line.strip().startswith('@'))
                 buttons.append(f'{title}:{mode}')
         if parsed != total or len(buttons) > 20:
             raise ValueError('Unsupported touchscreen light panel button count')
         parts[index] = f'{len(buttons)}:{fields[1]}' + ''.join('|' + button for button in buttons)
     return '#'.join(parts)
+
+
+def settings_preview_id(app, namespace, source):
+    # Include resource paths and content: order, labels and defaults all affect
+    # the external editor. Exclude generated build-info to keep reruns stable.
+    digest = hashlib.sha256()
+    for path in sorted(app.glob('resources*/**/*.xml')):
+        if path.name not in ('settings.xml', 'properties.xml', 'strings.xml'):
+            continue
+        digest.update(path.relative_to(app).as_posix().encode() + b'\0')
+        digest.update(path.read_bytes() + b'\0')
+    return uuid.uuid5(uuid.UUID(namespace),
+                      f'settings-preview-v1:{source}:{digest.hexdigest()}').hex
+
+
+def preview_binary(work):
+    app = ET.parse(work / 'manifest.xml').getroot().find(
+        '{http://www.garmin.com/xml/connectiq}application')
+    return work / f"SBL-{app.attrib['id']}.prg"
 
 
 def prepare(args):
@@ -224,9 +245,7 @@ def prepare(args):
     path = work / 'manifest.xml'
     text = re.sub(r'<iq:product id="([^"]+)"\s*/>',
                   lambda match: match[0] if match[1] == args.device else '', path.read_text())
-    preview_id = args.profile['previewAppId']
-    if args.source == 'upstream':
-        preview_id = uuid.uuid5(uuid.UUID(preview_id), 'upstream').hex
+    preview_id = settings_preview_id(work, args.profile['previewAppId'], args.source)
     # Separate application identity keeps preview properties/storage away from normal builds.
     text = re.sub(r'(<iq:application\s+[^>]*?id=")[^"]+', lambda match: match[1] + preview_id, text)
     path.write_text(text)
@@ -261,14 +280,61 @@ def prepare(args):
     text = replace_once(path.read_text(), '_individualNetwork = configuration[13];', '_individualNetwork = null; // Simulator uses only fake lights')
     path.write_text(text)
     path = work / 'source/SmartBikeLightsApp.mc'
-    assignments = '\n'.join(f'        Application.Properties.setValue({json.dumps(key)}, {json.dumps(value, ensure_ascii=False)});' for key, value in settings.items())
-    path.write_text(replace_once(path.read_text(), '        AppBase.initialize();', '        AppBase.initialize();\n        Application.Storage.clearValues();\n' + assignments))
+    assignments = '\n'.join(f'            Application.Properties.setValue({json.dumps(key)}, {json.dumps(value, ensure_ascii=False)});' for key, value in settings.items())
+    # A settings save can restart the app. Seed this build only once, so such a
+    # restart preserves changes made through either settings interface.
+    seed_id = uuid.uuid4().hex
+    initialization = ('        AppBase.initialize();\n'
+        '        var previewSeed = Application.Storage.getValue("SBLPreviewSeed");\n'
+        f'        if (previewSeed == null || !previewSeed.equals("{seed_id}")) {{\n'
+        '            Application.Storage.clearValues();\n' + assignments + '\n'
+        f'            Application.Storage.setValue("SBLPreviewSeed", "{seed_id}");\n'
+        '        }')
+    path.write_text(replace_once(path.read_text(), '        AppBase.initialize();', initialization))
     (work / 'preview.json').write_text(json.dumps({'device': args.device, 'source': args.source, 'upstreamRepository': UPSTREAM_URL if args.source == 'upstream' else None, 'upstreamCommit': args.revision, 'lights': args.lights, 'settings': settings}, indent=2))
     print(f'Preview: {work}', flush=True)
     if args.source == 'upstream':
         print(f'Upstream: {UPSTREAM_URL} @ {args.revision}', flush=True)
     print('Lights: ' + ', '.join(light['name'] for light in args.lights), flush=True)
     return work
+
+
+def simulator_shell(sdk, work):
+    # SDK 9.2 waits for push to exit without draining its progress output.
+    # Keep transfers off that pipe; preserve interactive shell output for run.
+    wrapper = work / 'simulator-shell'
+    shell = shlex.quote(str(sdk / 'bin/shell'))
+    log = shlex.quote(str(work / 'simulator-transfer.log'))
+    wrapper.write_text('#!/bin/sh\n'
+        'for arg in "$@"; do\n'
+        '  if [ "$arg" = push ]; then\n'
+        f'    exec {shell} "$@" >> {log} 2>&1\n'
+        '  fi\n'
+        'done\n'
+        f'exec {shell} "$@"\n')
+    wrapper.chmod(0o755)
+    return wrapper
+
+
+def simulator_command(sdk, binary, device):
+    settings = binary.with_name(binary.stem + '-settings.json')
+    if not settings.is_file():
+        raise ValueError(f'Compiler did not generate app settings: {settings}')
+    # The SDK editor renders groups but drops their changed values on Save.
+    # Flatten only the generated simulator metadata; retain the source XML.
+    metadata = json.loads(settings.read_text())
+    entries = metadata.get('settings', [])
+    if any('group' in entry for entry in entries):
+        metadata['settings'] = [child for entry in entries
+                                for child in (entry['group']['entries']
+                                              if 'group' in entry else [entry])]
+        settings.write_text(json.dumps(metadata, ensure_ascii=False))
+    # The settings editor looks up the uppercase executable name on the device.
+    destination = f'GARMIN/Settings/{binary.stem.upper()}-settings.json'
+    return ['java', '-classpath', str(sdk / 'bin/monkeybrains.jar'),
+            'com.garmin.monkeybrains.monkeydodeux.MonkeyDoDeux',
+            '-f', str(binary), '-d', device, '-s', str(simulator_shell(sdk, binary.parent)),
+            '-a', f'{settings}:{destination}']
 
 
 def main():
@@ -290,12 +356,12 @@ def main():
     if args.prepare_only:
         return
     subprocess.run(['npx', '--yes', 'directive-preprocessor@1.1.1', 'preprocess', '-c', 'preprocess.config.json'], cwd=work, check=True)
-    binary = work / 'SmartBikeLights-sim.prg'
+    binary = preview_binary(work)
     subprocess.run([str(sdk / 'bin/monkeyc'), '-f', 'monkey.jungle', '-d', args.device, '-y', 'unit_test_key', '-o', str(binary), '-w'], cwd=work, check=True)
     if not args.build_only:
         subprocess.run([str(sdk / 'bin/connectiq')], check=True)
         time.sleep(3)
-        subprocess.run([str(sdk / 'bin/monkeydo'), str(binary), args.device], cwd=work, check=True)
+        subprocess.run(simulator_command(sdk, binary, args.device), cwd=work, check=True)
     print(f'Build retained at {work}. You may delete this folder when finished.')
 
 

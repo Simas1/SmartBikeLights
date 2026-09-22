@@ -27,15 +27,15 @@ module LightPanelGraphics {
         }
     }
 
-    // [display name, lumens, full-charge hours, explicit icon]
+    // [display name, lumens, full-charge hours, explicit icon, title lines]
     function parseTitle(title) {
         if (title == null) { return null; }
         var lines = [];
-        var index = title.find("\\n");
+        var index = title.find("~n");
         while (index != null) {
             lines.add(title.substring(0, index));
             title = title.substring(index + 2, title.length());
-            index = title.find("\\n");
+            index = title.find("~n");
         }
         lines.add(title);
         var icon = "none";
@@ -62,8 +62,8 @@ module LightPanelGraphics {
         }
         if (lumens == null && icon.equals("none")) { return null; }
         var name = lines[0];
-        for (var i = 1; i < lines.size(); i++) { name += " " + lines[i]; }
-        return [name, lumens, hours, icon];
+        for (var i = 1; i < lines.size(); i++) { name += "~n" + lines[i]; }
+        return [name, lumens, hours, icon, titleLines(name)];
     }
 
     function blank(text) {
@@ -162,6 +162,67 @@ module LightPanelGraphics {
         return 0.5;
     }
 
+    // Each text-only light panel uses the largest font that fits every mode.
+    function unifyTextFonts(dc, panel, fontTopPaddings) {
+        var font = 4;
+        var group = 9;
+        for (var i = 0; i < panel[0]; i++) {
+            for (var j = 0; j < panel[group]; j++) {
+                var button = group + 1 + j * 8;
+                if (panel[button] > 0 && panel[button + 2] < font) {
+                    font = panel[button + 2];
+                }
+            }
+            group += 1 + panel[group] * 8;
+        }
+        group = 9;
+        for (var i = 0; i < panel[0]; i++) {
+            for (var j = 0; j < panel[group]; j++) {
+                var button = group + 1 + j * 8;
+                if (panel[button] <= 0) { continue; }
+                var parts = panel[button + 3];
+                var fontHeight = dc.getFontHeight(font);
+                var topPadding = StringHelper.getFontTopPadding(font, fontTopPaddings);
+                var titleY = panel[button + 5] + (panel[button + 7] - parts.size() / 2 * fontHeight - topPadding) / 2 + 2;
+                panel[button + 2] = font;
+                for (var k = 1; k < parts.size(); k += 2) {
+                    parts[k] = titleY;
+                    titleY += fontHeight;
+                }
+            }
+            group += 1 + panel[group] * 8;
+        }
+    }
+
+    // Explicit name breaks are independent of the ~n metadata delimiter.
+    function titleLines(text) {
+        // Keep scratch values off the small Edge VM call stack.
+        var v = [[], text, null, null, 3];
+        while (true) {
+            v[2] = v[1].find("~br");
+            v[3] = v[1].find("\n");
+            v[4] = 3;
+            if (v[3] != null && (v[2] == null || v[3] < v[2])) {
+                v[2] = v[3];
+                v[4] = 1;
+            }
+            if (v[2] == null) { break; }
+            v[0].add(v[1].substring(0, v[2]));
+            v[1] = v[1].substring(v[2] + v[4], v[1].length());
+        }
+        v[0].add(v[1]);
+        return v[0];
+    }
+
+    function titleWidth(dc, lines, font) {
+        var width = 0;
+        for (var i = 0; i < lines.size(); i++) {
+            var measured = dc.getTextWidthInPixels(lines[i], font);
+            if (measured > width) { width = measured; }
+        }
+        return width;
+    }
+
     function fitFont(dc, text, width, height, maximum) {
         var font = maximum;
         while (font > 0 && (dc.getTextWidthInPixels(text, font) > width || dc.getFontHeight(font) > height)) { font--; }
@@ -172,6 +233,7 @@ module LightPanelGraphics {
     // A shared font prevents long rear-light labels from shrinking on their own.
     function includeMode(dc, data, width, height) {
         var pad = width >= 150 ? 10 : 6;
+        var lines = data[4];
         var font = _modeTitleFont;
         var size = 18;
         while (true) {
@@ -180,7 +242,7 @@ module LightPanelGraphics {
             var ascent = Graphics.getFontAscent(font);
             size = ascent >= 20 ? 28 : ascent > 16 ? 22 : 18;
             var available = width - pad * 2 - (data[3].equals("none") ? 0 : size + 5);
-            if (font == 0 || (dc.getTextWidthInPixels(data[0], font) <= available && dc.getFontHeight(font) <= height * 0.3)) { break; }
+            if (font == 0 || (titleWidth(dc, lines, font) <= available && dc.getFontHeight(font) * lines.size() <= height * 0.3)) { break; }
             font--;
         }
         _modeTitleFont = font;
@@ -203,19 +265,116 @@ module LightPanelGraphics {
         if (dc has :setAntiAlias) { dc.setAntiAlias(false); }
     }
 
+    // Each panel scales to its longest FULL-charge mode runtime. Only the
+    // numerator decreases with battery; unknown readings have no fill.
+    function runtimeFillWidth(minutes, maxMinutes, width) {
+        if (minutes == null || minutes <= 0 || maxMinutes == null || maxMinutes <= 0) { return 0; }
+        return Math.floor(width * (minutes >= maxMinutes ? 1.0 : minutes.toFloat() / maxMinutes)).toNumber();
+    }
+
+    function drawRuntimeFill(dc, data, status, x, y, width, height, radius, bg, maxHours) {
+        if (AppTheme.hideFill) { return; }
+        var fillWidth = runtimeFillWidth(remainingMinutes(data[2], status), maxHours * 60, width);
+        if (fillWidth <= 0) { return; }
+        dc.setClip(x, y, fillWidth, height);
+        dc.setColor(bg == 0x000000 ? 0x333F4C : 0xDDE3EA, -1);
+        dc.fillRoundedRectangle(x, y, width, height, radius);
+        dc.clearClip();
+    }
+
+    function modeLayout(dc, data, status, x, y, width, height) {
+        // Store measurements in an array to stay within the Edge VM stack limit.
+        var v = new [26];
+        // Padding.
+        v[0] = width >= 150 ? 10 : 6;
+        // Selection size.
+        v[1] = width >= 150 ? 14 : 10;
+        // Title icon size.
+        v[2] = _modeTitleIconSize;
+        // Has title icon.
+        v[3] = !data[3].equals("none");
+        // Title font.
+        v[4] = _modeTitleFont;
+        // Title text.
+        v[5] = data[4].slice(0, null);
+        for (var line = 0; line < v[5].size(); line++) {
+            v[5][line] = StringHelper.trimTextByWidth(dc, v[5][line], v[4], width - v[0] * 2 - (v[3] ? v[2] + 5 : 0));
+        }
+        // Resolve optional rows before positioning: hidden or non-fitting rows
+        // take no space, and the background fill never affects alignment.
+        // Runtime icon size.
+        v[6] = width >= 150 ? 18 : 12;
+        // Title height.
+        v[7] = dc.getFontHeight(v[4]) * v[5].size();
+        // Brightness height.
+        v[8] = dc.getFontHeight(0);
+        // Lumens text.
+        v[9] = data[1] == null ? "" : data[1].format("%g") + " lm";
+        // Brightness step width.
+        v[10] = (width - v[0] * 2 - dc.getTextWidthInPixels(v[9], 0) - 18) / 6;
+        // Remaining minutes.
+        v[11] = remainingMinutes(data[2], status);
+        // Runtime text.
+        v[12] = runtimeText(v[11]);
+        // Runtime available width.
+        v[13] = width-v[0]*2-v[6]-7-v[1]-4;
+        // Minimum runtime height.
+        v[14] = v[8] > v[6] ? v[8] : v[6];
+        // Available detail height.
+        v[15] = height - v[0] * 2 - v[7] - 3;
+        // Show runtime.
+        v[16] = data[1] != null && !AppTheme.hideRuntime &&
+            v[15] >= v[14] && dc.getTextWidthInPixels(v[12], 0) <= v[13];
+        // Show brightness.
+        v[17] = data[1] != null && !AppTheme.hideLumens && v[10] >= 1 &&
+            v[15] >= v[8] + (v[16] ? v[14] + 2 : 0);
+        // Runtime font.
+        v[18] = v[16] ? fitFont(dc, v[12], v[13],
+            v[15] - (v[17] ? v[8] + 2 : 0), v[4]) : 0;
+        // Runtime height.
+        v[19] = v[16] ? dc.getFontHeight(v[18]) : 0;
+        if (v[16] && v[19] < v[6]) { v[19] = v[6]; }
+        // Content height.
+        v[20] = v[7] + (v[17] || v[16] ? 3 : 0) +
+            (v[17] ? v[8] : 0) + (v[17] && v[16] ? 2 : 0) + v[19];
+        // Title y.
+        v[21] = y + (height - v[20]) / 2;
+        // Title x.
+        v[22] = x + (width - titleWidth(dc, v[5], v[4]) - (v[3] ? v[2] + 5 : 0)) / 2;
+        // Brightness y.
+        v[23] = v[21] + v[7] + 3;
+        // Runtime y.
+        v[24] = v[23] + (v[17] ? v[8] + 2 : 0);
+        // Runtime x.
+        v[25] = x + (width - v[6] - 7 - dc.getTextWidthInPixels(v[12], v[18])) / 2;
+        // [title, titleX, titleY, brightnessVisible, brightnessY, stepWidth,
+        //  lumens, runtimeVisible, runtimeFont, runtimeY, runtimeX, runtime, minutes]
+        return [v[5], v[22], v[21], v[17], v[23], v[10],
+            v[9], v[16], v[18], v[24], v[25], v[12], v[11]];
+    }
+
     function drawMode(dc, data, maxLumens, status, x, y, width, height, selected, fg, bg) {
         var pad = width >= 150 ? 10 : 6;
-        var color = selected ? WHITE : fg;
+        // Bottom-right placement leaves the shared mode-title width unchanged.
+        var selectionSize = width >= 150 ? 14 : 10;
+        if (selected && !AppTheme.hideFill) {
+            dc.setColor(bg == 0x000000 ? AppTheme.onDark : AppTheme.accent, -1);
+            if (dc has :setAntiAlias) { dc.setAntiAlias(true); }
+            dc.fillCircle(x+width-pad-selectionSize/2,
+                y+height-pad-selectionSize/2, selectionSize/2);
+            if (dc has :setAntiAlias) { dc.setAntiAlias(false); }
+            dc.setPenWidth(1);
+        }
+        var layout = modeLayout(dc, data, status, x, y, width, height);
         var iconSize = _modeTitleIconSize;
         var hasIcon = !data[3].equals("none");
-        var nameWidth = width - pad * 2 - (hasIcon ? iconSize + 5 : 0);
-        var titleFont = _modeTitleFont;
-        var name = StringHelper.trimTextByWidth(dc, data[0], titleFont, nameWidth);
-        dc.setColor(color, -1);
-        dc.drawText(x+pad+(hasIcon?iconSize+5:0), y+pad, titleFont, name, Graphics.TEXT_JUSTIFY_LEFT);
+        dc.setColor(fg, -1);
+        for (var line = 0; line < layout[0].size(); line++) {
+            dc.drawText(layout[1]+(hasIcon?iconSize+5:0), layout[2]+line*dc.getFontHeight(_modeTitleFont), _modeTitleFont, layout[0][line], Graphics.TEXT_JUSTIFY_LEFT);
+        }
         if (hasIcon) {
             // Draw directly: no extra icon/font wrapper frame on the Edge VM stack.
-            dc.drawText(x+pad+iconSize/2, y+pad+_modeTitleIconY,
+            dc.drawText(layout[1]+iconSize/2, layout[2]+_modeTitleIconY,
                 iconSize == 28 ? _modeIconsExtra : iconSize == 22 ? _modeIconsWide : _modeIconsLarge,
                 data[3].equals("sun") ? "S" : (data[3].equals("headlight") || data[3].equals("headlight-high")) ? "H"
                 : data[3].equals("headlight-medium") ? "h" : data[3].equals("headlight-low") ? "L"
@@ -223,37 +382,22 @@ module LightPanelGraphics {
                 : data[3].equals("taillight-medium") ? "t" : data[3].equals("taillight-low") ? "l" : data[3].equals("moon") ? "N" : "F",
                 Graphics.TEXT_JUSTIFY_CENTER);
         }
-        // Keep runtime icons at their original size.
+        if (layout[3]) {
+            var lit = brightnessSteps(data[1], maxLumens);
+            for (var i=0; i<6; i++) {
+                dc.setColor(i<lit ? (selected && AppTheme.hideFill ? fg : bg==0x000000?AppTheme.onDark:AppTheme.accent) : bg==0x000000?0x555555:0xBBBBBB, -1);
+                dc.fillRectangle(x+pad+i*(layout[5]+2),layout[4]+dc.getFontHeight(0)/2-7/2,layout[5],7);
+            }
+            dc.setColor(fg,-1);
+            dc.drawText(x+width-pad,layout[4],0,layout[6],Graphics.TEXT_JUSTIFY_RIGHT);
+        }
+        if (!layout[7]) { return; }
         iconSize = width >= 150 ? 18 : 12;
-        if (data[1] == null || height < 65 || width < 80) { return; }
-        var brightnessY = y + pad + dc.getFontHeight(titleFont) + 3;
-        var lumens = data[1].format("%g") + " lm";
-        var lumensFont = 0;
-        var lumensWidth = dc.getTextWidthInPixels(lumens, lumensFont);
-        var stepsWidth = width - pad * 2 - lumensWidth - 8;
-        var stepWidth = (stepsWidth - 5 * 2) / 6;
-        var lit = brightnessSteps(data[1], maxLumens);
-        var stepHeight = 7;
-        for (var i=0; i<6 && stepWidth>=1; i++) {
-            dc.setColor(i<lit ? selected?WHITE:(bg==0x000000?AppTheme.onDark:AppTheme.accent) : selected?AppTheme.muted:bg==0x000000?0x444444:0xCCCCCC, -1);
-            dc.fillRectangle(x+pad+i*(stepWidth+2),brightnessY+dc.getFontHeight(0)/2-stepHeight/2,stepWidth,stepHeight);
-        }
-        dc.setColor(color,-1);
-        dc.drawText(x+width-pad,brightnessY,lumensFont,lumens,Graphics.TEXT_JUSTIFY_RIGHT);
-        var minutes = remainingMinutes(data[2], status);
-        var time = runtimeText(minutes);
-        var timeY = brightnessY + dc.getFontHeight(0) + 2;
-        var timeHeight = y+height-pad-timeY;
-        var timeFont = fitFont(dc,time,width-pad*2-iconSize-7,timeHeight,titleFont);
-        if (timeHeight < dc.getFontHeight(0)) { return; }
-        var warning = minutes != null && minutes < 30;
-        if (warning && selected) {
-            dc.setColor(0xFFF0F0,-1);
-            dc.fillRoundedRectangle(x+pad-2,timeY,width-pad*2+4,dc.getFontHeight(timeFont),3);
-        }
-        dc.setColor(warning ? (!selected && bg==0x000000 ? 0xFF6666 : RED) : color,-1);
-        dc.drawText(x+pad+iconSize/2, timeY+(dc.getFontHeight(timeFont)-iconSize)/2,
+        var warning = layout[12] != null && layout[12] < 30;
+        dc.setColor(warning ? (bg==0x000000 ? 0xFF6666 : RED) : fg,-1);
+        // Align with visible text ascent, as for mode icons, excluding descender space.
+        dc.drawText(layout[10]+iconSize/2, layout[9]+(Graphics.getFontAscent(layout[8])-iconSize)/2,
             width >= 150 ? _modeIconsLarge : _modeIconsSmall, "C", Graphics.TEXT_JUSTIFY_CENTER);
-        dc.drawText(x+pad+iconSize+7,timeY,timeFont,time,Graphics.TEXT_JUSTIFY_LEFT);
+        dc.drawText(layout[10]+iconSize+7,layout[9],layout[8],layout[11],Graphics.TEXT_JUSTIFY_LEFT);
     }
 }

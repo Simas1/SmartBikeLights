@@ -2063,7 +2063,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
 
         var i;
         var totalButtonGroups = panelSettings[1];
-        // [:TotalButtonGroups:, :LightName:, :ButtonColor:, :ButtonTextColor:, :LightNameX:, :LightNameY:, :BatteryX:, :BatteryY:, :MaxLumens:, (<ButtonGroup>)+]
+        // [:TotalButtonGroups:, :LightName:, :ButtonColor:, :ButtonTextColor:, :LightNameX:, :LightNameY:, :BatteryX:, :BatteryY:, :ModeScales [max lumens, max full-charge hours]:, (<ButtonGroup>)+]
         // <ButtonGroup> := [:NumberOfButtons:, :Mode:, :TitleX:, :TitleFont:, (<TitlePart>)+, :ButtonLeftX:, :ButtonTopY:, :ButtonWidth:, :ButtonHeight:){:NumberOfButtons:} ]
         // <TitlePart> := [(:Title:, :TitleY:)+]
         var panelData = new [9 + (8 * panelSettings[0]) + totalButtonGroups];
@@ -2083,7 +2083,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
         var normalGroups = totalButtonGroups - compactGroups;
         var normalHeight = normalGroups > 0 ? (availableHeight - compactGroups * compactHeight) / normalGroups : 0;
         var buttonHeight = 0;
-        var maxLumens = 0;
+        var maxLumens = [0, 0];
         var fontResult = [0];
         var textPadding = /* #include LIGHT_PANEL_MARGIN */ * 4;
         var groupIndex = 9;
@@ -2118,6 +2118,12 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
                     modeTitle = panelSettings[modeIndex + 1];
                 }
 
+                var graphics = mode > 0 ? LightPanelGraphics.parseTitle(modeTitle) : null;
+                if (AppTheme.textOnly && graphics != null) {
+                    // Keep only the display name; saved metadata remains intact.
+                    modeTitle = graphics[0];
+                    graphics = null;
+                }
                 var textStack = StringHelper.getTextStack(modeTitle, buttonHeight - textPadding);
                 var titleList = StringHelper.trimText(dc, textStack, 4, buttonWidth - textPadding, fontTopPaddings, fontResult);
                 var titleFont = fontResult[0];
@@ -2133,13 +2139,13 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
                    titleY += titleFontHeight;
                 }
 
-                var graphics = mode > 0 ? LightPanelGraphics.parseTitle(modeTitle) : null;
                 if (graphics != null) {
                     // Match the two-pixel face margins used by drawLightPanel.
                     LightPanelGraphics.includeMode(dc, graphics, buttonWidth - 4, buttonHeight - 4);
                     titleFont = -1; // Rich mode data instead of pre-laid-out title parts.
                     titleParts = graphics;
-                    if (graphics[1] != null && graphics[1] > maxLumens) { maxLumens = graphics[1]; }
+                    if (graphics[1] != null && graphics[1] > maxLumens[0]) { maxLumens[0] = graphics[1]; }
+                    if (graphics[2] != null && graphics[2] > maxLumens[1]) { maxLumens[1] = graphics[2]; }
                 }
                 // Set data
                 panelData[buttonIndex] = mode; // Light mode
@@ -2156,6 +2162,8 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
             settingsGroupIndex += 1 + (totalButtons * 2);
             y += buttonHeight;
         }
+
+        if (AppTheme.textOnly) { LightPanelGraphics.unifyTextFonts(dc, panelData, fontTopPaddings); }
 
         // The footer has two outer light summaries and one shared cycle target.
         x = position == 2 ? width * 0.15 : position == 1 ? width * 0.15 : width * 0.85;
@@ -2193,7 +2201,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
             dc.drawText(groupName[0], groupName[1], groupName[2], groupTitle, Graphics.TEXT_JUSTIFY_CENTER);
         }
 
-        // [:TotalButtonGroups:, :LightName:, :ButtonColor:, :ButtonTextColor:, :LightNameX:, :LightNameY:, :BatteryX:, :BatteryY:, :MaxLumens:, (<ButtonGroup>)+]
+        // [:TotalButtonGroups:, :LightName:, :ButtonColor:, :ButtonTextColor:, :LightNameX:, :LightNameY:, :BatteryX:, :BatteryY:, :ModeScales [max lumens, max full-charge hours]:, (<ButtonGroup>)+]
         // <ButtonGroup> := [:NumberOfButtons:, :Mode:, :TitleX:, :TitleFont:, (<TitlePart>)+, :ButtonLeftX:, :ButtonTopY:, :ButtonWidth:, :ButtonHeight:){:NumberOfButtons:} ]
         // <TitlePart> := [(:Title:, :TitleY:)+]
         var totalButtonGroups = panelData[0];
@@ -2212,22 +2220,24 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
                 var buttonHeight = panelData[buttonIndex + 7] - buttonPadding;
                 var isSelected = lightMode == mode;
 
-                // Bold Blue: flat faces, blue fill and white content when selected.
-                var faceY = buttonY;
-                var faceHeight = buttonHeight;
-                var contentOffsetY = 0;
-                var faceColor = isSelected ? panelData[2] : bgColor;
+                // Runtime-filled cards use an outline; other buttons use a solid selection face.
+                var isModeCard = titleFont == -1 && mode > 0 && !AppTheme.hideFill;
+                var faceColor = isSelected && !isModeCard ? panelData[2] : bgColor;
                 var radius = buttonWidth >= 180 ? 18 : 12;
                 if (radius > buttonHeight / 3) { radius = buttonHeight / 3; }
                 if (radius > buttonWidth / 3) { radius = buttonWidth / 3; }
                 dc.setPenWidth(isSelected ? 2 : 1);
                 setTextColor(dc, faceColor);
                 dc.fillRoundedRectangle(buttonX, buttonY, buttonWidth, buttonHeight, radius);
-                setTextColor(dc, isSelected ? panelData[2] : fgColor);
+                if (isModeCard) {
+                    LightPanelGraphics.drawRuntimeFill(dc, titleParts, batteryStatus, buttonX, buttonY, buttonWidth, buttonHeight, radius, bgColor, panelData[8][1]);
+                }
+                dc.setPenWidth(isSelected && isModeCard ? 3 : isSelected ? 2 : 1);
+                setTextColor(dc, isSelected && isModeCard ? (bgColor == 0x000000 ? AppTheme.onDark : AppTheme.accent) : isSelected ? panelData[2] : fgColor);
                 dc.drawRoundedRectangle(buttonX, buttonY, buttonWidth, buttonHeight, radius);
-                setTextColor(dc, isSelected ? panelData[3] : fgColor);
+                setTextColor(dc, isSelected && !isModeCard ? panelData[3] : fgColor);
                 if (mode == -3) {
-                    drawButtonBattery(dc, fgColor, bgColor, buttonX, faceY, buttonWidth, faceHeight, batteryStatus);
+                    drawButtonBattery(dc, fgColor, bgColor, buttonX, buttonY, buttonWidth, buttonHeight, batteryStatus);
                 } else if (mode == -1 || mode == 0) {
                     // Fit the square icon inside the face, keeping a two-pixel margin.
                     var iconSize = (buttonHeight < buttonWidth ? buttonHeight : buttonWidth) - 4;
@@ -2235,10 +2245,10 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
                     var iconFont = dc.getFontHeight(_panelIconFont) <= iconSize ? _panelIconFont : _controlModeFont;
                     dc.drawText(titleX, buttonY + (buttonHeight - dc.getFontHeight(iconFont)) / 2, iconFont, icon, 1 /* TEXT_JUSTIFY_CENTER */);
                 } else if (titleFont == -1) {
-                    LightPanelGraphics.drawMode(dc, titleParts, panelData[8], batteryStatus, buttonX, buttonY, buttonWidth, buttonHeight, isSelected, fgColor, faceColor);
+                    LightPanelGraphics.drawMode(dc, titleParts, panelData[8][0], batteryStatus, buttonX, buttonY, buttonWidth, buttonHeight, isSelected, isSelected && !isModeCard ? panelData[3] : fgColor, faceColor);
                 } else {
                     for (var k = 0; k < titleParts.size(); k += 2) {
-                        dc.drawText(titleX, titleParts[k + 1] + contentOffsetY, titleFont, titleParts[k], 1 /* TEXT_JUSTIFY_CENTER */);
+                        dc.drawText(titleX, titleParts[k + 1], titleFont, titleParts[k], 1 /* TEXT_JUSTIFY_CENTER */);
                     }
                 }
             }
@@ -2790,7 +2800,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
         }
 
         var totalButtonGroups = parse(1 /* NUMBER */, chars, null, filterResult);
-        // [:TotalButtons:, :TotalButtonGroups:, :LightName:, :ButtonColor:, :ButtonTextColor:, :MaxLumens:, (<ButtonGroup>)+]
+        // [:TotalButtons:, :TotalButtonGroups:, :LightName:, :ButtonColor:, :ButtonTextColor:, :ModeScales [max lumens, max full-charge hours]:, (<ButtonGroup>)+]
         // <ButtonGroup> = :NumberOfButtons:, (<Button>){:NumberOfButtons:})
         // <Button> = :Mode:, :Title:
         var data = new [6 + (2 * totalButtons) + totalButtonGroups];
