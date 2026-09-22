@@ -2124,7 +2124,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
     private function activeCardsFit(dc, width, height) {
         var cellWidth = _initializedLights > 1 ? width / 2 : width;
         var controlFont = WatchUi.loadResource(Rez.Fonts.panelControlFont);
-        var contentHeight = height - 14 - dc.getFontHeight(controlFont);
+        var contentHeight = height - 10 - dc.getFontHeight(controlFont);
         var cards = [activeCardData(headlightData, headlightPanelSettings),
             activeCardData(taillightData, taillightPanelSettings)];
         LightPanelGraphics.initializeFonts();
@@ -2140,13 +2140,15 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
             if (cards[i] == null) { continue; }
             var data = cards[i][1];
             var titleHeight = dc.getFontHeight(0) * data[4].size();
+            var titleWidth = LightPanelGraphics.titleWidth(dc, data[4], 0);
             var iconWidth = data[3].equals("none") ? 0 : LightPanelGraphics._modeTitleIconSize + 5;
             if (data[0].equals("Off")) {
                 titleHeight = dc.getFontHeight(controlFont);
-                iconWidth = dc.getTextWidthInPixels("P", controlFont) + 5;
+                titleWidth = 0;
+                iconWidth = dc.getTextWidthInPixels("P", controlFont);
             }
-            if (contentHeight < titleHeight + 4 ||
-                LightPanelGraphics.titleWidth(dc, data[4], 0) + iconWidth > cellWidth - 20 ||
+            if (contentHeight < titleHeight + 2 ||
+                titleWidth + iconWidth > cellWidth - 20 ||
                 cellWidth - 32 < dc.getTextWidthInPixels("AUTO", Graphics.FONT_XTINY) +
                     dc.getTextWidthInPixels("N", controlFont)) { return false; }
             if (data[1] != null) {
@@ -2168,7 +2170,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
         var cellWidth = _initializedLights > 1 ? width / 2 : width;
         var cardHeight = height - 6;
         var controlFont = WatchUi.loadResource(Rez.Fonts.panelControlFont);
-        var contentHeight = cardHeight - dc.getFontHeight(controlFont) - 8;
+        var contentHeight = cardHeight - dc.getFontHeight(controlFont) - 4;
         LightPanelGraphics.initializeFonts();
 // #if highResolution
         LightPanelGraphics.prominentModeIcons = true;
@@ -2193,7 +2195,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
         var battery = getLightBatteryStatus(lightData);
         var controlFont = WatchUi.loadResource(Rez.Fonts.panelControlFont);
         var controlHeight = dc.getFontHeight(controlFont);
-        var contentHeight = height - controlHeight - 8;
+        var contentHeight = height - controlHeight - 4;
         // Off uses the same neutral face, without a runtime fill or blue selection.
         if (lightData[2] != 0 && !AppTheme.hideFill) {
             LightPanelGraphics.drawRuntimeFill(dc, card[1], battery, x, y, w, height, radius, bg, card[3]);
@@ -2202,26 +2204,14 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
         dc.setPenWidth(1);
         dc.drawRoundedRectangle(x, y, w, height, radius);
         if (lightData[2] == 0) {
-            var font = WatchUi.loadResource(Rez.Fonts.panelControlFont);
-            var iconHeight = dc.getFontHeight(font);
-            var textHeight = dc.getFontHeight(1);
-            if (contentHeight < iconHeight + textHeight + 8) {
-                var textWidth = dc.getTextWidthInPixels("Off", 0);
-                var iconWidth = dc.getTextWidthInPixels("P", font);
-                var start = x + (w - iconWidth - 5 - textWidth) / 2;
-                dc.drawText(start, y + (contentHeight - iconHeight) / 2, font, "P", Graphics.TEXT_JUSTIFY_LEFT);
-                dc.drawText(start + iconWidth + 5, y + (contentHeight - dc.getFontHeight(0)) / 2, 0, "Off", Graphics.TEXT_JUSTIFY_LEFT);
-            } else {
-                var top = y + (contentHeight - iconHeight - textHeight - 4) / 2;
-                dc.drawText(x + w / 2, top, font, "P", Graphics.TEXT_JUSTIFY_CENTER);
-                dc.drawText(x + w / 2, top + iconHeight + 4, 1, "Off", Graphics.TEXT_JUSTIFY_CENTER);
-            }
+            dc.drawText(x + w / 2, y + (contentHeight - controlHeight) / 2,
+                controlFont, "P", Graphics.TEXT_JUSTIFY_CENTER);
         } else {
             LightPanelGraphics.drawMode(dc, card[1], card[2], battery, x, y, w, contentHeight, false, fg, bg);
         }
         setTextColor(dc, fg);
         var controlIcon = $.controlModes[lightData[4]];
-        var statusY = y + height - controlHeight - 4;
+        var statusY = y + height - controlHeight - 2;
         // Reuse the fullscreen header: active filter group or Garmin network mode.
         var status = lightData[5];
         if (status != null) {
