@@ -1,7 +1,7 @@
 # Build and install on Garmin Edge devices
 
 The manual GitHub Actions workflow (`.github/workflows/build-sbl.yml`) builds a `.prg`
-on a standard Linux runner. Supported devices: **1040, 1050, 850, 550, 840, 540**.
+on a standard Linux runner. Supported devices: **Edge 1040, 1050, 850, 550, 840, 540 and Forerunner 965**.
 Runs are titled `Build SBL (<device>)` according to the selected device.
 You do not need Java, Garmin's SDK, VS Code, Docker, or Garmin credentials on
 your Mac. No repository secrets are required.
@@ -13,7 +13,7 @@ your Mac. No repository secrets are required.
    GitHub displays its manual run button.
 2. Open the repository's **Actions** tab. If prompted, enable workflows on your fork.
 3. Select **Build SBL**, then **Run workflow** and select your branch.
-   Choose `edge1040` (the default), `edge1050`, `edge850`, `edge550`, `edge840` or `edge540` from the **Device to build for** dropdown.
+   Choose `edge1040` (the default), `edge1050`, `edge850`, `edge550`, `edge840`, `edge540` or `fr965` from the **Device to build for** dropdown.
 4. Open the completed run. Under **Artifacts**, download
    **SmartBikeLights-<device>**, matching your selection,
    and unzip it. Artifacts expire after seven days.

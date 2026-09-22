@@ -1,217 +1,25 @@
+# Supported devices: Edge 1050/850/550/1040/840/540 and Forerunner 965.
 project.manifest = manifest.xml
 excludeBase=widget;buttonPanel;watchPanel
-
 project.optimization = 2
 project.typecheck = 0
-
 base.sourcePath = source;source-common;source-generated;tests
-
-lowMemory = $(excludeBase);touchScreen;highMemory;settings;lightButtons;highResolution
-
-roundLowMemory = $(lowMemory);rectangle;semioctagon;monochromeScreen
-roundNoSettings = $(excludeBase);touchScreen;lowMemory;settings;lightButtons;rectangle;semioctagon;monochromeScreen;highResolution
-roundHighResolution = $(excludeBase);touchScreen;lowMemory;noLightButtons;rectangle;semioctagon;monochromeScreen;mediumResolution
-
-semioctagonLowMemory = $(lowMemory);round;rectangle;colorScreen
-
-rectangleLowMemory = $(lowMemory);round;semioctagon;monochromeScreen
-rectangleMonochromeLowMemory = $(lowMemory);round;semioctagon;colorScreen
-rectangleNoSettings = $(excludeBase);touchScreen;lowMemory;settings;lightButtons;round;semioctagon;monochromeScreen;highResolution
-rectangleNonTouchScreen = $(excludeBase);touchScreen;lowMemory;noLightButtons;round;semioctagon;monochromeScreen;highResolution
 rectangleHighResolution = $(excludeBase);nonTouchScreen;lowMemory;noLightButtons;round;semioctagon;settings;monochromeScreen;mediumResolution
-rectangleNonTouchScreenHighResolution = $(excludeBase);touchScreen;lowMemory;noLightButtons;round;semioctagon;monochromeScreen;mediumResolution
-
 rectangleButtonPanel = widget;touchScreen;lowMemory;noLightButtons;round;semioctagon;monochromeScreen;highResolution;noButtonPanel
-
 rectangleButtonPanelHighResolution = widget;touchScreen;lowMemory;noLightButtons;round;semioctagon;monochromeScreen;mediumResolution;noButtonPanel
-
 cardResources = resources/properties.xml;resources/settings.xml;resources/fitfields.xml;resources/data.xml;resources/strings.xml;resources-highmemory/panel-icons.xml;resources-highmemory/build-info.xml;resources-highmemory/strings.xml;resources-highmemory/properties.xml;resources-highmemory/settings.xml
-
-# maps default
 rectangle.excludeAnnotations = $(excludeBase);nonTouchScreen;lowMemory;noLightButtons;round;semioctagon;settings;monochromeScreen;highResolution
 round.excludeAnnotations = $(excludeBase);touchScreen;lowMemory;noLightButtons;rectangle;semioctagon;monochromeScreen;highResolution
 base.excludeAnnotations = $(rectangle.excludeAnnotations)
-
-# Non touch screen devices with 32KB memory
-  # Rectangle screen devices
-edge130.excludeAnnotations = $(rectangleMonochromeLowMemory)
-edge130.resourcePath = $(edge130.resourcePath);resources-lowmemory
-edge130plus.excludeAnnotations = $(rectangleMonochromeLowMemory)
-edge130plus.resourcePath = $(edge130plus.resourcePath);resources-lowmemory
-edge_520.excludeAnnotations = $(rectangleLowMemory)
-edge_520.resourcePath = $(edge_520.resourcePath);resources-lowmemory
-  # Round screen devices
-enduro.excludeAnnotations = $(roundLowMemory)
-enduro.resourcePath = $(enduro.resourcePath);resources-lowmemory
-fenix5.excludeAnnotations = $(roundLowMemory)
-fenix5.resourcePath = $(fenix5.resourcePath);resources-lowmemory
-fenix6.excludeAnnotations = $(roundLowMemory)
-fenix6.resourcePath = $(fenix6.resourcePath);resources-lowmemory
-fenix6s.excludeAnnotations = $(roundLowMemory)
-fenix6s.resourcePath = $(fenix6s.resourcePath);resources-lowmemory
-fr245.excludeAnnotations = $(roundLowMemory)
-fr245.resourcePath = $(fr245.resourcePath);resources-lowmemory
-fr645.excludeAnnotations = $(roundLowMemory)
-fr645.resourcePath = $(fr645.resourcePath);resources-lowmemory
-fr935.excludeAnnotations = $(roundLowMemory)
-fr935.resourcePath = $(fr935.resourcePath);resources-lowmemory
-vivoactive3.excludeAnnotations = $(roundLowMemory)
-vivoactive3.resourcePath = $(vivoactive3.resourcePath);resources-lowmemory
-vivoactive3d.excludeAnnotations = $(roundLowMemory)
-vivoactive3d.resourcePath = $(vivoactive3d.resourcePath);resources-lowmemory
-vivoactive3m.excludeAnnotations = $(roundLowMemory)
-vivoactive3m.resourcePath = $(vivoactive3m.resourcePath);resources-lowmemory
-vivoactive3mlte.excludeAnnotations = $(roundLowMemory)
-vivoactive3mlte.resourcePath = $(vivoactive3mlte.resourcePath);resources-lowmemory
-vivoactive4.excludeAnnotations = $(roundLowMemory)
-vivoactive4.resourcePath = $(vivoactive4.resourcePath);resources-lowmemory
-legacysagadarthvader.excludeAnnotations = $(roundLowMemory)
-legacysagadarthvader.resourcePath = $(legacysagadarthvader.resourcePath);resources-lowmemory
-legacyherofirstavenger.excludeAnnotations = $(roundLowMemory)
-legacyherofirstavenger.resourcePath = $(legacyherofirstavenger.resourcePath);resources-lowmemory
-  # Semioctagon screen devices
-instinct2.excludeAnnotations = $(semioctagonLowMemory)
-instinct2.resourcePath = resources-lowmemory;$(instinct2.resourcePath)
-instinct2s.excludeAnnotations = $(semioctagonLowMemory)
-instinct2s.resourcePath = resources-lowmemory;$(instinct2s.resourcePath)
-instinct2x.excludeAnnotations = $(semioctagonLowMemory)
-instinct2x.resourcePath = resources-lowmemory;$(instinct2x.resourcePath)
-
-# Rectangle non touch screen devices with more than 32KB memory
-edge520plus.excludeAnnotations = $(rectangleNoSettings)
-edge520plus.resourcePath = $(edge520plus.resourcePath);resources-highmemory
-edge530.excludeAnnotations = $(rectangleNonTouchScreen)
-edge530.resourcePath = $(edge530.resourcePath);resources-highmemory
 edge540.excludeAnnotations = $(rectangleButtonPanel)
 edge540.resourcePath = $(cardResources);resources-edge540
-edgemtb.excludeAnnotations = $(rectangleNonTouchScreen)
-edgemtb.resourcePath = $(edgemtb.resourcePath);resources-highmemory
-
-# Rectangle touch screen devices
-edge1030.resourcePath = $(edge1030.resourcePath);resources-highmemory;resources-touchscreen
-edge1030bontrager.resourcePath = $(edge1030bontrager.resourcePath);resources-highmemory;resources-touchscreen
-edge1030plus.resourcePath = $(edge1030plus.resourcePath);resources-highmemory;resources-touchscreen
 edge1040.resourcePath = $(edge1040.resourcePath);resources-highmemory;resources-touchscreen
-edge820.resourcePath = $(edge820.resourcePath);resources-highmemory;resources-touchscreen
-edge830.resourcePath = $(edge830.resourcePath);resources-highmemory;resources-touchscreen
 edge840.resourcePath = $(edge840.resourcePath);resources-highmemory;resources-touchscreen
-edge_1000.resourcePath = $(edge_1000.resourcePath);resources-highmemory;resources-touchscreen
-edgeexplore.resourcePath = $(edgeexplore.resourcePath);resources-highmemory;resources-touchscreen
-edgeexplore2.resourcePath = $(edgeexplore2.resourcePath);resources-highmemory;resources-touchscreen
-
-# Rectangle touch screen devices with high resolution
 edge1050.resourcePath = resources-highmemory;$(edge1050.resourcePath)
 edge1050.excludeAnnotations = $(rectangleHighResolution)
 edge850.resourcePath = resources-highmemory;$(edge850.resourcePath)
 edge850.excludeAnnotations = $(rectangleHighResolution)
-
-# Rectangle non touch screen devices with high resolution
 edge550.resourcePath = $(cardResources);resources-edge550
 edge550.excludeAnnotations = $(rectangleButtonPanelHighResolution)
-venux1.resourcePath = resources-highmemory;$(venux1.resourcePath)
-venux1.excludeAnnotations = $(rectangleNonTouchScreenHighResolution)
-
-# Round non touch screen devices with more than 32KB memory but do not have CIQ 3.2
-d2charlie.excludeAnnotations = $(roundNoSettings)
-d2charlie.resourcePath = $(d2charlie.resourcePath);resources-highmemory
-d2delta.excludeAnnotations = $(roundNoSettings)
-d2delta.resourcePath = $(d2delta.resourcePath);resources-highmemory
-d2deltapx.excludeAnnotations = $(roundNoSettings)
-d2deltapx.resourcePath = $(d2deltapx.resourcePath);resources-highmemory
-d2deltas.excludeAnnotations = $(roundNoSettings)
-d2deltas.resourcePath = $(d2deltas.resourcePath);resources-highmemory
-descentmk1.excludeAnnotations = $(roundNoSettings)
-descentmk1.resourcePath = $(descentmk1.resourcePath);resources-highmemory
-fenix5x.excludeAnnotations = $(roundNoSettings)
-fenix5x.resourcePath = $(fenix5x.resourcePath);resources-highmemory
-
-# Round non touch screen devices with more than 32KB memory and have CIQ 3.2+
-descentmk2.resourcePath = $(descentmk2.resourcePath);resources-highmemory
-descentmk2s.resourcePath = $(descentmk2s.resourcePath);resources-highmemory
-enduro3.resourcePath = $(enduro3.resourcePath);resources-highmemory
-fenix5plus.resourcePath = $(fenix5plus.resourcePath);resources-highmemory
-fenix5splus.resourcePath = $(fenix5splus.resourcePath);resources-highmemory
-fenix5xplus.resourcePath = $(fenix5xplus.resourcePath);resources-highmemory
-fenix6pro.resourcePath = $(fenix6pro.resourcePath);resources-highmemory
-fenix6spro.resourcePath = $(fenix6spro.resourcePath);resources-highmemory
-fenix6xpro.resourcePath = $(fenix6xpro.resourcePath);resources-highmemory
-fenix7.resourcePath = $(fenix7.resourcePath);resources-highmemory
-fenix7pro.resourcePath = $(fenix7pro.resourcePath);resources-highmemory
-fenix7pronowifi.resourcePath = $(fenix7pronowifi.resourcePath);resources-highmemory
-fenix7s.resourcePath = $(fenix7s.resourcePath);resources-highmemory
-fenix7spro.resourcePath = $(fenix7spro.resourcePath);resources-highmemory
-fenix7x.resourcePath = $(fenix7x.resourcePath);resources-highmemory
-fenix7xpro.resourcePath = $(fenix7xpro.resourcePath);resources-highmemory
-fenix7xpronowifi.resourcePath = $(fenix7xpronowifi.resourcePath);resources-highmemory
-fenix8solar47mm.resourcePath = $(fenix8solar47mm.resourcePath);resources-highmemory
-fenix8solar51mm.resourcePath = $(fenix8solar51mm.resourcePath);resources-highmemory
-fr245m.resourcePath = $(fr245m.resourcePath);resources-highmemory
-fr255.resourcePath = $(fr255.resourcePath);resources-highmemory
-fr255m.resourcePath = $(fr255m.resourcePath);resources-highmemory
-fr255s.resourcePath = $(fr255s.resourcePath);resources-highmemory
-fr255sm.resourcePath = $(fr255sm.resourcePath);resources-highmemory
-fr645m.resourcePath = $(fr645m.resourcePath);resources-highmemory
-fr745.resourcePath = $(fr745.resourcePath);resources-highmemory
-fr945.resourcePath = $(fr945.resourcePath);resources-highmemory
-fr945lte.resourcePath = $(fr945lte.resourcePath);resources-highmemory
-fr955.resourcePath = $(fr955.resourcePath);resources-highmemory
-marqadventurer.resourcePath = $(marqadventurer.resourcePath);resources-highmemory
-marqathlete.resourcePath = $(marqathlete.resourcePath);resources-highmemory
-marqaviator.resourcePath = $(marqaviator.resourcePath);resources-highmemory
-marqcaptain.resourcePath = $(marqcaptain.resourcePath);resources-highmemory
-marqcommander.resourcePath = $(marqcommander.resourcePath);resources-highmemory
-marqdriver.resourcePath = $(marqdriver.resourcePath);resources-highmemory
-marqexpedition.resourcePath = $(marqexpedition.resourcePath);resources-highmemory
-marqgolfer.resourcePath = $(marqgolfer.resourcePath);resources-highmemory
-
-# Round high resolution screen devices more than 32KB memory and CIQ 4.0+
-d2airx10.excludeAnnotations = $(roundHighResolution)
-d2airx10.resourcePath = $(d2airx10.resourcePath);resources-highmemory
-d2mach1.excludeAnnotations = $(roundHighResolution)
-d2mach1.resourcePath = $(d2mach1.resourcePath);resources-highmemory
-epix2.excludeAnnotations = $(roundHighResolution)
-epix2.resourcePath = $(epix2.resourcePath);resources-highmemory
-epix2pro42mm.excludeAnnotations = $(roundHighResolution)
-epix2pro42mm.resourcePath = $(epix2pro42mm.resourcePath);resources-highmemory
-epix2pro47mm.excludeAnnotations = $(roundHighResolution)
-epix2pro47mm.resourcePath = $(epix2pro47mm.resourcePath);resources-highmemory
-epix2pro51mm.excludeAnnotations = $(roundHighResolution)
-epix2pro51mm.resourcePath = $(epix2pro51mm.resourcePath);resources-highmemory
-fenix843mm.excludeAnnotations = $(roundHighResolution)
-fenix843mm.resourcePath = $(fenix843mm.resourcePath);resources-highmemory
-fenix847mm.excludeAnnotations = $(roundHighResolution)
-fenix847mm.resourcePath = $(fenix847mm.resourcePath);resources-highmemory
-fenix8pro47mm.excludeAnnotations = $(roundHighResolution)
-fenix8pro47mm.resourcePath = $(fenix8pro47mm.resourcePath);resources-highmemory
-fenixe.excludeAnnotations = $(roundHighResolution)
-fenixe.resourcePath = $(fenixe.resourcePath);resources-highmemory
-fr165.excludeAnnotations = $(roundHighResolution)
-fr165.resourcePath = $(fr165.resourcePath);resources-highmemory
-fr165m.excludeAnnotations = $(roundHighResolution)
-fr165m.resourcePath = $(fr165m.resourcePath);resources-highmemory
-fr265.excludeAnnotations = $(roundHighResolution)
-fr265.resourcePath = $(fr265.resourcePath);resources-highmemory
-fr265s.excludeAnnotations = $(roundHighResolution)
-fr265s.resourcePath = $(fr265s.resourcePath);resources-highmemory
 fr965.excludeAnnotations = widget;buttonPanel;noWatchPanel;nonTouchScreen;lowMemory;noLightButtons;rectangle;semioctagon;monochromeScreen;mediumResolution
 fr965.resourcePath = $(fr965.resourcePath);resources-highmemory
-fr970.excludeAnnotations = $(roundHighResolution)
-fr970.resourcePath = $(fr970.resourcePath);resources-highmemory
-marq2.excludeAnnotations = $(roundHighResolution)
-marq2.resourcePath = $(marq2.resourcePath);resources-highmemory
-marq2aviator.excludeAnnotations = $(roundHighResolution)
-marq2aviator.resourcePath = $(marq2aviator.resourcePath);resources-highmemory
-venu2.excludeAnnotations = $(roundHighResolution)
-venu2.resourcePath = $(venu2.resourcePath);resources-highmemory
-venu2s.excludeAnnotations = $(roundHighResolution)
-venu2s.resourcePath = $(venu2s.resourcePath);resources-highmemory
-venu2plus.excludeAnnotations = $(roundHighResolution)
-venu2plus.resourcePath = $(venu2plus.resourcePath);resources-highmemory
-venu3.excludeAnnotations = $(roundHighResolution)
-venu3.resourcePath = $(venu3.resourcePath);resources-highmemory
-venu3s.excludeAnnotations = $(roundHighResolution)
-venu3s.resourcePath = $(venu3s.resourcePath);resources-highmemory
-vivoactive5.excludeAnnotations = $(roundHighResolution)
-vivoactive5.resourcePath = $(vivoactive5.resourcePath);resources-highmemory
-vivoactive6.excludeAnnotations = $(roundHighResolution)
-vivoactive6.resourcePath = $(vivoactive6.resourcePath);resources-highmemory

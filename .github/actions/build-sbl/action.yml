@@ -2,7 +2,7 @@ name: Build SBL
 description: Build a sideloadable SmartBikeLights application using Docker on Linux.
 inputs:
   device:
-    description: Garmin device ID (edge1040, edge1050, edge850, edge550, edge840 or edge540).
+    description: Garmin device ID (edge1040, edge1050, edge850, edge550, edge840, edge540 or fr965).
     required: false
     default: edge1040
 runs:

@@ -12,16 +12,6 @@ using Toybox.Attention;
 using Toybox.Graphics;
 
 (/* #include TARGET */)
-const lightModeCharacters = [
-    "S", /* High steady beam */
-    "M", /* Medium steady beam */
-    "s", /* Low steady beam */
-    "F", /* High flash */
-    "m", /* Medium flash */
-    "f"  /* Low flash */
-];
-
-(/* #include TARGET */)
 const controlModes = [
     "S", /* SMART */
     "N", /* NETWORK */
@@ -40,9 +30,6 @@ const networkModes = [
 class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ WatchUi.View /* #endif */ {
 
     // Fonts
-    protected var _lightsFont;
-    protected var _batteryFont;
-    protected var _controlModeFont;
 
     // Fields related to lights and their network
     protected var _lightNetwork;
@@ -80,9 +67,6 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
 // #endif
 
     // Settings
-    protected var _separatorWidth;
-    protected var _separatorColor;
-    protected var _titleFont;
     protected var _invertLights;
 // #if touchScreen || buttonPanel || watchPanel
 
@@ -107,22 +91,14 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
 
   // #if dataField
     // Light icon tap behavior
-    var headlightIconTapBehavior;
-    var taillightIconTapBehavior;
-    var defaultLightIconTapBehavior = [[0 /* SMART */, 1 /* NETWORK */, 2 /* MANUAL */], null /* All light modes */];
   // #endif
 
     // Pre-calculated fields
     protected var _isFullScreen;
     protected var _fieldWidth;
-    protected var _batteryWidth = /* #include H_BATTERY_WIDTH */;
 // #endif
-    protected var _batteryY;
     protected var _lightY;
-    protected var _titleY;
-    protected var _offsetX;
 // #if dataField && highMemory && (mediumResolution || !round)
-    private var _useLargeIcons;
 // #endif
 
     // Parsed filters
@@ -458,10 +434,6 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
             var configuration = parseConfiguration();
             _globalFilters = configuration[0];
 // #if dataField
-            var separatorColor = configuration[/* #if highMemory */ 16 /* #else */ 11 /* #endif */];
-            _separatorColor = separatorColor == null || separatorColor == 0
-                ? /* #if highMemory */ AppTheme.accent /* #else */ 43775 /* Blue */ /* #endif */ // Default separator
-                : separatorColor;
   // #if highMemory
             remoteControllers = configuration[17];
             _bikeRadarNumber = configuration[18];
@@ -856,28 +828,6 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
             }
         }
         return;
-// #else
-        if (_initializedLights == 1) {
-            drawLight(getLightData(null), 2, dc, width, fgColor, bgColor);
-// #if highMemory
-            drawSensorStatus(width, height, dc);
-// #endif
-            return;
-        }
-
-        // Draw separator
-        var separatorColor = _separatorColor;
-        if (separatorColor != -1 /* No separator */) {
-            setTextColor(dc, separatorColor == 1 /* Black/White */ ? fgColor : separatorColor);
-            dc.setPenWidth(_separatorWidth);
-            dc.drawLine(width / 2 + _offsetX, 0, width / 2 + _offsetX, height);
-        }
-
-        drawLight(headlightData, 1, dc, width, fgColor, bgColor);
-        drawLight(taillightData, 3, dc, width, fgColor, bgColor);
-// #if highMemory
-        drawSensorStatus(width, height, dc);
-// #endif
 // #endif
     }
 
@@ -1270,19 +1220,6 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
         return Properties.getValue(key);
     }
 
-// #if widget
-    protected function getBackgroundColor() {
-    }
-// #endif
-
-// #if widget
-    protected function preCalculate(dc, width, height) {
-  // #if touchScreen || buttonPanel
-        _fieldWidth = width;
-        _isFullScreen = true;
-  // #endif
-    }
-// #elif buttonPanel || (touchScreen && !watchPanel)
     protected function preCalculate(dc, width, height) {
         _fieldWidth = width;
 // #if touchScreen
@@ -1291,134 +1228,6 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
 // #endif
         _lightY = 0;
     }
-// #elif rectangle
-    protected function preCalculate(dc, width, height) {
-        // Free resources
-        _lightsFont = null;
-        _batteryFont = null;
-        _controlModeFont = null;
-        var fonts = Rez.Fonts;
-        var padding = height - 55 < 0 ? 1 : 3;
-        var settings = WatchUi.loadResource(Rez.JsonData.Settings);
-        _separatorWidth = settings[0];
-        _titleFont = settings[1];
-        var titleTopPadding = settings[2];
-        _offsetX = settings[3];
-  // #if highMemory
-        var deviceSettings = System.getDeviceSettings();
-  // #endif
-  // #if touchScreen || buttonPanel
-        _fieldWidth = width;
-        _isFullScreen = width == deviceSettings.screenWidth && height == deviceSettings.screenHeight;
-  // #endif
-  // #if highMemory
-        _useLargeIcons = (_initializedLights == 1 || width == deviceSettings.screenWidth) /* #if touchScreen || buttonPanel */ && !_isFullScreen /* #endif */;
-        if (_useLargeIcons) {
-            _lightsFont = WatchUi.loadResource(fonts[:lightsLargeFont]);
-            _batteryFont = WatchUi.loadResource(fonts[:batteryLargeFont]);
-            _controlModeFont = WatchUi.loadResource(fonts[:controlModeLargeFont]);
-            _lightY = height - /* #include LIGHT_L_HEIGHT */ - padding;
-            _batteryY = _lightY;
-            _titleY = (_lightY - dc.getFontHeight(_titleFont) - titleTopPadding) >= 0 ? titleTopPadding : null;
-            return;
-        }
-  // #endif
-        _lightsFont = WatchUi.loadResource(fonts[:lightsFont]);
-        _batteryFont = WatchUi.loadResource(fonts[:batteryFont]);
-        _controlModeFont = WatchUi.loadResource(fonts[:controlModeFont]);
-        _batteryY = height - /* #include H_BATTERY_HEIGHT */ - padding;
-        _lightY = _batteryY - padding - /* #include LIGHT_HEIGHT */;
-        _titleY = (_lightY - dc.getFontHeight(_titleFont) - titleTopPadding) >= 0 ? titleTopPadding : null;
-    }
-
-// #elif round
-    protected function preCalculate(dc, width, height) {
-        // Free resources
-        _lightsFont = null;
-        _batteryFont = null;
-        _controlModeFont = null;
-        var fonts = Rez.Fonts;
-        var flags = getObscurityFlags();
-        var settings = WatchUi.loadResource(Rez.JsonData.Settings);
-        _separatorWidth = settings[0];
-        _titleFont = settings[1];
-        var titleTopPadding = settings[2];
-        var titleHeight = dc.getFontHeight(_titleFont) + titleTopPadding;
-  // #if highResolution
-        var excludeBattery = height < 83;
-        var lightHeight = excludeBattery ? 53 : 83;
-        var includeTitle = height > 120 && width > 200;
-  // #else
-        var excludeBattery = height < 55;
-        var lightHeight = excludeBattery ? 35 : 55;
-    // #if highMemory && mediumResolution
-        if (_initializedLights == 1 && !excludeBattery) {
-            lightHeight = 52;
-        }
-    // #endif
-        var includeTitle = height > 90 && width > 150;
-  // #endif
-        var totalHeight = includeTitle ? lightHeight + titleHeight : lightHeight;
-        var startY = (12800 >> flags) & 0x01 == 1 ? 2 /* From top */
-            : (200 >> flags) & 0x01 == 1 ? height - totalHeight /* From bottom */
-            : (height - totalHeight) / 2; /* From center */
-        _titleY = includeTitle ? startY : null;
-        _lightY = includeTitle ? _titleY + titleHeight : startY;
-        var offsetDirection = ((1415136409 >> (flags * 2)) & 0x03) - 1;
-        _offsetX = settings[3] * offsetDirection;
-  // #if highMemory && mediumResolution
-        _useLargeIcons = _initializedLights == 1 && !excludeBattery;
-        if (_useLargeIcons) {
-            _lightsFont = WatchUi.loadResource(fonts[:lightsLargeFont]);
-            _batteryFont = WatchUi.loadResource(fonts[:batteryLargeFont]);
-            _controlModeFont = WatchUi.loadResource(fonts[:controlModeLargeFont]);
-            _batteryY = _lightY;
-            return;
-        }
-  // #endif
-        _lightsFont = WatchUi.loadResource(fonts[:lightsFont]);
-        _batteryFont = WatchUi.loadResource(fonts[:batteryFont]);
-        _controlModeFont = WatchUi.loadResource(fonts[:controlModeFont]);
-  // #if highResolution
-        _batteryY = excludeBattery ? null : _lightY + 53;
-  // #else
-        _batteryY = excludeBattery ? null : _lightY + 35;
-  // #endif
-    }
-
-// #elif semioctagon
-    protected function preCalculate(dc, width, height) {
-        // Free resources
-        _lightsFont = null;
-        _batteryFont = null;
-        _controlModeFont = null;
-        var fonts = Rez.Fonts;
-        var flags = getObscurityFlags();
-        var padding = height - 30 < 0 ? 0 : 2;
-        var settings = WatchUi.loadResource(Rez.JsonData.Settings);
-        _separatorWidth = settings[0];
-        _titleFont = settings[1];
-        var titleTopPadding = settings[2];
-        var titleHeight = dc.getFontHeight(_titleFont) + titleTopPadding;
-        var offsetDirection = ((1431654869 >> (flags * 2)) & 0x03) - 1;
-        _offsetX = settings[3] * offsetDirection;
-
-        var includeTitle = height > 60 && width > 70;
-        var excludeBattery = height < 40;
-        var lightHeight = excludeBattery ? 25 : 40;
-        var totalHeight = includeTitle ? lightHeight + titleHeight : lightHeight;
-        var startY = (12800 >> flags) & 0x01 == 1 ? 2 /* From top */
-            : (((200 >> flags) & 0x01 == 1 ? height - totalHeight /* From bottom */
-            : (height - totalHeight) / 2) - padding);  /* From center */
-
-        _titleY = includeTitle ? startY : null;
-        _lightY = includeTitle ? _titleY + titleHeight : startY;
-        _batteryY = excludeBattery ? null : _lightY + 25;
-        _lightsFont = WatchUi.loadResource(fonts[:lightsFont]);
-        _batteryFont = WatchUi.loadResource(fonts[:batteryFont]);
-        _controlModeFont = WatchUi.loadResource(fonts[:controlModeFont]);
-    }
-// #endif
 
     protected function initializeLights(newNetworkMode) {
         //System.println("initializeLights=" + newNetworkMode + " timer=" + System.getTimer());
@@ -1783,85 +1592,6 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
 // #endif
     }
 
-// #if !buttonPanel && !touchScreen
-// #if widget
-    protected function drawLight(lightData, position, dc, width, fgColor, bgColor) {
-    }
-// #else
-    protected function drawLight(lightData, position, dc, width, fgColor, bgColor) {
-        var justification = lightData[0].type;
-        if (_invertLights) {
-            justification = justification == 0 ? 2 : 0;
-            position = position == 1 ? 3
-              : position == 3 ? 1
-              : position;
-        }
-
-        var direction = justification == 0 ? 1 : -1;
-  // #if rectangle
-        var lightX = Math.round(width * 0.25f * position);
-  // #else
-        var lightX = Math.round(width * 0.25f * position) + _offsetX;
-        lightX += _initializedLights == 2 ? (direction * ((width / 4) - /* #include LIGHT_OFFSET_X */)) : 0;
-  // #endif
-        var batteryStatus = getLightBatteryStatus(lightData);
-        var title = lightData[5];
-        var lightXOffset = justification == 0 ? -/* #include H_LIGHT_FONT_OFFSET_X */ : /* #include T_LIGHT_FONT_OFFSET_X */;
-        dc.setColor(fgColor, bgColor);
-
-        if (title != null && _titleY != null) {
-  // #if rectangle
-            dc.drawText(lightX, _titleY, _titleFont, title, 1 /* TEXT_JUSTIFY_CENTER */);
-  // #else
-            dc.drawText(lightX + (direction * /* #include TITLE_OFFSET_X */), _titleY, _titleFont, title, justification);
-  // #endif
-        }
-
-        var iconColor = lightData[16];
-        if (iconColor != null && iconColor != 1 /* Black/White */) {
-            setTextColor(dc, iconColor);
-        }
-
-    // #if highMemory && (mediumResolution || !round)
-        if (_useLargeIcons) { // Use larger icons when only one light is paired
-            lightXOffset = justification == 0 ? -/* #include H_LIGHT_L_FONT_OFFSET_X */ : /* #include T_LIGHT_L_FONT_OFFSET_X */;
-            lightX -= (/* #include V_BATTERY_L_WIDTH */ / 2); // Center by subtracting half of battery width
-            dc.drawText(lightX + (direction * (/* #include LIGHT_L_WIDTH */ / 2)) + lightXOffset, _lightY, _lightsFont, lightData[1], justification);
-            dc.drawText(lightX + (direction * /* #include CTRL_MODE_L_OFFSET_X */), _lightY + /* #include CTRL_MODE_L_OFFSET_Y */, _controlModeFont, $.controlModes[lightData[4]], 1 /* TEXT_JUSTIFY_CENTER */);
-            drawBattery(dc, fgColor, lightX + /* #include LIGHT_L_V_BATTERY_OFFSET_X */, _batteryY, batteryStatus);
-            return;
-        }
-    // #endif
-        dc.drawText(lightX + (direction * (/* #include H_BATTERY_WIDTH */ / 2)) + lightXOffset, _lightY, _lightsFont, lightData[1], justification);
-        dc.drawText(lightX + (direction * /* #include CTRL_MODE_OFFSET_X */), _lightY + /* #include CTRL_MODE_OFFSET_Y */, _controlModeFont, $.controlModes[lightData[4]], 1 /* TEXT_JUSTIFY_CENTER */);
-        if (_batteryY != null) {
-            drawBattery(dc, fgColor, lightX, _batteryY, batteryStatus);
-        }
-    }
-// #endif
-
-    protected function drawBattery(dc, fgColor, x, y, batteryStatus) {
-        // Do not draw the indicator in case the light is not connected anymore or an invalid status is given
-        // The only way to detect whether the light is still connected is to check whether the its battery status is not null
-        if (batteryStatus > 6) {
-            return;
-        }
-
-        // Draw the battery shell
-        setTextColor(dc, fgColor);
-        dc.drawText(x, y, _batteryFont, "B", 1 /* TEXT_JUSTIFY_CENTER */);
-
-        // Draw the battery indicator
-        var color = batteryStatus == 6 /* BATT_STATUS_CHARGE */ ? fgColor
-            : batteryStatus == 5 /* BATT_STATUS_CRITICAL */ ? 0xFF0000 /* COLOR_RED */
-            : batteryStatus > 2 /* BATT_STATUS_GOOD */ ? 0xFF5500 /* COLOR_ORANGE */
-            : 0x00AA00; /* COLOR_DK_GREEN */
-        setTextColor(dc, color);
-        dc.drawText(x, y, _batteryFont, batteryStatus.toString(), 1 /* TEXT_JUSTIFY_CENTER */);
-    }
-
-// #endif
-
     protected function getSecondsOfDay(value) {
         value = value.toNumber();
         return value == null ? null : (value < 0 ? value + 86400 : value) % 86400;
@@ -1984,20 +1714,6 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
         }
 
         var lightType = light.type;
-        var lightModes = lightData[14];
-        var lightModeCharacter = "";
-        if (mode < 0) {
-            lightModeCharacter = "X"; // Disconnected
-        } else if (mode > 0) {
-            var index = lightModes == null
-                ? -1
-                : ((lightModes >> (4 * ((mode > 9 ? mode - 49 : mode) - 1))) & 0x0F).toNumber() - 1;
-            lightModeCharacter = index < 0 || index >= $.lightModeCharacters.size()
-                ? "?" /* Unknown */
-                : $.lightModeCharacters[index];
-        }
-
-        lightData[1] = lightType == (_invertLights ? 2 /* LIGHT_TYPE_TAILLIGHT */ : 0 /* LIGHT_TYPE_HEADLIGHT */) ? lightModeCharacter + ")" : "(" + lightModeCharacter;
         lightData[2] = mode;
         var fitField = lightData[6];
         if (fitField != null) {
@@ -2051,15 +1767,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
 // #endif
         setupHighMemoryConfiguration(configuration, setupSensors);
     // #if dataField
-        var lightsTapBehavior = configuration[15];
-        if (lightsTapBehavior != null) {
-            headlightIconTapBehavior = lightsTapBehavior[0];
-            taillightIconTapBehavior = lightsTapBehavior[1];
-        } else {
-            headlightIconTapBehavior = null;
-            taillightIconTapBehavior = null;
-        }
-    // #endif
+// #endif
     }
   // #endif
 
@@ -2668,7 +2376,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
                     // Fit the square icon inside the face, keeping a two-pixel margin.
                     var iconSize = (buttonHeight < buttonWidth ? buttonHeight : buttonWidth) - 4;
                     var icon = mode == 0 ? "P" : $.controlModes[controlMode];
-                    var iconFont = dc.getFontHeight(_panelIconFont) <= iconSize ? _panelIconFont : _controlModeFont;
+                    var iconFont = dc.getFontHeight(_panelIconFont) <= iconSize ? _panelIconFont : WatchUi.loadResource(Rez.Fonts.panelControlFont);
                     dc.drawText(titleX, buttonY + (buttonHeight - dc.getFontHeight(iconFont)) / 2, iconFont, icon, 1 /* TEXT_JUSTIFY_CENTER */);
                 } else if (titleFont == -1) {
                     LightPanelGraphics.drawMode(dc, titleParts, panelData[8][0], batteryStatus, buttonX, buttonY, buttonWidth, buttonHeight, isSelected, isSelected && !isModeCard ? panelData[3] : fgColor, faceColor);

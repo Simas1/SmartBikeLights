@@ -15,16 +15,6 @@ using Toybox.Attention;
 using Toybox.Graphics;
 
 (:highMemory :rectangle :nonTouchScreen :highResolution :buttonPanel)
-const lightModeCharacters = [
-    "S", /* High steady beam */
-    "M", /* Medium steady beam */
-    "s", /* Low steady beam */
-    "F", /* High flash */
-    "m", /* Medium flash */
-    "f"  /* Low flash */
-];
-
-(:highMemory :rectangle :nonTouchScreen :highResolution :buttonPanel)
 const controlModes = [
     "S", /* SMART */
     "N", /* NETWORK */
@@ -43,9 +33,6 @@ const networkModes = [
 class BikeLightsView extends  WatchUi.DataField  {
 
     // Fonts
-    protected var _lightsFont;
-    protected var _batteryFont;
-    protected var _controlModeFont;
 
     // Fields related to lights and their network
     protected var _lightNetwork;
@@ -81,9 +68,6 @@ class BikeLightsView extends  WatchUi.DataField  {
     protected var _errorContext; // [code, affected component, detail]
 
     // Settings
-    protected var _separatorWidth;
-    protected var _separatorColor;
-    protected var _titleFont;
     protected var _invertLights;
 
     // Light panel settings
@@ -104,19 +88,11 @@ class BikeLightsView extends  WatchUi.DataField  {
     private var _taillightGroupName;
 
     // Light icon tap behavior
-    var headlightIconTapBehavior;
-    var taillightIconTapBehavior;
-    var defaultLightIconTapBehavior = [[0 /* SMART */, 1 /* NETWORK */, 2 /* MANUAL */], null /* All light modes */];
 
     // Pre-calculated fields
     protected var _isFullScreen;
     protected var _fieldWidth;
-    protected var _batteryWidth = 68;
-    protected var _batteryY;
     protected var _lightY;
-    protected var _titleY;
-    protected var _offsetX;
-    private var _useLargeIcons;
 
     // Parsed filters
     protected var _globalFilters;
@@ -426,10 +402,6 @@ class BikeLightsView extends  WatchUi.DataField  {
             releaseLightSensors();
             var configuration = parseConfiguration();
             _globalFilters = configuration[0];
-            var separatorColor = configuration[ 16 ];
-            _separatorColor = separatorColor == null || separatorColor == 0
-                ?  AppTheme.accent  // Default separator
-                : separatorColor;
             remoteControllers = configuration[17];
             _bikeRadarNumber = configuration[18];
             if (setupSensors) {
@@ -996,6 +968,7 @@ class BikeLightsView extends  WatchUi.DataField  {
         _fieldWidth = width;
         _lightY = 0;
     }
+
     protected function initializeLights(newNetworkMode) {
         //System.println("initializeLights=" + newNetworkMode + " timer=" + System.getTimer());
         var errorCode = _errorCode;
@@ -1334,20 +1307,6 @@ class BikeLightsView extends  WatchUi.DataField  {
         }
 
         var lightType = light.type;
-        var lightModes = lightData[14];
-        var lightModeCharacter = "";
-        if (mode < 0) {
-            lightModeCharacter = "X"; // Disconnected
-        } else if (mode > 0) {
-            var index = lightModes == null
-                ? -1
-                : ((lightModes >> (4 * ((mode > 9 ? mode - 49 : mode) - 1))) & 0x0F).toNumber() - 1;
-            lightModeCharacter = index < 0 || index >= $.lightModeCharacters.size()
-                ? "?" /* Unknown */
-                : $.lightModeCharacters[index];
-        }
-
-        lightData[1] = lightType == (_invertLights ? 2 /* LIGHT_TYPE_TAILLIGHT */ : 0 /* LIGHT_TYPE_HEADLIGHT */) ? lightModeCharacter + ")" : "(" + lightModeCharacter;
         lightData[2] = mode;
         var fitField = lightData[6];
         if (fitField != null) {
@@ -1396,6 +1355,7 @@ class BikeLightsView extends  WatchUi.DataField  {
         taillightSettings = panelMenuSettings(taillightPanelSettings);
         setupHighMemoryConfiguration(configuration, setupSensors);
     }
+
 
     private function panelMenuSettings(panel) {
         if (panel == null) { return null; }
@@ -1473,6 +1433,7 @@ class BikeLightsView extends  WatchUi.DataField  {
         return [name, active, maxLumens, maxHours];
     }
 
+
     // All enabled details must fit; only Theme settings may hide them.
     private function activeCardsFit(dc, width, height) {
         var cellWidth = _initializedLights > 1 ? width / 2 : width;
@@ -1530,16 +1491,13 @@ class BikeLightsView extends  WatchUi.DataField  {
         var right = _invertLights ? head : tail;
         var leftData = _invertLights ? taillightData : headlightData;
         var rightData = _invertLights ? headlightData : taillightData;
-        if (left != null) { drawActiveLightCard(dc, leftData, left, 0, cellWidth, cardHeight, fg, bg); }
-        if (right != null) { drawActiveLightCard(dc, rightData, right, left == null ? 0 : cellWidth, cellWidth, cardHeight, fg, bg); }
+        if (left != null) { drawActiveLightCardFace(dc, leftData, left, 4, 3, cellWidth - (_initializedLights > 1 ? 6 : 8), cardHeight, fg, bg); }
+        if (right != null) { drawActiveLightCardFace(dc, rightData, right, left == null ? 4 : cellWidth + 2, 3, cellWidth - (_initializedLights > 1 ? 6 : 8), cardHeight, fg, bg); }
         drawSensorStatus(width, height, dc);
     }
 
-    private function drawActiveLightCard(dc, lightData, card, left, width, height, fg, bg) {
-        // Share the central gap: 2 px per card, 4 px at the outer edges.
-        var x = left + (_initializedLights > 1 && left > 0 ? 2 : 4);
-        var y = 3;
-        var w = width - (_initializedLights > 1 ? 6 : 8);
+
+    private function drawActiveLightCardFace(dc, lightData, card, x, y, w, height, fg, bg) {
         var radius = w >= 180 ? 18 : 12;
         var battery = getLightBatteryStatus(lightData);
         var controlFont = WatchUi.loadResource(Rez.Fonts.panelControlFont);
@@ -1560,7 +1518,7 @@ class BikeLightsView extends  WatchUi.DataField  {
         }
         setTextColor(dc, fg);
         var controlIcon = $.controlModes[lightData[4]];
-        var statusY = y + height - controlHeight - 2;
+        var statusY = y + height - controlHeight -  2 ;
         // Reuse the fullscreen header: active filter group or Garmin network mode.
         var status = lightData[5];
         if (status != null) {

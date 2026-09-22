@@ -3,7 +3,7 @@ using Toybox.Lang;
 using Toybox.WatchUi;
 using Toybox.Application.Properties as Properties;
 
-(:touchScreen :highResolution)
+(:touchScreen :highResolution :noWatchPanel)
 module DataFieldUi {
 
     var _openedMenus = [];

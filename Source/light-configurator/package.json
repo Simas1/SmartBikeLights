@@ -65,5 +65,11 @@
   },
   "devDependencies": {
     "gh-pages": "^5.0.0"
+  },
+  "jest": {
+    "transformIgnorePatterns": [
+      "node_modules/(?!(nanoid|react-dnd|react-dnd-html5-backend|dnd-core|@react-dnd|react-leaflet|@react-leaflet)/).+\\.(js|jsx|mjs|cjs|ts|tsx)$",
+      "^.+\\.module\\.(css|sass|scss)$"
+    ]
   }
 }
