@@ -1,24 +1,5 @@
 <resources>
     <settings>
-        <setting propertyKey="@Properties.TO" title="@Strings.TO">
-            <settingConfig type="boolean" />
-        </setting>
-        <setting propertyKey="@Properties.HL" title="@Strings.HL">
-            <settingConfig type="boolean" />
-        </setting>
-        <setting propertyKey="@Properties.HR" title="@Strings.HR">
-            <settingConfig type="boolean" />
-        </setting>
-        <setting propertyKey="@Properties.HF" title="@Strings.HF">
-            <settingConfig type="boolean" />
-        </setting>
-        <setting propertyKey="@Properties.TH" title="@Strings.TH">
-            <settingConfig type="list">
-                <listEntry value="0">@Strings.Blue</listEntry>
-                <listEntry value="1">@Strings.Violet</listEntry>
-                <listEntry value="2">@Strings.Mint</listEntry>
-            </settingConfig>
-        </setting>
         <setting propertyKey="@Properties.CC" title="@Strings.CC">
             <settingConfig type="list">
                 <listEntry value="1">@Strings.Primary</listEntry>
@@ -44,5 +25,26 @@
         <setting propertyKey="@Properties.CN3" title="@Strings.CN3">
             <settingConfig type="alphaNumeric" maxLength="20" />
         </setting>
+        <group id="Theme" title="@Strings.TH" description="@Strings.DisplayOptions">
+            <setting propertyKey="@Properties.TO" title="@Strings.TO">
+                <settingConfig type="boolean" />
+            </setting>
+            <setting propertyKey="@Properties.ShowBrightness" title="@Strings.Brightness">
+                <settingConfig type="boolean" />
+            </setting>
+            <setting propertyKey="@Properties.ShowRuntime" title="@Strings.Runtime">
+                <settingConfig type="boolean" />
+            </setting>
+            <setting propertyKey="@Properties.ShowRuntimeFill" title="@Strings.RuntimeFill">
+                <settingConfig type="boolean" />
+            </setting>
+            <setting propertyKey="@Properties.TH" title="@Strings.TH">
+                <settingConfig type="list">
+                    <listEntry value="0">@Strings.Blue</listEntry>
+                    <listEntry value="1">@Strings.Violet</listEntry>
+                    <listEntry value="2">@Strings.Mint</listEntry>
+                </settingConfig>
+            </setting>
+        </group>
     </settings>
 </resources>

@@ -1920,8 +1920,8 @@ class BikeLightsView extends  WatchUi.DataField  {
                 var buttonHeight = panelData[buttonIndex + 7] - buttonPadding;
                 var isSelected = lightMode == mode;
 
-                // Rich mode cards keep runtime fill independent of selection.
-                var isModeCard = titleFont == -1 && mode > 0;
+                // Runtime-filled cards use an outline; other buttons use a solid selection face.
+                var isModeCard = titleFont == -1 && mode > 0 && !AppTheme.hideFill;
                 var faceColor = isSelected && !isModeCard ? panelData[2] : bgColor;
                 var radius = buttonWidth >= 180 ? 18 : 12;
                 if (radius > buttonHeight / 3) { radius = buttonHeight / 3; }
@@ -1945,7 +1945,7 @@ class BikeLightsView extends  WatchUi.DataField  {
                     var iconFont = dc.getFontHeight(_panelIconFont) <= iconSize ? _panelIconFont : _controlModeFont;
                     dc.drawText(titleX, buttonY + (buttonHeight - dc.getFontHeight(iconFont)) / 2, iconFont, icon, 1 /* TEXT_JUSTIFY_CENTER */);
                 } else if (titleFont == -1) {
-                    LightPanelGraphics.drawMode(dc, titleParts, panelData[8][0], batteryStatus, buttonX, buttonY, buttonWidth, buttonHeight, isSelected, fgColor, faceColor);
+                    LightPanelGraphics.drawMode(dc, titleParts, panelData[8][0], batteryStatus, buttonX, buttonY, buttonWidth, buttonHeight, isSelected, isSelected && !isModeCard ? panelData[3] : fgColor, faceColor);
                 } else {
                     for (var k = 0; k < titleParts.size(); k += 2) {
                         dc.drawText(titleX, titleParts[k + 1], titleFont, titleParts[k], 1 /* TEXT_JUSTIFY_CENTER */);

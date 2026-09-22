@@ -256,7 +256,7 @@ module LightPanelGraphics {
         var pad = width >= 150 ? 10 : 6;
         // Bottom-right placement leaves the shared mode-title width unchanged.
         var selectionSize = width >= 150 ? 14 : 10;
-        if (selected) {
+        if (selected && !AppTheme.hideFill) {
             dc.setColor(bg == 0x000000 ? AppTheme.onDark : AppTheme.accent, -1);
             if (dc has :setAntiAlias) { dc.setAntiAlias(true); }
             dc.fillCircle(x+width-pad-selectionSize/2,
@@ -299,7 +299,7 @@ module LightPanelGraphics {
             dc.getTextWidthInPixels(time, 0) <= timeWidth)) {
             var lit = brightnessSteps(data[1], maxLumens);
             for (var i=0; i<6; i++) {
-                dc.setColor(i<lit ? (bg==0x000000?AppTheme.onDark:AppTheme.accent) : bg==0x000000?0x555555:0xBBBBBB, -1);
+                dc.setColor(i<lit ? (selected && AppTheme.hideFill ? fg : bg==0x000000?AppTheme.onDark:AppTheme.accent) : bg==0x000000?0x555555:0xBBBBBB, -1);
                 dc.fillRectangle(x+pad+i*(stepWidth+2),brightnessY+dc.getFontHeight(0)/2-7/2,stepWidth,7);
             }
             dc.setColor(fg,-1);

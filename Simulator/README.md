@@ -27,6 +27,16 @@ subject to app/device memory. Multiple network devices do not create extra UI
 panels: the app has headlight and taillight slots. Use configuration serial-number
 filters to choose between lights of the same type. Fixture serials are in the catalog.
 
+The launcher also transfers the generated settings definition to the simulator.
+Open **File → Edit Persistent Storage → Edit Application.Properties data** to
+edit the Connect IQ app settings while the preview is running.
+Settings resource changes produce a new preview app ID and matching executable
+filename, preventing the editor from reusing an older build's settings definition.
+Unchanged settings resources retain the same identity. Close the settings editor
+before launching, then reopen it for the current preview. No simulator-wide reset
+is needed; a new settings revision starts a separate preview with its defaults
+and any supplied `--settings` values.
+
 ## Preview original upstream
 
 ```bash

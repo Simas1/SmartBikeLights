@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Build an isolated Garmin preview with simulated lights."""
 import argparse
+import hashlib
 import importlib.util
 import json
 import os
@@ -199,6 +200,25 @@ def menu_configuration(value):
     return '#'.join(parts)
 
 
+def settings_preview_id(app, namespace, source):
+    # Include resource paths and content: order, labels and defaults all affect
+    # the external editor. Exclude generated build-info to keep reruns stable.
+    digest = hashlib.sha256()
+    for path in sorted(app.glob('resources*/**/*.xml')):
+        if path.name not in ('settings.xml', 'properties.xml', 'strings.xml'):
+            continue
+        digest.update(path.relative_to(app).as_posix().encode() + b'\0')
+        digest.update(path.read_bytes() + b'\0')
+    return uuid.uuid5(uuid.UUID(namespace),
+                      f'settings-preview-v1:{source}:{digest.hexdigest()}').hex
+
+
+def preview_binary(work):
+    app = ET.parse(work / 'manifest.xml').getroot().find(
+        '{http://www.garmin.com/xml/connectiq}application')
+    return work / f"SBL-{app.attrib['id']}.prg"
+
+
 def prepare(args):
     values = read_settings(args.settings) if args.settings else {}
     app = getattr(args, 'app', APP)
@@ -224,9 +244,7 @@ def prepare(args):
     path = work / 'manifest.xml'
     text = re.sub(r'<iq:product id="([^"]+)"\s*/>',
                   lambda match: match[0] if match[1] == args.device else '', path.read_text())
-    preview_id = args.profile['previewAppId']
-    if args.source == 'upstream':
-        preview_id = uuid.uuid5(uuid.UUID(preview_id), 'upstream').hex
+    preview_id = settings_preview_id(work, args.profile['previewAppId'], args.source)
     # Separate application identity keeps preview properties/storage away from normal builds.
     text = re.sub(r'(<iq:application\s+[^>]*?id=")[^"]+', lambda match: match[1] + preview_id, text)
     path.write_text(text)
@@ -271,6 +289,16 @@ def prepare(args):
     return work
 
 
+def simulator_command(sdk, binary, device):
+    settings = binary.with_name(binary.stem + '-settings.json')
+    if not settings.is_file():
+        raise ValueError(f'Compiler did not generate app settings: {settings}')
+    # The settings editor looks up the uppercase executable name on the device.
+    destination = f'GARMIN/Settings/{binary.stem.upper()}-settings.json'
+    return [str(sdk / 'bin/monkeydo'), str(binary), device,
+            '-a', f'{settings}:{destination}']
+
+
 def main():
     args = arguments()
     sdk = None
@@ -290,12 +318,12 @@ def main():
     if args.prepare_only:
         return
     subprocess.run(['npx', '--yes', 'directive-preprocessor@1.1.1', 'preprocess', '-c', 'preprocess.config.json'], cwd=work, check=True)
-    binary = work / 'SmartBikeLights-sim.prg'
+    binary = preview_binary(work)
     subprocess.run([str(sdk / 'bin/monkeyc'), '-f', 'monkey.jungle', '-d', args.device, '-y', 'unit_test_key', '-o', str(binary), '-w'], cwd=work, check=True)
     if not args.build_only:
         subprocess.run([str(sdk / 'bin/connectiq')], check=True)
         time.sleep(3)
-        subprocess.run([str(sdk / 'bin/monkeydo'), str(binary), args.device], cwd=work, check=True)
+        subprocess.run(simulator_command(sdk, binary, args.device), cwd=work, check=True)
     print(f'Build retained at {work}. You may delete this folder when finished.')
 
 

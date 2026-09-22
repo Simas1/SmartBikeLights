@@ -13,6 +13,36 @@ SPEC.loader.exec_module(preview)
 
 
 class PreviewTests(unittest.TestCase):
+    def test_settings_revision_identity(self):
+        namespace = '12345678123456781234567812345678'
+        with tempfile.TemporaryDirectory() as directory:
+            app = Path(directory)
+            resources = app / 'resources'
+            resources.mkdir()
+            settings = resources / 'settings.xml'
+            settings.write_text('<settings/>')
+            identity = preview.settings_preview_id(app, namespace, 'local')
+            self.assertEqual(identity, preview.settings_preview_id(app, namespace, 'local'))
+            (resources / 'build-info.xml').write_text('new build')
+            self.assertEqual(identity, preview.settings_preview_id(app, namespace, 'local'))
+            self.assertNotEqual(identity, preview.settings_preview_id(app, namespace, 'upstream'))
+            for name in ('settings.xml', 'strings.xml', 'properties.xml'):
+                with self.subTest(resource=name):
+                    previous = preview.settings_preview_id(app, namespace, 'local')
+                    (resources / name).write_text('<changed/>')
+                    self.assertNotEqual(previous, preview.settings_preview_id(app, namespace, 'local'))
+
+    def test_simulator_transfers_settings_metadata(self):
+        with tempfile.TemporaryDirectory(prefix='preview-settings-') as directory:
+            binary = Path(directory) / 'SmartBikeLights-sim.prg'
+            with self.assertRaisesRegex(ValueError, 'did not generate app settings'):
+                preview.simulator_command(Path('/sdk'), binary, 'edge1040')
+            settings = binary.with_name('SmartBikeLights-sim-settings.json')
+            settings.write_text('{}')
+            self.assertEqual(preview.simulator_command(Path('/sdk'), binary, 'edge1040'),
+                ['/sdk/bin/monkeydo', str(binary), 'edge1040', '-a',
+                 f'{settings}:GARMIN/Settings/SMARTBIKELIGHTS-SIM-settings.json'])
+
     def test_settings_types_and_choices(self):
         self.assertEqual(preview.validate_settings({'TH': 'Violet', 'IL': True})['TH'], 1)
         for values in ({'IL': 'false'}, {'CC': True}, {'TH': 123}, {'unknown': 1}, {'LC': 'a\nb'}):
@@ -127,7 +157,10 @@ class PreviewTests(unittest.TestCase):
             profile = json.loads((preview.SIMULATOR / 'edge1050/profile.json').read_text())
             other = json.loads((preview.SIMULATOR / 'edge1040/profile.json').read_text())
             self.assertNotEqual(profile['previewAppId'], other['previewAppId'])
-            self.assertEqual(manifest.find('iq:application', ns).attrib['id'], profile['previewAppId'])
+            self.assertEqual(manifest.find('iq:application', ns).attrib['id'],
+                preview.settings_preview_id(work, profile['previewAppId'], 'local'))
+            self.assertEqual(preview.preview_binary(work).stem,
+                'SBL-' + manifest.find('iq:application', ns).attrib['id'])
             self.assertTrue((work / 'resources-edge1050/resources.xml').is_file())
             resolved = json.loads((work / 'preview.json').read_text())
             self.assertEqual(resolved['device'], 'edge1050')
