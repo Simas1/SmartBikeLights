@@ -4,7 +4,7 @@
         <property id="LC" type="string"></property>
 
         <!-- Whether to record light modes -->
-        <property id="RL" type="boolean">true</property>
+        <property id="RL" type="boolean">false</property>
 
         <!-- Invert lights -->
         <property id="IL" type="boolean">false</property>
