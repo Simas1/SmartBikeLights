@@ -1,5 +1,6 @@
 <resources>
     <properties>
+        <property id="LightDiagnostics" type="boolean">false</property>
         <!-- Theme: 0 Blue, 1 Violet, 2 Mint -->
         <property id="TH" type="number">0</property>
         <property id="TO" type="boolean">false</property>

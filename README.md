@@ -28,6 +28,12 @@ Smart Bike Lights is a [data field](https://developer.garmin.com/connect-iq/conn
 6. Select the data screen where you want put the data field
 7. On the chosen field select `Connect IQ` -> `Smart Bike Lights`
 
+## Light Diagnostics
+
+Enable **Settings → Light Diagnostics** (off by default) to inspect the existing light network while SBL continues controlling the lights. Available on Edge 1050, 850, 550, 1040, 840, 540 and Forerunner 965.
+
+The display shows one physical light per page with raw `TY`, `ID`, `LM`, `BS` and `CM` values, plus a shared network status and update count. Touchscreen Edges and the 965 have a Light Device button to cycle pages, Control to cycle S/N/M (Smart is skipped without filters), Mode to select a supported mode without sending, and Set Mode to apply it in Manual control. Controls use the existing headlight/taillight group; modes unsupported by that group are not sent. Edge 540/550 show the device label as text, cycle lights every three seconds, and use built-in settings for control changes. `MEM` shows used/total app memory in KB; `NET` counts network losses and subsequent recoveries, excluding the first connection. Each headlight/taillight control group keeps its latest `CMD`, resend count (`Retry`), and confirmation time from the initial send. A matching reported mode completes the timing; unrelated reports do not. Results can also be Waiting, Timeout, Disconnected, or Cancelled. Multiple lights controlled as one group share its command result. Counters and command records update while diagnostics is closed; memory is sampled when displaying it. Records reset when SBL restarts. Values come from the existing network, not Configurator labels. Turn the switch off to restore the normal display. Diagnostics appears only in a full-screen field; smaller fields retain their normal display. Tap the Settings button to open Settings on touchscreen Edge devices. Forerunner 965 and Edge 550/540 use Garmin’s physical-button app settings menu. The switch is also available in Garmin Connect/Express app settings.
+
 ## Control modes
 
 | Name | Description |

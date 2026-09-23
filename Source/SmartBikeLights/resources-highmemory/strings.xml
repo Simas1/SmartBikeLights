@@ -1,4 +1,5 @@
 <strings>
+        <string id="LightDiagnostics">Light Diagnostics</string>
     <string id="CC">Current Configuration</string>
     <string id="LC2">Secondary Lights Configuration</string>
     <string id="LC3">Tertiary Lights Configuration</string>

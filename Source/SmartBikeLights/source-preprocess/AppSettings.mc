@@ -61,6 +61,7 @@ module /* #if touchScreen */ TouchAppSettings /* #else */ AppSettings /* #endif 
                 Menu2.addItem(new /* #include UIMODULE */MenuItem(Rez.Strings.RemoteControllers, null, 3, null));
             }
 // #endif
+            Menu2.addItem(new /* #include UIMODULE */ToggleMenuItem(Rez.Strings.LightDiagnostics, null, 5, Properties.getValue("LightDiagnostics") == true, null));
             Menu2.addItem(new /* #include UIMODULE */MenuItem("About", Rez.Strings.AppVersion, 4, null));
         }
 
@@ -81,6 +82,13 @@ module /* #if touchScreen */ TouchAppSettings /* #else */ AppSettings /* #endif 
 // #endif
 
         public function onSelect(index, menuItem) {
+            if (index == 5) {
+                var enabled = Properties.getValue("LightDiagnostics") != true;
+                Properties.setValue("LightDiagnostics", enabled);
+                menuItem.setEnabled(enabled);
+                WatchUi.requestUpdate();
+                return;
+            }
             if (index == 4) {
                 openSubMenu(new AboutMenu());
                 return;
