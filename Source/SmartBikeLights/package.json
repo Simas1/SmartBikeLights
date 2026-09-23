@@ -1,9 +1,6 @@
 {
   "scripts": {
     "start": "directive-preprocessor watch preprocess.config.json -p",
-    "tests": "ciq-test-runner test edge1050 edge850 edge550 edge1040 edge840 edge540 fr965 --keyPath unit_test_key"
-  },
-  "dependencies": {
-    "ciq-test-runner": "file:../ciq-test-runner"
+    "tests": "bash ../../scripts/test-sbl.sh"
   }
 }
