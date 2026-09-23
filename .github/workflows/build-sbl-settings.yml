@@ -8,7 +8,7 @@ on:
         description: Record lights mode
         type: boolean
         required: false
-        default: true
+        default: false
       IL:
         description: Invert lights
         type: boolean

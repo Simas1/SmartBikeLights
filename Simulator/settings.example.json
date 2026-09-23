@@ -1,6 +1,6 @@
 {
   "LightDiagnostics": false,
-  "RL": true,
+  "RL": false,
   "IL": false,
   "TH": "Blue",
   "CC": "Primary",
