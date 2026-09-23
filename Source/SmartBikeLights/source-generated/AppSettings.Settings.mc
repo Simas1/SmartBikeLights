@@ -4,7 +4,7 @@ using Toybox.WatchUi;
 using Toybox.Application.Properties as Properties;
 
 (:settings)
-module AppSettings {
+module  AppSettings  {
 
     const themeValues = [0, 1, 2];
     const themeNames = [:Blue, :Violet, :Mint];
@@ -49,6 +49,7 @@ module AppSettings {
             if (view.remoteControllers != null && view.remoteControllers.size() > 0) {
                 Menu2.addItem(new WatchUi.MenuItem(Rez.Strings.RemoteControllers, null, 3, null));
             }
+            Menu2.addItem(new WatchUi.ToggleMenuItem(Rez.Strings.LightDiagnostics, null, 5, Properties.getValue("LightDiagnostics") == true, null));
             Menu2.addItem(new WatchUi.MenuItem("About", Rez.Strings.AppVersion, 4, null));
         }
 
@@ -67,6 +68,13 @@ module AppSettings {
         }
 
         public function onSelect(index, menuItem) {
+            if (index == 5) {
+                var enabled = Properties.getValue("LightDiagnostics") != true;
+                Properties.setValue("LightDiagnostics", enabled);
+                menuItem.setEnabled(enabled);
+                WatchUi.requestUpdate();
+                return;
+            }
             if (index == 4) {
                 openSubMenu(new AboutMenu());
                 return;

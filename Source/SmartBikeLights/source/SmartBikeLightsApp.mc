@@ -28,10 +28,12 @@ class BikeLightNetworkListener extends AntPlus.LightNetworkListener {
     }
 
     function onLightNetworkStateUpdate(state) {
+        LightDiagnostics.stateChanged(state);
         _eventHandler.get().onNetworkStateUpdate(state);
     }
 
     function onBikeLightUpdate(light) {
+        LightDiagnostics.updates++;
         _eventHandler.get().updateLight(light, light.mode);
     }
 }

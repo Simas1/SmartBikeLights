@@ -19,6 +19,11 @@ on:
         type: boolean
         required: false
         default: false
+      LightDiagnostics:
+        description: Light Diagnostics
+        type: boolean
+        required: false
+        default: false
       ShowBrightness:
         description: Brightness
         type: boolean

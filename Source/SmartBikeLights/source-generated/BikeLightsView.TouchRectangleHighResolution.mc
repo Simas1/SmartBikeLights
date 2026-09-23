@@ -568,10 +568,12 @@ class BikeLightsView extends  WatchUi.DataField  {
             if (lightData[7] != null) {
                 lightData[9]--;
                 if (lightData[9] <= 0) {
+                    LightDiagnostics.finish(lightData[0].type, "Timeout", System.getTimer());
                     lightData[7] = null;
                     lightData[8] = null;
                 } else if (lightData[9] == 2 && lightData[2] != lightData[7]) {
                     // Retry only the latest target, and only if it has not converged.
+                    LightDiagnostics.retried(lightData[0].type);
                     lightData[0].setMode(lightData[7]);
                 }
             }
@@ -691,8 +693,12 @@ class BikeLightsView extends  WatchUi.DataField  {
         if (_lightY == null) {
             preCalculate(dc, width, height);
         }
-
         if (_isFullScreen && DataFieldUi.onUpdate(dc, fgColor, bgColor)) {
+            return;
+        }
+
+        if (_isFullScreen && getPropertyValue("LightDiagnostics") == true) {
+            LightDiagnostics.draw(dc, _lightNetwork, self,  true ,  true );
             return;
         }
 
@@ -801,6 +807,7 @@ class BikeLightsView extends  WatchUi.DataField  {
         }
 
         lightData[0] = light;
+        LightDiagnostics.reported(lightType, mode, System.getTimer());
         var nextMode = lightData[7];
         if (mode == lightData[2] && nextMode == null) {
             //System.println("skip updateLight light=" + light.type + " mode=" + mode + " currMode=" + lightData[2] + " nextMode=" + lightData[7]  + " timer=" + System.getTimer());
@@ -839,7 +846,7 @@ class BikeLightsView extends  WatchUi.DataField  {
     (:settings)
     function getSettingsView() {
         var menu = null;
-        if (_errorCode != null ||
+        if (getPropertyValue("LightDiagnostics") == true || _errorCode != null ||
             _initializedLights == 0 ||
             !validateSettingsLightModes(headlightData[0], headlightData[17]) ||
             !validateSettingsLightModes(taillightData[0], taillightData[17]) ||
@@ -876,6 +883,21 @@ class BikeLightsView extends  WatchUi.DataField  {
         return lightSettings == null
             ? getDefaultLightSettings(light, lightData[17])
             : lightSettings;
+    }
+
+    function diagnosticControl(type, action, mode) {
+        var data = getLightData(type);
+        if (data[0] == null || _errorCode != null) { return; }
+        if (action == 2) {
+            var control = (data[4] + 1) % 3;
+            if (control == 0 && data[18] == null) { control = 1; }
+            setLightAndControlMode(data, type, data[2], control);
+        } else if (mode != null && data[0].getCapableModes().indexOf(mode) >= 0) {
+            // Set Mode is an explicit diagnostic send, including the current mode.
+            var resend = data[4] != 1 && (data[7] == mode || (data[7] == null && data[2] == mode));
+            setLightAndControlMode(data, type, mode, 2);
+            if (resend) { setLightMode(data, mode, null, true); }
+        }
     }
 
     function setLightAndControlMode(lightData, lightType, newMode, newControlMode) {
@@ -924,6 +946,14 @@ class BikeLightsView extends  WatchUi.DataField  {
                 _updateSettings = true;
             }
 
+            return true;
+        }
+
+        if (_isFullScreen && getPropertyValue("LightDiagnostics") == true) {
+            if (LightDiagnostics.tap(location, _lightNetwork, self) == 5) {
+                DataFieldUi.pushMenu(new TouchAppSettings.Menu(self));
+            }
+            WatchUi.requestUpdate();
             return true;
         }
 
@@ -1307,6 +1337,7 @@ class BikeLightsView extends  WatchUi.DataField  {
         // Keep the target even when it matches the last report: an older
         // command may still be in flight. New requests always replace it.
         lightData[9] = 4;
+        LightDiagnostics.sent(lightData[0].type, mode, System.getTimer());
         lightData[0].setMode(mode);
     }
 
@@ -1389,6 +1420,8 @@ class BikeLightsView extends  WatchUi.DataField  {
     }
 
     protected function releaseLights() {
+        LightDiagnostics.finish(0, "Cancelled", System.getTimer());
+        LightDiagnostics.finish(2, "Cancelled", System.getTimer());
         _initializedLights = 0;
         headlightData[0] = null;
         taillightData[0] = null;
@@ -2137,6 +2170,7 @@ class BikeLightsView extends  WatchUi.DataField  {
     }
 
     private function setNetworkMode(lightData, networkMode) {
+        LightDiagnostics.finish(lightData[0].type, "Cancelled", System.getTimer());
         lightData[7] = null;
         lightData[8] = null;
         lightData[9] = 0;

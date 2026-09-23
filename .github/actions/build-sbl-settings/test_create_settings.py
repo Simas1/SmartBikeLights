@@ -11,7 +11,7 @@ spec.loader.exec_module(settings)
 class SettingsTests(unittest.TestCase):
     def inputs(self):
         return dict(RL=True, IL=False, TO=False, ShowBrightness=True, ShowRuntime=True,
-                    ShowRuntimeFill=True, TH='Blue', CC='Secondary', LC=r'Low\n@headlight',
+                    ShowRuntimeFill=True, LightDiagnostics=False, TH='Blue', CC='Secondary', LC=r'Low\n@headlight',
                     LC2='', LC3='', CN1='Flash Config', CN2='Steady Config', CN3='Break Config')
 
     def test_known_wire_records(self):
