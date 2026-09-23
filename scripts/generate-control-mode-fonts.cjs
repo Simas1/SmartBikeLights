@@ -1,6 +1,6 @@
 // Requires Node.js and sharp. Run from any directory:
 //   node scripts/generate-control-mode-fonts.cjs
-// SVGs are the source of truth; ControlMode.sfd is a legacy letter-based font.
+// SVGs are the source of truth for the current card icons.
 const fs = require('node:fs');
 const path = require('node:path');
 const sharp = require('sharp');
@@ -8,8 +8,7 @@ const sharp = require('sharp');
 const app = path.resolve(__dirname, '../Source/SmartBikeLights');
 const glyphs = [['M', 'manual'], ['N', 'network'], ['S', 'smart'], ['P', 'power']];
 // Existing filenames describe historical font sizes, not bitmap heights.
-const fonts = {ControlMode12: 12, ControlMode18: 19, ControlMode32: 19,
-    ControlMode54: 32, PanelControl24: 24, PanelControl40: 40, ModeIcons12: 12, ModeIcons18: 18, ModeIcons22: 22, ModeIcons28: 28, ModeIcons36: 36};
+const fonts = {PanelControl24: 24, PanelControl40: 40, ModeIcons12: 12, ModeIcons18: 18, ModeIcons22: 22, ModeIcons28: 28, ModeIcons36: 36};
 // Optional --font=ModeIcons28 regenerates just one atlas.
 const selectedFont = process.argv.find(arg => arg.startsWith('--font='))?.slice(7);
 const powerOfTwo = n => 2 ** Math.ceil(Math.log2(n));

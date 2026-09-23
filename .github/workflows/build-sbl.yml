@@ -16,6 +16,7 @@ on:
           - edge550
           - edge840
           - edge540
+          - fr965
 
 permissions:
   contents: read

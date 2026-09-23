@@ -3,8 +3,8 @@ set -euo pipefail
 
 device="${1:-edge1040}"
 case "$device" in
-  edge1040|edge1050|edge850|edge550|edge840|edge540) ;;
-  *) echo "Unsupported device: $device (expected edge1040, edge1050, edge850, edge550, edge840 or edge540)" >&2; exit 1 ;;
+  edge1040|edge1050|edge850|edge550|edge840|edge540|fr965) ;;
+  *) echo "Unsupported device: $device (expected edge1040, edge1050, edge850, edge550, edge840, edge540 or fr965)" >&2; exit 1 ;;
 esac
 
 # SDK 9.2.0 with device definitions from 2026-08-31. Pin the image so a

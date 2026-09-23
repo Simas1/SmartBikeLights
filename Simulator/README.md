@@ -6,7 +6,14 @@ The pinned `directive-preprocessor@1.1.1` is downloaded through npx on first use
 
 Use the simulator launcher with a device ID and optional settings:
 
-Supported: `edge1040`, `edge1050`, `edge850`, `edge550`, `edge840`, `edge540`.
+Supported: `edge1040`, `edge1050`, `edge850`, `edge550`, `edge840`, `edge540`, `fr965`.
+Forerunner 965 uses full-screen round cards with Edge-style touchscreen actions.
+Medium and small watch slots are blank.
+
+```bash
+./Simulator/run-simulator.sh fr965 --settings Simulator/settings.example.json
+```
+
 Edge 540 and 550 show active-mode cards and use native menus for button controls.
 
 ```bash
@@ -95,10 +102,11 @@ Simulator/
   edge550/                 Edge 550 profile and usage (high-resolution buttons)
   edge840/                 Edge 840 profile and usage (medium-resolution touch)
   edge540/                 Edge 540 profile and usage (medium-resolution buttons)
+  fr965/                   Forerunner 965 profile and usage (round watch)
 ```
 
-The shared runner discovers supported devices from `*/profile.json`. To add Edge
-xxxx later, create `edgexxxx/` with its own profile and app ID, and validate its resource/annotation rules.
+The shared runner discovers supported devices from `*/profile.json`. To add a device
+later, create a directory named after its SDK device ID with its own profile and app ID, and validate its resource/annotation rules.
 Generated source and binaries remain under ignored `Build/simulator/`.
 
 ## Saved settings

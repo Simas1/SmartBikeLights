@@ -224,7 +224,7 @@ def prepare(args):
     values = read_settings(args.settings) if args.settings else {}
     app = getattr(args, 'app', APP)
     settings = validate_settings(values, app)
-    if args.profile.get('settingsFormat') == 'menu' or (args.source == 'upstream' and args.device in ('edge540', 'edge550')):
+    if args.profile.get('settingsFormat') == 'menu' or (args.source == 'upstream' and args.device in ('edge540', 'edge550', 'fr965')):
         for key in ('LC', 'LC2', 'LC3'):
             settings[key] = menu_configuration(settings[key])
     output = ROOT / 'Build/simulator'

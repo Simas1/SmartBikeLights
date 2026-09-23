@@ -212,6 +212,30 @@ class PreviewTests(unittest.TestCase):
         finally:
             shutil.rmtree(work)
 
+    def test_fr965_round_preview_with_shared_settings(self):
+        result = subprocess.run([sys.executable, str(Path(__file__).with_name('run.py')),
+            'fr965', '--prepare-only', '--settings',
+            str(preview.SIMULATOR / 'settings.example.json')],
+            capture_output=True, text=True, check=True)
+        work = Path(result.stdout.splitlines()[0].removeprefix('Preview: '))
+        try:
+            jungle = (work / 'monkey.jungle').read_text()
+            self.assertIn('fr965.excludeAnnotations = widget;buttonPanel;noWatchPanel;', jungle)
+            self.assertIn('round.excludeAnnotations =', jungle)
+            self.assertIn('rectangle.excludeAnnotations =', jungle)
+            self.assertIn('fr965.resourcePath = $(fr965.resourcePath);resources-highmemory', jungle)
+            self.assertNotIn('edge1040.resourcePath', jungle)
+            import xml.etree.ElementTree as ET
+            ns = {'iq': 'http://www.garmin.com/xml/connectiq'}
+            manifest = ET.parse(work / 'manifest.xml')
+            self.assertEqual([node.attrib['id'] for node in manifest.findall('.//iq:product', ns)], ['fr965'])
+            original = json.loads((preview.SIMULATOR / 'settings.example.json').read_text())
+            resolved = json.loads((work / 'preview.json').read_text())
+            for key in ('LC', 'LC2', 'LC3'):
+                self.assertEqual(resolved['settings'][key], original[key])
+        finally:
+            shutil.rmtree(work)
+
     def test_additional_edge_profiles_and_pipeline(self):
         import re
         expected = {'edge850': 'rectangleHighResolution',

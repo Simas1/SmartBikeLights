@@ -8,10 +8,7 @@ rounded network nodes, and an inset power ring.
 
 | Font resource | Pixel height |
 | --- | --- |
-| ControlMode12 | 12 |
-| ControlMode18 / ControlMode32 | 19 |
 | PanelControl24 | 24 |
-| ControlMode54 | 32 |
 | PanelControl40 | 40 |
 
 The generator renders PanelControl24 directly at its native size. Other sizes
@@ -20,9 +17,6 @@ as grayscale on black, rather than only PNG alpha. Black represents no glyph
 coverage; Garmin applies the current text color at runtime.
 
 Generated PNG atlases and `.fnt` files remain in `resources/fonts`.
-`preview.png` shows sizes 12, 19, 24, 32, and 40 from top to bottom, enlarged 3x.
-Small sizes retain less detail; check day/night and selected/unselected states
-on the device. The legacy `../ControlMode.sfd` is not a generation source.
 
 With Node.js and sharp available, run from the repository root:
 

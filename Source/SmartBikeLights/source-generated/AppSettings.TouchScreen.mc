@@ -3,8 +3,8 @@ using Toybox.Lang;
 using Toybox.WatchUi;
 using Toybox.Application.Properties as Properties;
 
-(:touchScreen)
-module AppSettings {
+(:touchScreen :noWatchPanel)
+module  TouchAppSettings  {
 
     const themeValues = [0, 1, 2];
     const themeNames = [:Blue, :Violet, :Mint];

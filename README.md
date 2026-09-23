@@ -3,9 +3,6 @@ Smart Bike Lights
 
 Smart Bike Lights is a [data field](https://developer.garmin.com/connect-iq/connect-iq-basics/app-types/#datafields) IQ Connect application for Garmin devices, that displays and controls ANT+ lights. Garmin has a built-in `Auto` [Light mode](https://www8.garmin.com/manuals/webhelp/variabikelights/EN-US/GUID-73B08487-BA57-4EF0-A253-D226E229BC68.html) setting, which automatically adjusts the light intensity based on the ambient light or time of day. The issue with `Auto` mode is that is not configurable and that is why this application introduces a special `Smart` mode, which is fully configurable based on sunset, sunrise, speed, ... (check [supported filters](#filters)).
 
-| Small | Light Panel | Dark Small | Dark Light Panel |
-| :---: | :---------: | :--------: | :--------------: |
-| <table><tbody><tr><td><img src="/Images/SmallHeadlight.png?raw=true"></td></tr> <tr><td><img src="/Images/SmallTaillight.png?raw=true"></td></tr> <tr><td><img src="/Images/SmallSmart.png?raw=true"></td></tr> </tbody></table> | <img src="/Images/LightsPanel.png?raw=true"> | <table><tbody><tr><td><img src="/Images/SmallHeadlightNight.png?raw=true"></td></tr> <tr><td><img src="/Images/SmallTaillightNight.png?raw=true"></td></tr> <tr><td><img src="/Images/SmallLightsNight.png?raw=true"></td></tr> </tbody></table> | <img src="/Images/LightsPanelNight.png?raw=true"> |
 
 ## Features
 - Smart mode that control lights based on the configured filters
@@ -33,48 +30,23 @@ Smart Bike Lights is a [data field](https://developer.garmin.com/connect-iq/conn
 
 ## Control modes
 
-| Name | Example | Description |
-| :--- | :-----: | :---------- |
-| Smart (**S**) | ![Smart](/Images/SmallSmart.png?raw=true) | Light is controlled by the filters defined with [Lights Configurator](https://simas1.github.io/SmartBikeLights/) |
-| Network (**N**) | ![Network](/Images/SmallNetwork.png?raw=true) | Light is controlled by the Garmin [Light mode](https://www8.garmin.com/manuals/webhelp/variabikelights/EN-US/GUID-73B08487-BA57-4EF0-A253-D226E229BC68.html) |
-| Manual (**M**) | ![Manual](/Images/SmallManual.png?raw=true) | Light is controlled by the user |
+| Name | Description |
+| :--- | :---------- |
+| Smart | Controlled by configured filters. |
+| Network | Controlled by Garmin's light-network mode. |
+| Manual | Controlled by your mode selection or the light's own buttons. |
 
 ## Changing control modes
 
-For Edge touch screen devices (Edge 1030/1000/Explore/820/830):
-- Full screen: The control mode can be changed by tapping on the top left button which contains one character (M, N or S).
-- Non full screen: The control mode can be changed by tapping on the light icon
+Supported devices: **Edge 1050, 850, 550, 1040, 840, 540**, and **Forerunner 965** (including Solar variants where applicable).
 
-For Edge 530:
-1. Make sure that the lights are paired and connected with your Garmin device
-2. On the data screen where you have the data field press the Menu button to open the menu
-3. Navigate to `Data Fields` -> `Connect IQ data fields` -> `Smart Bike Lights` -> `Control mode` and change to the desired mode
+Touchscreen Edge devices use the full-screen light-mode panel or active-mode cards in full-width fields. Edge 540/550 use active-mode cards with native settings menus. Forerunner 965 uses its full-screen watch card view. Split Edge fields display “Use full-width field”.
 
-For watches with CIQ 3.2 and more than 32KB memory (Fenix 5 Plus/5S Plus/5X Plus, Fenix 6 Pro/6X Pro/6S Pro, Forerunner 245 Music/645 Music/745/945, MARQ, Descent Mk2):
-1. Make sure that the lights are paired and connected with your Garmin device
-2. On the data screen where you have the data field hold the `Up` button until a menu shows up (make sure that you have a recent firmware installed)
-3. Navigate to `ConnectIQ Fields` -> `Smart Bike Lights` -> `Control mode` and change to the desired mode
-
-For other devices:
-
-The initial control mode will be determined based on the configuration from the [Lights Configurator](https://simas1.github.io/SmartBikeLights/). When using a configuration where only the lights were selected (without any filters), the initial control mode will be set to Network (N) otherwise it will be set to Smart (S). When in Smart mode the following can be done to switch control modes:
-- To go into Manual control mode, use the physical button on the light to switch the light mode. For restoring back to the Smart mode, switch to a different data screen and then back to the original one.
-- To go into Network control mode, change the Garmin [Light mode](https://www8.garmin.com/manuals/webhelp/variabikelights/EN-US/GUID-73B08487-BA57-4EF0-A253-D226E229BC68.html) to a different one by using the Garmin menu (e.g. from Auto to Individual). For restoring back to the Smart mode, switch to a different data screen and then back to the original one.
+Card taps cycle configured light modes, then Off. The bottom control icon switches Smart/Network. Theme display options determine which details must fit.
 
 ## Icons
 
-| Icon | Description |
-| :--: | :---------: |
-| <img src="./Source/SmartBikeLights/assets/headlight.svg" width="25" height="32"> | Headlight |
-| <img src="./Source/SmartBikeLights/assets/taillight.svg" width="25" height="32"> | Taillight |
-| <img src="./Source/SmartBikeLights/assets/highbeam.svg" width="13.71" height="32"> <img src="./Source/SmartBikeLights/assets/headlight.svg" width="25" height="32"> <img src="./Source/SmartBikeLights/assets/taillight.svg" width="25" height="32"> <img src="./Source/SmartBikeLights/assets/highbeam.svg" width="13.71" height="32"> | Full steady beam |
-| <img src="./Source/SmartBikeLights/assets/mediumbeam.svg" width="13.71" height="32"> <img src="./Source/SmartBikeLights/assets/headlight.svg" width="25" height="32"> <img src="./Source/SmartBikeLights/assets/taillight.svg" width="25" height="32"> <img src="./Source/SmartBikeLights/assets/mediumbeam.svg" width="13.71" height="32"> | Medium steady beam |
-| <img src="./Source/SmartBikeLights/assets/lowbeam.svg" width="13.71" height="32"> <img src="./Source/SmartBikeLights/assets/headlight.svg" width="25" height="32"> <img src="./Source/SmartBikeLights/assets/taillight.svg" width="25" height="32"> <img src="./Source/SmartBikeLights/assets/lowbeam.svg" width="13.71" height="32"> | Low steady beam |
-| <img src="./Source/SmartBikeLights/assets/highflash.svg" width="13.71" height="32"><img src="./Source/SmartBikeLights/assets/headlight.svg" width="25" height="32"> <img src="./Source/SmartBikeLights/assets/taillight.svg" width="25" height="32"><img src="./Source/SmartBikeLights/assets/highflash.svg" width="13.71" height="32"> | Day flash |
-| <img src="./Source/SmartBikeLights/assets/mediumflash.svg" width="13.71" height="32"><img src="./Source/SmartBikeLights/assets/headlight.svg" width="25" height="32"> <img src="./Source/SmartBikeLights/assets/taillight.svg" width="25" height="32"><img src="./Source/SmartBikeLights/assets/mediumflash.svg" width="13.71" height="32"> | Medium flash |
-| <img src="./Source/SmartBikeLights/assets/lowflash.svg" width="13.71" height="32"><img src="./Source/SmartBikeLights/assets/headlight.svg" width="25" height="32"> <img src="./Source/SmartBikeLights/assets/taillight.svg" width="25" height="32"><img src="./Source/SmartBikeLights/assets/lowflash.svg" width="13.71" height="32"> | Night flash |
-| <img src="./Source/SmartBikeLights/assets/disconnect.svg" width="13.71" height="32"> <img src="./Source/SmartBikeLights/assets/headlight.svg" width="25" height="32"> <img src="./Source/SmartBikeLights/assets/taillight.svg" width="25" height="32"> <img src="./Source/SmartBikeLights/assets/disconnect.svg" width="13.71" height="32"> | Disconnected light |
-| <img src="./Source/SmartBikeLights/assets/unknown_mode.svg" width="13.71" height="32"> <img src="./Source/SmartBikeLights/assets/headlight.svg" width="25" height="32"> <img src="./Source/SmartBikeLights/assets/taillight.svg" width="25" height="32"> <img src="./Source/SmartBikeLights/assets/unknown_mode.svg" width="13.71" height="32"> | Unknown light mode |
+Current mode and control icons are documented with their source artwork in [button icons](Source/SmartBikeLights/assets/button-icons/README.md) and [control icons](Source/SmartBikeLights/assets/control-icons/README.md).
 
 ## Settings
 
@@ -159,7 +131,7 @@ Because within a data field application it is not possible to swipe up/down, a b
 
 ### Other devices
 
-For devices that support CIQ 3.2+ and have more than 32KB memory, the app setting editor can be reached by using the data field on-device settings view. To reach the app settings menu, hold the `Up` or `Back/Menu` button (depends on the device, e.g. `Back/Menu` for Venu 2, `Up` for fenix 6) and the navigate to `ConnectIQ Fields` -> `Smart Bike Lights` -> `Settings`.
+For devices that support CIQ 3.2+ and have more than 32KB memory, the app setting editor can be reached by using the data field on-device settings view. To reach the app settings menu, hold the `Up` or `Back/Menu` button (depends on the device, `Up` for Forerunner 965) and the navigate to `ConnectIQ Fields` -> `Smart Bike Lights` -> `Settings`.
 
 <img src="/Images/WatchSettings.png?raw=true">
 

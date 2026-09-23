@@ -14,6 +14,7 @@ module LightPanelGraphics {
     var _modeIconsExtra;
     var _modeIconsXL;
     var prominentModeIcons = false;
+    var matchRuntimeIconToText = false;
     var _modeTitleFont = 2;
     var _modeTitleIconSize = 18;
     var _modeTitleIconY = 0;
@@ -22,6 +23,7 @@ module LightPanelGraphics {
     function initializeFonts() {
         _modeTitleFont = 2;
         prominentModeIcons = false;
+        matchRuntimeIconToText = false;
         if (_modeIconsSmall == null) {
             _modeIconsSmall = WatchUi.loadResource(Rez.Fonts.modeIconsSmall);
             _modeIconsLarge = WatchUi.loadResource(Rez.Fonts.modeIconsLarge);
@@ -292,11 +294,18 @@ module LightPanelGraphics {
         dc.clearClip();
     }
 
+    function runtimeIconSize(font, width) {
+        if (!matchRuntimeIconToText) { return width >= 150 ? 18 : 12; }
+        // Keep the clock slightly smaller than the visible runtime text.
+        var size = Graphics.getFontAscent(font) * 0.9;
+        return size > 28 ? 36 : size > 22 ? 28 : size > 18 ? 22 : 18;
+    }
+
     function modeLayout(dc, data, status, x, y, width, height) {
         // Store measurements in an array to stay within the Edge VM stack limit.
         var v = new [26];
         // Padding.
-        v[0] = width >= 150 ? 10 : 6;
+        v[0] = matchRuntimeIconToText ? 6 : width >= 150 ? 10 : 6;
         // Selection size.
         v[1] = width >= 150 ? 14 : 10;
         // Title icon size.
@@ -313,7 +322,7 @@ module LightPanelGraphics {
         // Resolve optional rows before positioning: hidden or non-fitting rows
         // take no space, and the background fill never affects alignment.
         // Runtime icon size.
-        v[6] = width >= 150 ? 18 : 12;
+        v[6] = runtimeIconSize(v[4], width);
         // Title height.
         v[7] = dc.getFontHeight(v[4]) * v[5].size();
         // Brightness height.
@@ -327,7 +336,7 @@ module LightPanelGraphics {
         // Runtime text.
         v[12] = runtimeText(v[11]);
         // Runtime available width.
-        v[13] = width-v[0]*2-v[6]-7-v[1]-4;
+        v[13] = width-v[0]*2-v[6]-7-(matchRuntimeIconToText ? 0 : v[1]+4);
         // Minimum runtime height.
         v[14] = v[8] > v[6] ? v[8] : v[6];
         // Available detail height.
@@ -341,6 +350,7 @@ module LightPanelGraphics {
         // Runtime font.
         v[18] = v[16] ? fitFont(dc, v[12], v[13],
             v[15] - (v[17] ? v[8] + 2 : 0), v[4]) : 0;
+        v[6] = runtimeIconSize(v[18], width);
         // Runtime height.
         v[19] = v[16] ? dc.getFontHeight(v[18]) : 0;
         if (v[16] && v[19] < v[6]) { v[19] = v[6]; }
@@ -402,12 +412,14 @@ module LightPanelGraphics {
             dc.drawText(x+width-pad,layout[4],0,layout[6],Graphics.TEXT_JUSTIFY_RIGHT);
         }
         if (!layout[7]) { return; }
-        iconSize = width >= 150 ? 18 : 12;
+        iconSize = runtimeIconSize(layout[8], width);
+        if (iconSize == 36 && _modeIconsXL == null) { _modeIconsXL = WatchUi.loadResource(Rez.Fonts.modeIconsXL); }
         var warning = layout[12] != null && layout[12] < 30;
         dc.setColor(warning ? (bg==0x000000 ? 0xFF6666 : RED) : fg,-1);
         // Align with visible text ascent, as for mode icons, excluding descender space.
-        dc.drawText(layout[10]+iconSize/2, layout[9]+(Graphics.getFontAscent(layout[8])-iconSize)/2,
-            width >= 150 ? _modeIconsLarge : _modeIconsSmall, "C", Graphics.TEXT_JUSTIFY_CENTER);
+        dc.drawText(layout[10]+iconSize/2, layout[9]+((matchRuntimeIconToText ? dc.getFontHeight(layout[8]) : Graphics.getFontAscent(layout[8]))-iconSize)/2,
+            iconSize == 36 ? _modeIconsXL : iconSize == 28 ? _modeIconsExtra : iconSize == 22 ? _modeIconsWide
+                : iconSize == 18 ? _modeIconsLarge : _modeIconsSmall, "C", Graphics.TEXT_JUSTIFY_CENTER);
         dc.drawText(layout[10]+iconSize+7,layout[9],layout[8],layout[11],Graphics.TEXT_JUSTIFY_LEFT);
     }
 }
