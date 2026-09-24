@@ -1143,7 +1143,7 @@ class BikeLightsView extends  WatchUi.DataField  {
                     var totalFilters = filters[j + 1];
                     if (capableModes.indexOf(filters[j + 2]) < 0) {
                         errorCode = 3;
-                        recordModeError(light, filters[j + 2], "Filter group " + filterGroup);
+                        recordModeError(light, filters[j + 2], "Smart rule " + filterGroup);
                         break;
                     }
 

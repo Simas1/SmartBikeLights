@@ -77,9 +77,9 @@ export default class FilterGroup {
   }
 
   getDisplayName(lightModes) {
-    let name = 'Group';
+    let name = 'Smart rule';
     if (this.name) {
-      name += ' Name: ' + this.name;
+      name = 'Rule name: ' + this.name;
     }
 
     if (lightModes && this.lightMode !== null) {

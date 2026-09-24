@@ -102,7 +102,7 @@ export default observer(({
                   help={
                     <React.Fragment>
                       <Typography>
-                        The default mode is used only by the Smart control mode as a fallback light mode, when none of the below filter groups
+                        The default mode is used only by the Smart control mode as a fallback light mode, when none of the below smart rules
                         is matched.
                       </Typography>
                     </React.Fragment>
@@ -220,12 +220,12 @@ export default observer(({
           ? <React.Fragment>
               <ElementWithHelp
                 sx={{marginBottom: 1, marginTop: 1}}
-                element={<Typography variant="h5">Filter groups</Typography>}
+                element={<Typography variant="h5">Smart rules</Typography>}
                 help={
                   <Typography>
-                    Filter groups contains a group of filters, which are used by the Smart control mode to determine the light mode. Every filter group defines
-                    a light mode, which will be used when every filter inside the group is matched. The order of filter groups is important
-                    as in case multiple filter groups are matched, only the light mode of the topmost matched group will be used.
+                    Smart rules contain sets of conditions, which are used by the Smart control mode to determine the light mode. Each smart rule defines
+                    a light mode, which will be used when every condition in the rule is matched. The order of smart rules is important
+                    as in case multiple smart rules are matched, only the light mode of the topmost matching rule will be used.
                   </Typography>
                 }
               />
@@ -241,14 +241,14 @@ export default observer(({
                 element={<Typography variant="h5">Header</Typography>}
                 help={
                   <Typography>
-                    Choose the control modes the button cycles through. Manual is always included. Smart is used only when this light has filters. Selecting any light-mode button enters Manual.
+                    Choose the control modes the button cycles through. Manual is always included. Smart is used only when this light has smart rules. Selecting any light-mode button enters Manual.
                   </Typography>
                 }
               />
               {lightPanel && device?.touchScreen && <Grid container spacing={3} sx={{ marginBottom: 3 }}>
                 <Grid item xs={12}>
                   <AppSelect required items={groupNameVisibility} label="Header visibility"
-                    help="Show the active filter group or Network mode above the light buttons."
+                    help="Show the active smart rule or Network mode above the light buttons."
                     setter={lightPanel.setGroupNameVisibility} value={lightPanel.groupNameVisibility} />
                 </Grid>
               </Grid>}
@@ -266,7 +266,7 @@ export default observer(({
                   <Typography>
                     Fullscreen (1 Field Layout) shows your configured light-mode buttons. Rename, reorder, group, or remove buttons and choose their icons, brightness, and runtime details here.
                     In Field view, the card shows the active light mode; tapping it cycles through the configured modes in button order, followed by Off, and enters Manual.
-                    Filter Light Mode limits the buttons shown full-screen and the modes included in field cycling, while Filter Groups can still use hidden modes. The short light name appears in the footer when enabled.
+                    Filter Light Mode limits the buttons shown full-screen and the modes included in field cycling, while Smart rules can still use hidden modes. The short light name appears in the footer when enabled.
                   </Typography>
                 }
               />

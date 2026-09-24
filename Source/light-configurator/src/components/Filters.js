@@ -77,7 +77,7 @@ export default observer(({ filters, filterTypes, device }) => {
                                         note={
                                           <Typography>
                                           NOTE: Acceleration is calculated once per second by calculating the difference between the current and previous (one second ago) speed
-                                          in percentage (%). When decelerating, the calculated value will be negative, which means that this filter can be also used for braking
+                                          in percentage (%). When decelerating, the calculated value will be negative, which means that this condition can be also used for braking
                                           by setting a negative value (e.g. Lower than -20%).
                                           </Typography>
                                         }

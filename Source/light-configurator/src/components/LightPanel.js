@@ -70,7 +70,7 @@ export default observer(({ lightPanel, lightModes, lightModeFilter }) => {
           <Grid item xs={12} sm={4}>
             <AppSelect required items={manualModeBehaviorList} label="Filter Light Mode"
               setter={lightModeFilter.setManualModeBehavior} value={lightModeFilter.manualModeBehavior}
-              help="Choose which configured light-mode buttons appear full-screen and are included when tapping the field card to cycle modes. Hidden modes remain available to Filter Groups, so automation can use them without adding them to manual cycling. Button order is preserved, and Off always follows the last mode. Control mode and Off remain visible."
+              help="Choose which configured light-mode buttons appear full-screen and are included when tapping the field card to cycle modes. Hidden modes remain available to Smart rules, so automation can use them without adding them to manual cycling. Button order is preserved, and Off always follows the last mode. Control mode and Off remain visible."
             />
           </Grid>
           {lightModeFilter.manualModeBehavior === 1 && <Grid item xs={12} sm={4}>

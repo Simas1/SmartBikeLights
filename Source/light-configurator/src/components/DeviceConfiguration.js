@@ -39,12 +39,12 @@ export default observer(({ configuration, device, deviceList }) => {
         <CardHeader
           title={
             <ElementWithHelp
-              element={<Typography variant="h5" align="center">Global Filters</Typography>}
+              element={<Typography variant="h5" align="center">Global smart rules</Typography>}
               help={
                 <Typography>
-                  Global filters are the first filters that are checked by the Smart control mode to determine whether the lights can be turned on. In
-                  case we define one or more global filters and none them is matched, then the lights won't be turned on. In case we don't define
-                  any global filter or at least one of them is matched, then the light mode will be determine by the filters in the below Headlight/Taillight
+                  Global smart rules are checked first by Smart mode to determine whether the lights can be turned on. In
+                  case we define one or more global smart rules and none of them matches, then the lights won't be turned on. In case we don't define
+                  any global smart rule or at least one of them is matched, then the light mode will be determined by the smart rules in the below Headlight/Taillight
                   Configuration section.
                 </Typography>
               }
@@ -57,16 +57,16 @@ export default observer(({ configuration, device, deviceList }) => {
           <Grid item xs={12} sm={12}>
             <ElementWithHelp
               sx={{marginBottom: 1}}
-              element={<Typography variant="h5">Filter groups</Typography>}
+              element={<Typography variant="h5">Smart rules</Typography>}
               help={
                 <React.Fragment>
                   <Typography>
-                    Global filter groups contains a list of groups, where each group can have one or more filters, that are used by the Smart mode to determine
-                    whether the lights can be turned on. A filter group is matched, when all filters inside it are matched. Rules:
+                    Each global smart rule has one or more conditions that are used by the Smart mode to determine
+                    whether the lights can be turned on. A smart rule matches when all conditions inside it are matched. Rules:
                   </Typography>
                   <ul>
-                    <li><Typography>When no filters groups are added or at least one of them is matched, the light mode will be determined by the below Headlight/Taillight Configuration section</Typography></li>
-                    <li><Typography>When one or more filters groups are added and none of them is matched, then the lights won't be turned on</Typography></li>
+                    <li><Typography>When no smart rules are added or at least one of them is matched, the light mode will be determined by the below Headlight/Taillight Configuration section</Typography></li>
+                    <li><Typography>When one or more smart rules are added and none of them is matched, then the lights won't be turned on</Typography></li>
                   </ul>
                   <Typography>
                    They are useful when having a condition that applies to all lights. For example, in case we want the lights to be turned on only when recording an activity.

@@ -11,7 +11,7 @@ Install **Edge 540** device support in Garmin SDK Manager, then run:
 This profile shows one active-mode card per connected light inside a single data
 field: headlight on the left and taillight on the right. Mode graphics, brightness,
 estimated runtime and a control-mode icon inside each card use the shared panel
-design. The bottom-left status shows the active filter group or Garmin network
+design. The bottom-left status shows the active smart rule or Garmin network
 mode, matching the fullscreen header. Cards have no name/battery footer. Off keeps a
 neutral background. All details enabled in Theme settings must fit alongside the mode name/icon and bottom status/control icon. Details are never hidden automatically. If they do not fit, the field suggests hiding details in Settings or enlarging the field; no legacy icon layout is used.
 

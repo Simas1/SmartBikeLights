@@ -5,8 +5,7 @@ Each light keeps its configured buttons and order. Off and control mode use
 icons; control icons distinguish Smart (spark), Network (connected nodes), and
 Manual (hand). Control buttons are taller, with larger, heavier icons and more
 rounded corners. Headlight/taillight headers are omitted, but the active
-automation/filter group name is shown above each light when **Group name
-visibility** is enabled in the configurator. This setting retains its saved
+automation/smart rule name is shown above each light when **Header visibility** is enabled in the configurator. This setting retains its saved
 font size. Configuration buttons
 are removed from the grid at layout time, including from older saved settings.
 The footer's central cycle icon and current name switch to the next nonempty

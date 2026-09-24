@@ -15,7 +15,7 @@ export default observer(({ filter }) => {
   <Grid container spacing={3}>
     <Grid item xs={12} sm={12}>
       <Typography>
-      NOTE: Start location is set when the activity is started and the GPS location is acquired. This filter can be 
+      NOTE: Start location is set when the activity is started and the GPS location is acquired. This condition can be
       used to detect whether the activity is indoor or not.
       </Typography>
     </Grid>
