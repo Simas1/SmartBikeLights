@@ -12,13 +12,11 @@ import AppTextInput from '../inputs/AppTextInput';
 import AppCheckbox from '../inputs/AppCheckbox';
 import ElementWithHelp from './ElementWithHelp';
 import LightPanel from './LightPanel';
-import { createMenuItemColorTemplateFunc } from './Templates';
 import LightIconTapBehavior from './LightIconTapBehavior';
 import LightSettings from './LightSettings';
 import LightPanelModel from '../models/LightPanel';
 import LightSettingsModel from '../models/LightSettings';
 import LightModeCycleBehavior from '../models/LightModeCycleBehavior';
-import { getLightIconColors } from '../constants';
 
 const PREFIX = 'LightConfiguration';
 
@@ -40,12 +38,11 @@ const getLightData = (value, lights) => {
 const getDefaultPanel = (value, lights) => {
   return value !== null ? lights.find(l => l.id === value)?.defaultLightPanel : null;
 };
-const itemTemplate = createMenuItemColorTemplateFunc();
 
 export default observer(({
   device, totalLights, useIndividualNetwork, globalFilterGroups, lightType, lightList, lightFilterGroups, setLight, light,
   setLightModes, setAdditionalLightModes, setDefaultMode, defaultMode, lightPanel, setLightPanel, lightSettings, setLightSettings, deviceNumber, setDeviceNumber,
-  serialNumber, setSerialNumber, forceSmartMode, setForceSmartMode, lightIconTapBehavior, setLightIconTapBehavior, lightIconColor, setLightIconColor,
+  serialNumber, setSerialNumber, forceSmartMode, setForceSmartMode, lightIconTapBehavior, setLightIconTapBehavior,
   bikeRadarNumber, setBikeRadarNumber, createBikeRadarConnection, setCreateBikeRadarConnection }) => {
   const [lightData, setLightData] = React.useState(getLightData(light, lightList));
   const setValue = (value) => {
@@ -159,14 +156,6 @@ export default observer(({
                 }
               />
             </Grid>
-          }
-          {
-            light
-            ?
-            <Grid item xs={12} sm={4}>
-              <AppSelect required items={getLightIconColors(device)} label="Icon color" setter={setLightIconColor} value={lightIconColor} itemTemplateFunc={itemTemplate} />
-            </Grid>
-            : null
           }
           {
             setBikeRadarNumber && lightData && lightData.allowRadarSensor && device && device.highMemory && device.nativePairing !== true

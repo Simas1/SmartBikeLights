@@ -1485,12 +1485,6 @@ export const getDeviceLights = (device, lightsList, useIndividualNetwork) => {
   return device.highMemory && useIndividualNetwork ? lightsList : lightsList.filter(o => !o.individualNetworkOnly);
 };
 
-export const getLightIconColors = (device) => {
-  return device.bitsPerPixel === 1
-    ? colors.filter(o => o.id === 1 /* Black/White */)
-    : colors;
-};
-
 export const getButtonColors = () => {
   return [{ id: 0, name: 'Theme' }].concat(colors.filter(o => o.id !== 1 /* Black/White */));
 };

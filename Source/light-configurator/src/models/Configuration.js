@@ -9,7 +9,7 @@ import LightButton from './LightButton';
 import { serializeButtonGraphics } from './lightButtonGraphics';
 import LightSettings from './LightSettings';
 import LightModeCycleBehavior from './LightModeCycleBehavior';
-import { getLight, isDataField, getLightIconColors } from '../constants';
+import { getLight, isDataField } from '../constants';
 import RemoteController from './RemoteController';
 import RemoteControllerButton from './RemoteControllerButton';
 import RemoteControllerButtonAction from './RemoteControllerButtonAction';
@@ -518,7 +518,7 @@ const parseDevice = (value, deviceList) => {
   if (sections.length !== total) return { device: null };
   // Light fields have fixed positions; serial number and additional modes may be empty.
   const pair = '(?:-?\\d+,-?\\d+)?';
-  const light = new RegExp(`^${pair}:${pair}:-?\\d+:${pair}$`);
+  const light = new RegExp(`^${pair}:${pair}:${pair}$`);
   if ([1, 3].some(i => sections[i] !== '' && !light.test(sections[i]))) return { device: null };
   if ([0, 2, 4, 5, 6].some(i => sections[i]?.includes('|'))) return { device: null };
   if (device.highMemory) {
@@ -558,7 +558,6 @@ export default class Configuration {
   headlightSettings = null;
   headlightForceSmartMode = false;
   headlightIconTapBehavior = null;
-  headlightIconColor = 1; /* Black/White */
   taillight = null;
   taillightModes = null;
   taillightFilterGroups = [];
@@ -567,7 +566,6 @@ export default class Configuration {
   taillightSettings = null;
   taillightForceSmartMode = false;
   taillightIconTapBehavior = null;
-  taillightIconColor = 1; /* Black/White */
   useIndividualNetwork = false;
   headlightDeviceNumber = null;
   taillightDeviceNumber = null;
@@ -599,7 +597,6 @@ export default class Configuration {
     configuration.headlightModes = parseNumberArray(value, filterResult[0] + 1, filterResult);
     if (value[filterResult[0]] === ':') {
       configuration.headlightSerialNumber = parseSerialNumber(value, filterResult[0] + 1, filterResult);
-      configuration.headlightIconColor = parseNumber(value, filterResult[0] + 1, filterResult);
       configuration.headlightAdditionalModes = parseNumberArray(value, filterResult[0] + 1, filterResult);
     }
 
@@ -615,7 +612,6 @@ export default class Configuration {
     configuration.taillightModes = parseNumberArray(value, filterResult[0] + 1, filterResult);
     if (value[filterResult[0]] === ':') {
       configuration.taillightSerialNumber = parseSerialNumber(value, filterResult[0] + 1, filterResult);
-      configuration.taillightIconColor = parseNumber(value, filterResult[0] + 1, filterResult);
       configuration.taillightAdditionalModes = parseNumberArray(value, filterResult[0] + 1, filterResult);
     }
 
@@ -700,15 +696,12 @@ export default class Configuration {
     const device = deviceList.find(l => l.id === this.device);
     const headlightData = getLight(false, this.headlight);
     const taillightData = getLight(true, this.taillight);
-    const validColors = device ? getLightIconColors(device) : [];
     return device &&
       this.globalFilterGroups.every(g => g.isValid(device, null)) && (
         (this.headlight !== null || this.taillight !== null) &&
         this.isLightValid(headlightData, this.headlightFilterGroups, this.headlightDefaultMode, device) &&
         this.isLightValid(taillightData, this.taillightFilterGroups, this.taillightDefaultMode, device)
       ) &&
-      (this.headlight === null || validColors.some(o => o.id === this.headlightIconColor)) &&
-      (this.taillight === null || validColors.some(o => o.id === this.taillightIconColor)) &&
       this.isItemValid(this.headlightPanel, headlightData, device.touchScreen) &&
       this.isItemValid(this.taillightPanel, taillightData, device.touchScreen) &&
       this.isItemValid(this.headlightIconTapBehavior, headlightData, device.touchScreen) &&
@@ -757,9 +750,9 @@ export default class Configuration {
     const headlightData = getLight(false, this.headlight);
     const taillightData = getLight(true, this.taillight);
     let config = 'SBL1#' + this.getFilterGroupsConfigurationValue(this.globalFilterGroups, null);
-    config += `#${this.getLightInfo(this.headlight, this.headlightModes, this.headlightSerialNumber, this.headlightIconColor, this.headlightAdditionalModes)}`;
+    config += `#${this.getLightInfo(this.headlight, this.headlightModes, this.headlightSerialNumber, this.headlightAdditionalModes)}`;
     config += `#${this.headlight === null ? '' : this.getFilterGroupsConfigurationValue(this.headlightFilterGroups, this.headlightDefaultMode)}`;
-    config += `#${this.getLightInfo(this.taillight, this.taillightModes, this.taillightSerialNumber, this.taillightIconColor, this.taillightAdditionalModes)}`;
+    config += `#${this.getLightInfo(this.taillight, this.taillightModes, this.taillightSerialNumber, this.taillightAdditionalModes)}`;
     config += `#${this.taillight === null ? '' : this.getFilterGroupsConfigurationValue(this.taillightFilterGroups, this.taillightDefaultMode)}`;
     config += this.getLightPanelOrSettingsConfigurationValue(this.headlightPanel, this.headlightSettings, device);
     config += this.getLightPanelOrSettingsConfigurationValue(this.taillightPanel, this.taillightSettings, device);
@@ -777,7 +770,7 @@ export default class Configuration {
     return config;
   }
 
-  getLightInfo(light, lightModes, serialNumber, iconColor, additionalLightModes) {
+  getLightInfo(light, lightModes, serialNumber, additionalLightModes) {
     if (!light) {
       return '';
     }
@@ -788,7 +781,6 @@ export default class Configuration {
       config += `${long.shiftRight(31)},${long.and(0x7FFFFFFF)}`;
     }
 
-    config += `:${iconColor}`;
     config += `:${this.getNumberArray(additionalLightModes)}`;
 
     return config;
@@ -1074,10 +1066,6 @@ export default class Configuration {
     this.headlightIconTapBehavior = value;
   }
 
-  setHeadlightIconColor = (value) => {
-    this.headlightIconColor = value;
-  }
-
   setTaillight = (value) => {
     this.taillight = value;
   }
@@ -1132,10 +1120,6 @@ export default class Configuration {
 
   setTaillightIconTapBehavior = (value) => {
     this.taillightIconTapBehavior = value;
-  }
-
-  setTaillightIconColor = (value) => {
-    this.taillightIconColor = value;
   }
 
   setBikeRadarNumber = (value) => {

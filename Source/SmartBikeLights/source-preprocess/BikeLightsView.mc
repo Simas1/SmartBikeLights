@@ -55,7 +55,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
     // 13. Next filter group activation delay
     // 14. Light modes
     // 15. Serial number
-    // 16. Icon color
+    // 16. Configured light (derived from a non-empty configuration section)
     // 17. Additional supported light modes
     // 18. Filters
     var headlightData = new [19];
@@ -446,12 +446,12 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
 
             // configuration[1];  // Headlight modes
             // configuration[2];  // Headlight serial number
-            // configuration[3];  // Headlight color
+            // configuration[3];  // Headlight configured
             // configuration[4];  // Headlight additional light modes
             // configuration[5];  // Headlight filters
             // configuration[6];  // Taillight modes
             // configuration[7];  // Taillight serial number
-            // configuration[8];  // Taillight color
+            // configuration[8];  // Taillight configured
             // configuration[9];  // Taillight filters
             // configuration[10]; // Taillight additional light modes
             for (var i = 0; i < 10; i++) {
@@ -1283,7 +1283,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
 
         var recordLightModes = getPropertyValue("RL");
         var initializedLights = 0;
-        var isConfigSet = headlightData[16] != null || taillightData[16] != null;
+        var isConfigSet = headlightData[16] == true || taillightData[16] == true;
         for (var i = 0; i < lights.size(); i++) {
             var light = lights[i];
             var lightType = light != null ? light.type : 7;
@@ -1299,7 +1299,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
             var serial = lightData[15];
             // In case only one light type is configured, ignore other light types (e.g. when only headlight is set, ignore taillights).
             // But if no light is configured, initialize all of them
-            if ((isConfigSet && lightData[16] /* Icon color */ == null) ||
+            if ((isConfigSet && lightData[16] /* Configured */ != true) ||
                 (serial != null && serial != lightNetwork.getProductInfo(light.identifier).serial)) {
                 continue;
             }
@@ -1663,8 +1663,8 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
             return;
         }
 
-        // Icon color will be always set when a light is set in the configurator
-        var isHeadlightSet = headlightData[16] /* Icon color */ != null;
+        // Presence of each light section identifies which light types were configured.
+        var isHeadlightSet = headlightData[16] /* Configured */ == true;
         var headlightDeviceNumbers = isHeadlightSet ? _individualNetwork[0] as Lang.Array<Lang.Number> : [];
         if (isHeadlightSet && headlightDeviceNumbers.size() == 0) {
             var deviceNumbers = Application.Storage.getValue("HDN") as Lang.Array<Lang.Number> or Null;
@@ -1673,7 +1673,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
             }
         }
 
-        var isTaillightSet = taillightData[16] /* Icon color */ != null;
+        var isTaillightSet = taillightData[16] /* Configured */ == true;
         var taillightDeviceNumbers = isTaillightSet ? _individualNetwork[2] as Lang.Array<Lang.Number> : [];
         if (isTaillightSet && taillightDeviceNumbers.size() == 0) {
             var deviceNumbers = Application.Storage.getValue("TDN") as Lang.Array<Lang.Number> or Null;
@@ -2822,7 +2822,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
                 if (chars[j] == ':') { colons++; }
                 if (chars[j] == '|') { throw new Lang.Exception(); }
             }
-            if ((section == 1 || section == 3) && boundaries[section + 1] > boundaries[section] + 1 && colons != 3) {
+            if ((section == 1 || section == 3) && boundaries[section + 1] > boundaries[section] + 1 && colons != 2) {
                 throw new Lang.Exception();
             }
         }
@@ -2858,12 +2858,12 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
         // lightData[0]  // Global filter
         // lightData[1]  // Headlight light modes
         // lightData[2]  // Headlight serial number
-        // lightData[3]  // Headlight icon color
+        // lightData[3]  // Headlight configured
         // lightData[4]  // Headlight additional supported light modes
         // lightData[5]  // Headlight filters
         // lightData[6]  // Taillight light modes
         // lightData[7]  // Taillight serial number
-        // lightData[8]  // Taillight icon color
+        // lightData[8]  // Taillight configured
         // lightData[9]  // Taillight additional supported light modes
         // lightData[10] // Taillight filters
         var lightData = new [11];
@@ -3360,21 +3360,23 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
   // #endif
 // #endif
 
-    // <LightModes>(:<LightSerialNumber>)*(:<LightIconColor>)*(:<AdditionalLightModes>)*
+    // <LightModes>:<LightSerialNumber>:<AdditionalLightModes>; an empty section means no light.
     private function parseLightInfo(chars, dataType, resultIndex) {
         var index = resultIndex[0];
+        // This internal flag occupies no field in the configuration string.
+        // After the serial field, a configured light still has the ':' before additional modes.
+        if (dataType == 2) { return index < chars.size() && chars[index] == ':'; }
         if (dataType > 0 && (index >= chars.size() || chars[index] == '#')) {
             return null;
         }
 
         var left = parse(1 /* NUMBER */, chars, null, resultIndex);
-        if (dataType == 2 /* Icon color */ && left == null) { throw new Lang.Exception(); }
-        if (left == null || dataType == 2 /* Icon color */) {
+        if (left == null) {
             return left;
         }
 
         var serial = dataType == 1;
-        var result = (left.toLong() << (serial ? 31 : 32)) | parse(1 /* NUMBER */, chars, null, resultIndex);
+        var result = (left.toLong() << (serial ? 31 : 32)) | requiredNumber(chars, ',', resultIndex);
         return serial
             ? result.toNumber()
             : result;
