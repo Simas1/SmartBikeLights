@@ -166,7 +166,7 @@ def menu_configuration(value, device_id=None, upstream=False):
     if not upstream and not value.startswith('SBL1#'):
         raise ValueError('Expected an SBL1 configuration')
     parts = (value if upstream else value[5:]).split('#')
-    if not upstream and len(parts) != 17:
+    if not upstream and len(parts) != 18:
         raise ValueError('Incomplete SBL1 configuration')
     for index in (5, 6):
         if len(parts) <= index:

@@ -80,6 +80,8 @@ export default observer(({ configuration, device, deviceList }) => {
       </Card>
 
       <LightConfiguration
+        showFooter={configuration.showFooter}
+        setShowFooter={configuration.setShowFooter}
         globalFilterGroups={configuration.globalFilterGroups}
         useIndividualNetwork={configuration.useIndividualNetwork}
         device={device}
@@ -111,6 +113,8 @@ export default observer(({ configuration, device, deviceList }) => {
         setCreateBikeRadarConnection={configuration.setCreateBikeRadarConnection}
       />
       <LightConfiguration
+        showFooter={configuration.showFooter}
+        setShowFooter={configuration.setShowFooter}
         globalFilterGroups={configuration.globalFilterGroups}
         useIndividualNetwork={configuration.useIndividualNetwork}
         device={device}

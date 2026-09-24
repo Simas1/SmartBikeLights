@@ -13,7 +13,7 @@ afterAll(() => {
 });
 
 const sample = exampleSettings.LC;
-const remoteSample = "SBL1#1,1!NIGHT:1Es1800,r0###0,73404416::#2,2!BREAK:1:7:1:0A[-30!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Steady Beam:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#1|1:MicroRemote!1|1:3167:0!2|1:1::123!:123!!|2:1::,0=:!H]0#4321#B3843##2#0#0";
+const remoteSample = "SBL1#1,1!NIGHT:1Es1800,r0###0,73404416::#2,2!BREAK:1:7:1:0A[-30!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Steady Beam:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#1|1:MicroRemote!1|1:3167:0!2|1:1::123!:123!!|2:1::,0=:!H]0#4321#1#B3843##2#0#0";
 
 test.each(deviceList)('round trips the separator-free format for $name', (device) => {
   const configuration = Configuration.parse(sample, deviceList);
@@ -26,7 +26,8 @@ test.each(deviceList)('round trips the separator-free format for $name', (device
   const remoteIndex = 10;
   expect(fields[remoteIndex]).toBe('0');
   expect(fields[remoteIndex + 1]).toBe('');
-  expect(fields[remoteIndex + 2]).toBe(device.id);
+  expect(fields[remoteIndex + 2]).toBe('1');
+  expect(fields[remoteIndex + 3]).toBe(device.id);
   const restored = Configuration.parse(exported, deviceList);
   expect(restored).not.toBeNull();
   expect(restored.remoteControllers).toHaveLength(0);
@@ -52,30 +53,30 @@ test('round trips automatic radar connection in the new format', () => {
   configuration.setTaillight(24);
   configuration.createBikeRadarConnection = true;
   const exported = configuration.getConfigurationValue(deviceList);
-  expect(exported.slice(5).split('#').slice(10, 13)).toEqual(['0', '0', 'B3843']);
+  expect(exported.slice(5).split('#').slice(10, 14)).toEqual(['0', '0', '1', 'B3843']);
   const restored = Configuration.parse(exported, deviceList);
   expect(restored).not.toBeNull();
   expect(restored.createBikeRadarConnection).toBe(true);
 });
 
 const obsoleteFormats = [
-  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0:0#123!:123!#0##B3843##2#0#0",
-  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#123!:123!#0##B3843##2#0#0",
-  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#0##B3843##2#0#0",
-  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!##B3843##2#0#0",
-  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0#B3843##2#0#0",
-  "1,1!NIGHT:1Es1800,r0###0,73404416#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0",
-  "1,1!NIGHT:1Es1800,r0###0,73404416::1#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0",
-  "1,1!NIGHT:1Es1800,r0###0,73404416:::#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0",
-  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0",
-  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0",
-  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1|:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0",
-  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#1:123:456#0:0#123!:123!#0##B3843##2#0#0",
-  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0#0##B3843##2#0#0",
-  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##5,4:Varia 510:0:16777215:-1|2,:-1,Off:0|1,Solid:4|1,Day Flash:7|1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0",
-  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##5,4:Varia 510!2,:-1,Off:0!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0",
-  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##5,4:Varia 510:0!2,:-1,Off:0!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0",
-  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##5,4:Varia 510:0:16777215!2,:-1,Off:0!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0"
+  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0:0#123!:123!#0##1#B3843##2#0#0",
+  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#123!:123!#0##1#B3843##2#0#0",
+  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#0##1#B3843##2#0#0",
+  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!##1#B3843##2#0#0",
+  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0#1#B3843##2#0#0",
+  "1,1!NIGHT:1Es1800,r0###0,73404416#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##1#B3843##2#0#0",
+  "1,1!NIGHT:1Es1800,r0###0,73404416::1#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##1#B3843##2#0#0",
+  "1,1!NIGHT:1Es1800,r0###0,73404416:::#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##1#B3843##2#0#0",
+  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##1#B3843##2#0#0",
+  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##1#B3843##2#0#0",
+  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1|:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##1#B3843##2#0#0",
+  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#1:123:456#0:0#123!:123!#0##1#B3843##2#0#0",
+  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0#0##1#B3843##2#0#0",
+  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##5,4:Varia 510:0:16777215:-1|2,:-1,Off:0|1,Solid:4|1,Day Flash:7|1,Night Flash:6#0::#0:0#123!:123!#0##1#B3843##2#0#0",
+  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##5,4:Varia 510!2,:-1,Off:0!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##1#B3843##2#0#0",
+  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##5,4:Varia 510:0!2,:-1,Off:0!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##1#B3843##2#0#0",
+  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##5,4:Varia 510:0:16777215!2,:-1,Off:0!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##1#B3843##2#0#0"
 ];
 test.each(obsoleteFormats)('rejects obsolete or incomplete configuration %#', (value) => {
   let parsed = null;
@@ -166,7 +167,7 @@ test.each([-3, -2, -1, 0])('rejects fixed button %s in an editable layout', (mod
   expect(() => Configuration.parse('SBL1#' + sections.join('#'), deviceList)).toThrow(/positive light mode/);
   sections[5] = `1:Front!Fixed:${mode}`;
   sections[6] = '';
-  sections[12] = 'B4315';
+  sections[13] = 'B4315';
   expect(() => Configuration.parse('SBL1#' + sections.join('#'), deviceList)).toThrow(/positive light mode/);
 });
 
@@ -174,7 +175,7 @@ test.each(['B3843', 'B4315'])('preserves a layout with only fixed buttons on %s'
   const sections = sample.slice(5).split('#');
   sections[5] = deviceId === 'B3843' ? '0,0:Front:0:16777215:-1' : '0:Front';
   sections[6] = '';
-  sections[12] = deviceId;
+  sections[13] = deviceId;
   const parsed = Configuration.parse('SBL1#' + sections.join('#'), deviceList);
   expect(parsed.getConfigurationValue(deviceList).slice(5).split('#')[5]).toBe(sections[5]);
 });
@@ -188,4 +189,20 @@ test('catalog layouts contain only editable buttons', () => {
     expect(panel.buttonGroups.flatMap(group => group.buttons).every(button => button.mode > 0)).toBe(true);
     expect(settings.buttons.every(button => button.mode > 0)).toBe(true);
   }
+});
+
+
+test.each([true, false])('round trips shared footer visibility: %s', visible => {
+  const configuration = Configuration.parse(sample, deviceList);
+  expect(configuration.showFooter).toBe(true);
+  configuration.setShowFooter(visible);
+  const exported = configuration.getConfigurationValue(deviceList);
+  expect(exported.slice(5).split('#')[12]).toBe(visible ? '1' : '0');
+  expect(Configuration.parse(exported, deviceList).showFooter).toBe(visible);
+});
+
+test.each(['', '2', '-1'])('rejects invalid footer visibility: %s', value => {
+  const sections = sample.slice(5).split('#');
+  sections[12] = value;
+  expect(Configuration.parse('SBL1#' + sections.join('#'), deviceList)).toBeNull();
 });

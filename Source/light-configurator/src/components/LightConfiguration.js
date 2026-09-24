@@ -40,7 +40,7 @@ const getDefaultPanel = (value, lights) => {
 };
 
 export default observer(({
-  device, totalLights, useIndividualNetwork, globalFilterGroups, lightType, lightList, lightFilterGroups, setLight, light,
+  showFooter, setShowFooter, device, totalLights, useIndividualNetwork, globalFilterGroups, lightType, lightList, lightFilterGroups, setLight, light,
   setLightModes, setAdditionalLightModes, setDefaultMode, defaultMode, lightPanel, setLightPanel, lightSettings, setLightSettings, deviceNumber, setDeviceNumber,
   serialNumber, setSerialNumber, forceSmartMode, setForceSmartMode, lightIconTapBehavior, setLightIconTapBehavior,
   bikeRadarNumber, setBikeRadarNumber, createBikeRadarConnection, setCreateBikeRadarConnection }) => {
@@ -261,7 +261,7 @@ export default observer(({
                   </Typography>
                 }
               />
-            <LightPanel lightPanel={lightPanel} lightModes={lightData.modes} />
+            <LightPanel lightPanel={lightPanel} lightModes={lightData.modes} showFooter={showFooter} setShowFooter={setShowFooter} />
           </React.Fragment>
           : null
         }

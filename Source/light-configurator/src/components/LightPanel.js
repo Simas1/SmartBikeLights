@@ -9,13 +9,14 @@ import AddButton from './AddButton';
 import { groupNameVisibility } from '../constants';
 import AppTextInput from '../inputs/AppTextInput';
 import AppSelect from '../inputs/AppSelect';
-import Typography from '@mui/material/Typography';
+import AppCheckbox from '../inputs/AppCheckbox';
+import ElementWithHelp from './ElementWithHelp';
 
 const getModes = (lightModes) => {
   return lightModes.filter(mode => mode.id > 0);
 };
 
-export default observer(({ lightPanel, lightModes }) => {
+export default observer(({ lightPanel, lightModes, showFooter, setShowFooter }) => {
   const [modes, setModes] = React.useState(getModes(lightModes));
   const addButtonGroup = action(() => {
     const group = new LightButtonGroup();
@@ -49,16 +50,17 @@ export default observer(({ lightPanel, lightModes }) => {
         <Grid item xs={12} sm={4}>
           <AppTextInput label="Short light name" setter={lightPanel.setLightName} value={lightPanel.lightName} />
         </Grid>
-        <Grid item xs={12} sm={8}>
-          <Typography variant="body2">
-            Control mode and Off always appear in a fixed first row. Only the remaining buttons are configured below. The footer always provides configuration switching. Set brightness and runtime
-            on each mode to show graphical details.
-          </Typography>
-        </Grid>
+        <Grid item xs={12} sm={8} />
         <Grid item xs={12} sm={4}>
           <AppSelect required items={groupNameVisibility} label="Header visibility"
             help="Show the active filter group or Network mode above the light buttons."
             setter={lightPanel.setGroupNameVisibility} value={lightPanel.groupNameVisibility} />
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <ElementWithHelp
+            element={<AppCheckbox label="Show Footer" value={showFooter} setter={setShowFooter} />}
+            help="Show the footer with the light name and battery status, plus controls to switch configurations and open Settings."
+          />
         </Grid>
       </Grid>
       <div>

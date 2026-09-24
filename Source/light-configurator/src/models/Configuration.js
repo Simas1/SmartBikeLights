@@ -516,7 +516,7 @@ const parseDevice = (value, deviceList) => {
   const device = deviceList.find(item => item.id === sections[sections.length - 5]);
   if (!device) return { device: null };
   const dataField = isDataField();
-  const total = device.highMemory ? (dataField ? 17 : 15) : 10;
+  const total = device.highMemory ? (dataField ? 18 : 15) : 10;
   if (sections.length !== total) return { device: null };
   // Light fields have fixed positions; serial number and additional modes may be empty.
   const pair = '(?:-?\\d+,-?\\d+)?';
@@ -528,7 +528,8 @@ const parseDevice = (value, deviceList) => {
         !/^[01]:[01]$/.test(sections[8])) return { device: null };
     if (dataField && !/^[0-3]+!(?:\d+(?:,\d+)*)?:[0-3]+!(?:\d+(?:,\d+)*)?$/.test(sections[9])) return { device: null };
     if (dataField && sections[9].split(':').some(cycle => !cycle.split('!')[0].includes('3'))) return { device: null };
-    const radarIndex = total - 6;
+    const radarIndex = total - (dataField ? 7 : 6);
+    if (dataField && !/^[01]$/.test(sections[12])) return { device: null };
     if (!/^\d*$/.test(sections[radarIndex])) return { device: null };
     if (dataField && !/^\d+(?:\||$)/.test(sections[radarIndex - 1])) return { device: null };
     for (const i of [5, 6]) {
@@ -552,6 +553,9 @@ export default class Configuration {
   device = null;
   units = 0;
   timeFormat = 0;
+  showFooter = true;
+
+  setShowFooter = value => { this.showFooter = value; };
   globalFilterGroups = [];
   headlight = null;
   headlightModes = null;
@@ -682,6 +686,9 @@ export default class Configuration {
       }
     }
 
+    if (device.highMemory && isDataField()) {
+      configuration.showFooter = requiredNumber(value, '#', filterResult) === 1;
+    }
     return this.parseMetadataConfiguration(configuration, value, deviceList, deviceIndex, filterResult);
   }
 
@@ -764,6 +771,7 @@ export default class Configuration {
     config += this.getLightsTapBehaviorConfigurationValue(device);
     config += this.getRemoteControllersConfigrationValue(device);
     config += this.getBikeRadarNumberValue(device, headlightData, taillightData);
+    if (device.highMemory && isDataField()) config += `#${this.showFooter ? 1 : 0}`;
     config += `#${(this.device)}`;
     config += `#${(this.headlight === null ? '' : this.headlight)}`;
     config += `#${(this.taillight === null ? '' : this.taillight)}`;

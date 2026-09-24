@@ -42,7 +42,7 @@ The display shows one physical light per page with raw `TY`, `ID`, `LM`, `BS` an
 | Network | Controlled by Garmin's light-network mode. |
 | Manual | Controlled by your mode selection or the light's own buttons. |
 
-The Control mode button cycles through the modes selected in the configurator. Manual is mandatory; Smart and Network are optional. Smart is skipped when the light has no filters. Selecting a light-mode button, including Off, enters Manual. Control mode and Off always occupy a fixed first row, even with only Manual selected. These buttons and the configuration-switching footer are supplied by the device and are not part of the editable layout or configuration string.
+The Control mode button cycles through the modes selected in the configurator. Manual is mandatory; Smart and Network are optional. Smart is skipped when the light has no filters. Selecting a light-mode button, including Off, enters Manual. Control mode and Off always occupy a fixed first row, even with only Manual selected. These buttons and the configuration-switching footer are supplied by the device. Show Footer is enabled by default; turning it off hides the entire bottom section for both lights and gives that space to the mode buttons. The shared visibility flag is saved before the device metadata in the configuration string.
 
 ## Changing control modes
 

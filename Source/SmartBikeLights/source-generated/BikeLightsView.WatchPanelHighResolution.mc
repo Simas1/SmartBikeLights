@@ -923,7 +923,7 @@ class BikeLightsView extends  WatchUi.DataField  {
     }
 
     private function isConfigurationButton(location) {
-        return _isFullScreen &&  _panelFooter != null &&
+        return _showFooter && _isFullScreen &&  _panelFooter != null &&
             location[0] >= _panelFooter[0] && location[0] < _panelFooter[0] + _panelFooter[2] &&
             location[1] >= _panelFooter[1] && location[1] < _panelFooter[1] + _panelFooter[3];
     }
@@ -1583,6 +1583,8 @@ class BikeLightsView extends  WatchUi.DataField  {
         return result;
     }
 
+    protected var _showFooter = true;
+
     private var _panelControlModes = [[0, 1, 2], [0, 1, 2]];
 
     function configuredControlModes(lightType) {
@@ -1590,6 +1592,7 @@ class BikeLightsView extends  WatchUi.DataField  {
     }
 
     private function setupHighMemoryConfiguration(configuration, setupSensors) {
+        _showFooter = configuration[18] == null || configuration[18] == 1;
         var behavior = configuration[15];
         _panelControlModes = behavior == null ? [[0, 1, 2], [0, 1, 2]] : [behavior[0][0], behavior[1][0]];
         _individualNetwork = configuration[13];
@@ -1607,7 +1610,7 @@ class BikeLightsView extends  WatchUi.DataField  {
     private function drawWatchFull(dc, width, height, fg, bg) {
         // Geometry and card data share one frame to stay within Garmin's VM stack.
         // [left, top, card width, height, first light, second light, first card, second card]
-        var v = [width * 0.11, height * 0.24, 0, height * 0.52,
+        var v = [width * 0.11, height * 0.24, 0, height * (_showFooter ? 0.52 : 0.64),
             _invertLights ? taillightData : headlightData,
             _invertLights ? headlightData : taillightData, null, null];
         if (v[4][0] == null) { v[4] = v[5]; v[5] = null; }
@@ -1625,13 +1628,14 @@ class BikeLightsView extends  WatchUi.DataField  {
         includeWatchModes(dc, headlightPanelSettings, v[2], contentHeight);
         includeWatchModes(dc, taillightPanelSettings, v[2], contentHeight);
         drawActiveLightCardFace(dc, v[4], v[6], v[0], v[1], v[2], v[3], fg, bg);
-        drawWatchCardLabel(dc, v[4], v[6], v[0], v[1], v[2], v[3], fg);
+        if (_showFooter) { drawWatchCardLabel(dc, v[4], v[6], v[0], v[1], v[2], v[3], fg); }
         if (v[7] != null) {
             drawActiveLightCardFace(dc, v[5], v[7], v[0] + v[2] + 8, v[1], v[2], v[3], fg, bg);
-            drawWatchCardLabel(dc, v[5], v[7], v[0] + v[2] + 8, v[1], v[2], v[3], fg);
+            if (_showFooter) { drawWatchCardLabel(dc, v[5], v[7], v[0] + v[2] + 8, v[1], v[2], v[3], fg); }
         }
         dc.setColor(bg == 0 ? AppTheme.onDark : AppTheme.accent, -1);
         dc.drawText(width / 2, height * 0.075, Graphics.FONT_XTINY, "LIGHTS", Graphics.TEXT_JUSTIFY_CENTER);
+        if (!_showFooter) { _panelFooter = null; return; }
         var current = getPropertyValue("CC");
         var name = getPropertyValue("CN" + (current == null ? 1 : current));
         _panelFooter = [width * 0.2, height * 0.87, width * 0.6, height * 0.11];
@@ -1900,7 +1904,7 @@ class BikeLightsView extends  WatchUi.DataField  {
         var currentConfig = getPropertyValue("CC");
         var configName = getPropertyValue("CN" + (currentConfig == null ? 1 : currentConfig));
         if (configName == null) { configName = "Config"; }
-        _panelFooter = [width * 0.3, height - footerHeight, width * 0.4, footerHeight, configName];
+        _panelFooter = _showFooter ? [width * 0.3, height - footerHeight, width * 0.4, footerHeight, configName] : null;
         if (_initializedLights == 1) {
             initializeLightPanel(dc, getLightData(null), 2, width, height);
         } else {
@@ -1940,7 +1944,7 @@ class BikeLightsView extends  WatchUi.DataField  {
         // <TitlePart> := [(:Title:, :TitleY:)+]
         var panelData = new [9 + (8 * panelSettings[0]) + totalButtonGroups];
         panelData[0] = totalButtonGroups;
-        var footerHeight = _panelFooter[3];
+        var footerHeight = _showFooter ? _panelFooter[3] : 0;
         var compactGroups = 0;
         var weightIndex = 6;
         for (var g = 0; g < totalButtonGroups; g++) {
@@ -2037,9 +2041,9 @@ class BikeLightsView extends  WatchUi.DataField  {
         panelData[2] = AppTheme.accent;
         panelData[3] = LightPanelGraphics.WHITE;
         panelData[4] = x;
-        panelData[5] = _panelFooter[1] + 4;
+        panelData[5] = _showFooter ? _panelFooter[1] + 4 : 0;
         panelData[6] = x;
-        panelData[7] = _panelFooter[1] + dc.getFontHeight(0) + 5;
+        panelData[7] = _showFooter ? _panelFooter[1] + dc.getFontHeight(0) + 5 : 0;
         panelData[8] = maxLumens;
 
         if (lightData[0].type == 0 /* LIGHT_TYPE_HEADLIGHT */) {
@@ -2120,6 +2124,7 @@ class BikeLightsView extends  WatchUi.DataField  {
             groupIndex += 1 + (totalButtons * 8);
         }
 
+        if (!_showFooter) { return; }
         setTextColor(dc, fgColor);
         if (panelData[1] != null) {
             dc.drawText(panelData[4], panelData[5], 0, panelData[1], 1 /* TEXT_JUSTIFY_CENTER */);
@@ -2461,7 +2466,7 @@ class BikeLightsView extends  WatchUi.DataField  {
             if (chars[i] == '#') { boundaries.add(i); }
         }
         boundaries.add(chars.size());
-        var sections = 17;
+        var sections = 18;
         if (boundaries.size() != sections + 1) { throw new Lang.Exception(); }
         for (var section = 0; section < 7; section++) {
             var colons = 0;
@@ -2484,7 +2489,7 @@ class BikeLightsView extends  WatchUi.DataField  {
             : "LC";
         var value = getPropertyValue(configKey);
         if (value == null || value.length() == 0) {
-            return new [18];
+            return new [19];
         }
 
         var filterResult = [0 /* next index */, 0 /* operator type */];
@@ -2518,8 +2523,15 @@ class BikeLightsView extends  WatchUi.DataField  {
             parseForceSmartMode(chars, null, filterResult),    // Force smart mode
             parseLightsTapBehavior(chars, null, filterResult), // Light icons tap behavior
             parseRemoteControllers(chars, null, filterResult), // Remote controllers
-            parseBikeRadarNumber(chars, null, filterResult)    // Bike radar number
+            parseBikeRadarNumber(chars, null, filterResult),   // Bike radar number
+            parseFooterVisibility(chars, filterResult)        // Shared footer
         ]);
+    }
+
+    private function parseFooterVisibility(chars, filterResult) {
+        var value = requiredNumber(chars, '#', filterResult);
+        if (value != 0 && value != 1) { throw new Lang.Exception(); }
+        return value;
     }
 
     private function parseIndividualNetwork(chars, i, filterResult) {

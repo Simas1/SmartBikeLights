@@ -1403,6 +1403,8 @@ class BikeLightsView extends  WatchUi.DataField  {
         return result;
     }
 
+    protected var _showFooter = true;
+
     private var _panelControlModes = [[0, 1, 2], [0, 1, 2]];
 
     function configuredControlModes(lightType) {
@@ -1410,6 +1412,7 @@ class BikeLightsView extends  WatchUi.DataField  {
     }
 
     private function setupHighMemoryConfiguration(configuration, setupSensors) {
+        _showFooter = configuration[18] == null || configuration[18] == 1;
         var behavior = configuration[15];
         _panelControlModes = behavior == null ? [[0, 1, 2], [0, 1, 2]] : [behavior[0][0], behavior[1][0]];
         _individualNetwork = configuration[13];
@@ -1838,7 +1841,7 @@ class BikeLightsView extends  WatchUi.DataField  {
             if (chars[i] == '#') { boundaries.add(i); }
         }
         boundaries.add(chars.size());
-        var sections = 17;
+        var sections = 18;
         if (boundaries.size() != sections + 1) { throw new Lang.Exception(); }
         for (var section = 0; section < 7; section++) {
             var colons = 0;
@@ -1861,7 +1864,7 @@ class BikeLightsView extends  WatchUi.DataField  {
             : "LC";
         var value = getPropertyValue(configKey);
         if (value == null || value.length() == 0) {
-            return new [18];
+            return new [19];
         }
 
         var filterResult = [0 /* next index */, 0 /* operator type */];
@@ -1895,8 +1898,15 @@ class BikeLightsView extends  WatchUi.DataField  {
             parseForceSmartMode(chars, null, filterResult),    // Force smart mode
             parseLightsTapBehavior(chars, null, filterResult), // Light icons tap behavior
             parseRemoteControllers(chars, null, filterResult), // Remote controllers
-            parseBikeRadarNumber(chars, null, filterResult)    // Bike radar number
+            parseBikeRadarNumber(chars, null, filterResult),   // Bike radar number
+            parseFooterVisibility(chars, filterResult)        // Shared footer
         ]);
+    }
+
+    private function parseFooterVisibility(chars, filterResult) {
+        var value = requiredNumber(chars, '#', filterResult);
+        if (value != 0 && value != 1) { throw new Lang.Exception(); }
+        return value;
     }
 
     private function parseIndividualNetwork(chars, i, filterResult) {
