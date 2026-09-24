@@ -97,11 +97,7 @@ export default observer(({ buttonGroup, lightModes, index, moveGroup, addButton,
               <AppSelect required items={lightModes} label="Light mode" setter={button.setMode} value={button.mode} />
             </Grid>
             <Grid item xs={12} sm={12}>
-              { button.mode >= 0
-              ? <AppTextInput required label="Button name" value={button.name} setter={button.setName} />
-              : button.mode === -3 ? <AppTextInput label="Button name" value="Battery" />
-              : <AppTextInput label="Button name" value="Smart / Manual / Network" />
-              }
+              <AppTextInput required label="Button name" value={button.name} setter={button.setName} />
             </Grid>
             {isGroup && button.mode > 0 && <>
               <Grid item xs={12} sm={6}>

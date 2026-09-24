@@ -194,8 +194,8 @@ def menu_configuration(value, device_id=None, upstream=False):
                     raise ValueError('Malformed touchscreen light button')
                 mode = int(raw_mode)
                 parsed += 1
-                if not upstream and mode in (-2, -1, 0):
-                    raise ValueError("Control mode, Off and configuration switching are fixed buttons")
+                if not upstream and mode <= 0:
+                    raise ValueError("Editable buttons require a positive light mode")
                 if mode < 0:
                     continue  # Touch-only control/configuration buttons are not light modes.
                 if upstream:

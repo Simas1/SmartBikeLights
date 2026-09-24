@@ -464,7 +464,6 @@ const mageneAt1600Modes = [
   { id: 7, name: 'Strobe' }
 ];
 
-export const battery = {id: -3, name: "Battery"};
 
 export const headlightList = [
   {

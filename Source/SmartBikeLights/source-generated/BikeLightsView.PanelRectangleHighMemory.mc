@@ -2045,7 +2045,7 @@ class BikeLightsView extends  WatchUi.DataField  {
                 for (var j = 0; j < numberOfButtons; j++) {
                     data[dataIndex + 1] = parse(0 /* STRING */, chars, null, filterResult);
                     data[dataIndex] = parse(1 /* NUMBER */, chars, null, filterResult);
-                    if (data[dataIndex] == -2 || data[dataIndex] == -1 || data[dataIndex] == 0) { throw new Lang.Exception(); }
+                    if (data[dataIndex] <= 0) { throw new Lang.Exception(); }
                     dataIndex += 2;
                 }
 

@@ -205,7 +205,7 @@ const parseLightPanel = (chars, i, filterResult) => {
             let lightButton = new LightButton();
             lightButton.loadPanelName(parseTitle(chars, filterResult[0] + 1, filterResult));
             lightButton.mode = parseNumber(chars, filterResult[0] + 1, filterResult);
-            if (lightButton.mode === -2 || lightButton.mode === -1 || lightButton.mode === 0) throw new Error("Control mode, Off and configuration switching are fixed buttons");
+            if (lightButton.mode <= 0) throw new Error("Editable buttons require a positive light mode");
             lightButtonGroup.buttons.push(lightButton);
         }
 
@@ -370,7 +370,7 @@ const parseLightSettings = (totalButtons, chars, filterResult) => {
     let lightButton = new LightButton();
     lightButton.name = parseTitle(chars, filterResult[0] + 1, filterResult);
     lightButton.mode = parseNumber(chars, filterResult[0] + 1, filterResult);
-    if (lightButton.mode === -2 || lightButton.mode === -1 || lightButton.mode === 0) throw new Error("Control mode, Off and configuration switching are fixed buttons");
+    if (lightButton.mode <= 0) throw new Error("Editable buttons require a positive light mode");
     settings.buttons.push(lightButton);
   }
 
@@ -986,7 +986,7 @@ export default class Configuration {
       buttonGroups += `!${buttons.length}`;
       for (let j = 0; j < buttons.length; j++) {
         let button = buttons[j];
-        buttonGroups += `,${(button.mode < 0 ? '' : serializeButtonGraphics(button))}:${button.mode}`;
+        buttonGroups += `,${serializeButtonGraphics(button)}:${button.mode}`;
       }
     }
 

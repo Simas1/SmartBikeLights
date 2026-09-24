@@ -6,13 +6,13 @@ import LightButtonGroup from '../models/LightButtonGroup';
 import LightButton from '../models/LightButton';
 import ButtonGroup from './ButtonGroup';
 import AddButton from './AddButton';
-import { battery, groupNameVisibility } from '../constants';
+import { groupNameVisibility } from '../constants';
 import AppTextInput from '../inputs/AppTextInput';
 import AppSelect from '../inputs/AppSelect';
 import Typography from '@mui/material/Typography';
 
 const getModes = (lightModes) => {
-  return [battery].concat(lightModes.filter(mode => mode.id !== 0));
+  return lightModes.filter(mode => mode.id > 0);
 };
 
 export default observer(({ lightPanel, lightModes }) => {
