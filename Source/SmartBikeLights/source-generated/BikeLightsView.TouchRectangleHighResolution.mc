@@ -1034,9 +1034,10 @@ class BikeLightsView extends  WatchUi.DataField  {
         return true;
     }
 
-    private function configuredTapModes(lightType, supportedModes) {
+    protected function configuredTapModes(lightType, supportedModes) {
         var settings = lightType == 0 ? headlightPanelSettings : taillightPanelSettings;
         var modes = [];
+        var allowed = _panelLightModes[lightType == 0 ? 0 : 1];
         if (settings == null) { return modes; }
         var index = 6;
         for (var group = 0; group < settings[1]; group++) {
@@ -1047,7 +1048,7 @@ class BikeLightsView extends  WatchUi.DataField  {
                 index += 2;
                 // Exclude control/configuration actions and unsupported modes.
                 // Repeated buttons retain their first position in the sequence.
-                if (mode >= 0 && supportedModes.indexOf(mode) >= 0 && modes.indexOf(mode) < 0) {
+                if (mode > 0 && (allowed == null || allowed.indexOf(mode) >= 0) && supportedModes.indexOf(mode) >= 0 && modes.indexOf(mode) < 0) {
                     modes.add(mode);
                 }
             }
@@ -1610,6 +1611,8 @@ class BikeLightsView extends  WatchUi.DataField  {
 
     protected var _showFooter = true;
 
+    private var _panelLightModes = [null, null];
+
     private var _panelControlModes = [[0, 1, 2], [0, 1, 2]];
 
     function configuredControlModes(lightType) {
@@ -1619,6 +1622,7 @@ class BikeLightsView extends  WatchUi.DataField  {
     private function setupHighMemoryConfiguration(configuration, setupSensors) {
         _showFooter = configuration[18] == null || configuration[18] == 1;
         var behavior = configuration[15];
+        _panelLightModes = behavior == null ? [null, null] : [behavior[0][1], behavior[1][1]];
         _panelControlModes = behavior == null ? [[0, 1, 2], [0, 1, 2]] : [behavior[0][0], behavior[1][0]];
         _individualNetwork = configuration[13];
         if (setupSensors && (_individualNetwork != null /* Is enabled */ || _lightNetwork instanceof AntLightNetwork.IndividualLightNetwork)) {
@@ -1838,6 +1842,7 @@ class BikeLightsView extends  WatchUi.DataField  {
             panelSettings = getDefaultLightPanelSettings(lightData[0].type, capableModes);
         }
 
+        panelSettings = LightPanelGraphics.filterModes(panelSettings, _panelLightModes[lightData[0].type == 0 ? 0 : 1]);
         panelSettings = LightPanelGraphics.panelSettings(panelSettings);
         // This is the active automation/filter group, not a light-type heading.
         var groupName = null;

@@ -261,7 +261,7 @@ export default observer(({
                   </Typography>
                 }
               />
-            <LightPanel lightPanel={lightPanel} lightModes={lightData.modes} showFooter={showFooter} setShowFooter={setShowFooter} />
+            <LightPanel lightPanel={lightPanel} lightModes={lightData.modes} lightModeFilter={lightIconTapBehavior} showFooter={showFooter} setShowFooter={setShowFooter} />
           </React.Fragment>
           : null
         }

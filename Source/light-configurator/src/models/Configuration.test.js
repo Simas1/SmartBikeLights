@@ -206,3 +206,19 @@ test.each(['', '2', '-1'])('rejects invalid footer visibility: %s', value => {
   sections[12] = value;
   expect(Configuration.parse('SBL1#' + sections.join('#'), deviceList)).toBeNull();
 });
+
+test('mode filter round trips without removing layout buttons or automation modes', () => {
+  const configuration = Configuration.parse(sample, deviceList);
+  const buttons = configuration.headlightPanel.buttonGroups.flatMap(group => group.buttons.map(button => button.mode));
+  const filters = configuration.headlightFilterGroups.map(group => group.lightMode);
+  configuration.headlightIconTapBehavior.setManualModeBehavior(1);
+  configuration.headlightIconTapBehavior.setLightModes([51, 53]);
+  let restored = Configuration.parse(configuration.getConfigurationValue(deviceList), deviceList);
+  expect(restored.headlightIconTapBehavior.manualModeBehavior).toBe(1);
+  expect(restored.headlightIconTapBehavior.lightModes).toEqual([51, 53]);
+  expect(restored.headlightPanel.buttonGroups.flatMap(group => group.buttons.map(button => button.mode))).toEqual(buttons);
+  expect(restored.headlightFilterGroups.map(group => group.lightMode)).toEqual(filters);
+  restored.headlightIconTapBehavior.setManualModeBehavior(0);
+  restored = Configuration.parse(restored.getConfigurationValue(deviceList), deviceList);
+  expect(restored.headlightIconTapBehavior.lightModes).toBeNull();
+});

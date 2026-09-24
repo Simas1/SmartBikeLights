@@ -109,3 +109,20 @@ function graphicsActualNameNewlineTest(logger) {
     Test.assert(mixed[0][1] == 30);
     return true;
 }
+
+(:test :highMemory)
+function graphicsFilteredModesTest(logger) {
+    var original = [4,3,"Front",0,0,-1,2,51,"Low",52,"Medium",1,53,"High",1,51,"Low copy"];
+    var filtered = LightPanelGraphics.filterModes(original, [53, 51]);
+    Test.assert(original[0] == 4 && original[6] == 2);
+    Test.assert(filtered[0] == 3 && filtered[1] == 3);
+    Test.assert(filtered[6] == 1 && filtered[7] == 51 && filtered[10] == 53 && filtered[13] == 51);
+    var panel = LightPanelGraphics.panelSettings(filtered);
+    Test.assert(panel[0] == 5 && panel[7] == -1 && panel[9] == 0);
+    filtered = LightPanelGraphics.filterModes(original, [99]);
+    Test.assert(filtered[0] == 0 && filtered[1] == 0);
+    panel = LightPanelGraphics.panelSettings(filtered);
+    Test.assert(panel[0] == 2 && panel[1] == 1);
+    Test.assert(LightPanelGraphics.filterModes(original, null) == original);
+    return true;
+}

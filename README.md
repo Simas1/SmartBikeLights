@@ -237,3 +237,5 @@ fake-light preview (defaults: AT1600 and Flare RT). Device arguments also includ
 `--lights at1600,varia-515,flare-rt` and saved JSON or Garmin `.SET` settings using
 `--settings PATH`. See [simulator instructions](Simulator/README.md) for shared
 files, device-specific profiles, and the complete workflow settings example.
+
+The light panel’s **Filter Light Mode** setting limits visible mode buttons and field-card tap cycling to selected modes, in layout order, followed by Off. It preserves the configured layout and leaves Filter Groups free to use hidden modes. **All light modes** restores the full configured button list.

@@ -131,6 +131,33 @@ module LightPanelGraphics {
         return steps < 1 ? 1 : steps > 6 ? 6 : steps;
     }
 
+    // Filter only manual buttons; automation modes and the stored configuration stay intact.
+    function filterModes(settings, allowedModes) {
+        if (settings == null || allowedModes == null) { return settings; }
+        var result = settings.slice(0, 6);
+        result[0] = 0;
+        result[1] = 0;
+        var index = 6;
+        for (var g = 0; g < settings[1]; g++) {
+            var count = settings[index];
+            var group = [0];
+            for (var b = 0; b < count; b++) {
+                var k = index + 1 + b * 2;
+                if (allowedModes.indexOf(settings[k]) >= 0) {
+                    group[0]++;
+                    group.addAll([settings[k], settings[k + 1]]);
+                }
+            }
+            if (group[0] > 0) {
+                result[0] += group[0];
+                result[1]++;
+                result.addAll(group);
+            }
+            index += 1 + count * 2;
+        }
+        return result;
+    }
+
     // Supply the fixed Control mode / Off row; configuration switching uses the footer.
     function panelSettings(settings) {
         var result = settings.slice(0, 6);

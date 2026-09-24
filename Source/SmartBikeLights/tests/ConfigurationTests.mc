@@ -39,6 +39,9 @@ class TestBikeLightsView extends BikeLightsView {
         setLightMode(lightData, mode, title, force);
     }
 
+    (:touchScreen)
+    function tapModes(type, supported) { return configuredTapModes(type, supported); }
+
     function showsFooter() { return _showFooter; }
 
     function getErrorCode() {
@@ -370,5 +373,18 @@ function footerVisibilityConfiguration(logger) {
     }
     var defaults = new TestBikeLightsView(null);
     Test.assert(defaults.showsFooter());
+    return true;
+}
+
+
+(:test :touchScreen :noWatchPanel)
+function fieldCyclesFilteredLayoutModes(logger) {
+    var config = "SBL1##::#1,1!:1:52:0:0D=1###3,2:Front:0:16777215:-1!2,Low:51,Medium:52!1,High:53##0::#0:0#123!53,51:123!#0##1#B3843#14##0#0";
+    var view = new TestBikeLightsView(config);
+    Test.assert(view.getErrorCode() == null);
+    var modes = view.tapModes(0, [0, 51, 52, 53]);
+    Test.assert(modes.size() == 2 && modes[0] == 51 && modes[1] == 53);
+    Test.assert(view.headlightPanelSettings[0] == 3); // Keep hidden-mode metadata for the active card.
+    Test.assert(view.headlightData[18] != null); // Automation remains configured.
     return true;
 }

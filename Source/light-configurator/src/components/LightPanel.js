@@ -6,7 +6,7 @@ import LightButtonGroup from '../models/LightButtonGroup';
 import LightButton from '../models/LightButton';
 import ButtonGroup from './ButtonGroup';
 import AddButton from './AddButton';
-import { groupNameVisibility } from '../constants';
+import { groupNameVisibility, manualModeBehaviorList } from '../constants';
 import AppTextInput from '../inputs/AppTextInput';
 import AppSelect from '../inputs/AppSelect';
 import AppCheckbox from '../inputs/AppCheckbox';
@@ -16,7 +16,7 @@ const getModes = (lightModes) => {
   return lightModes.filter(mode => mode.id > 0);
 };
 
-export default observer(({ lightPanel, lightModes, showFooter, setShowFooter }) => {
+export default observer(({ lightPanel, lightModes, lightModeFilter, showFooter, setShowFooter }) => {
   const [modes, setModes] = React.useState(getModes(lightModes));
   const addButtonGroup = action(() => {
     const group = new LightButtonGroup();
@@ -62,6 +62,19 @@ export default observer(({ lightPanel, lightModes, showFooter, setShowFooter }) 
             help="Show the footer with the light name and battery status, plus controls to switch configurations and open Settings."
           />
         </Grid>
+        {lightModeFilter && <>
+          <Grid item xs={12} />
+          <Grid item xs={12} sm={4}>
+            <AppSelect required items={manualModeBehaviorList} label="Filter Light Mode"
+              setter={lightModeFilter.setManualModeBehavior} value={lightModeFilter.manualModeBehavior}
+              help="Choose which configured light-mode buttons appear full-screen and are included when tapping the field card to cycle modes. Hidden modes remain available to Filter Groups, so automation can use them without adding them to manual cycling. Button order is preserved, and Off always follows the last mode. Control mode and Off remain visible."
+            />
+          </Grid>
+          {lightModeFilter.manualModeBehavior === 1 && <Grid item xs={12} sm={4}>
+            <AppSelect required items={modes} label="Light modes" multiple
+              setter={lightModeFilter.setLightModes} value={lightModeFilter.lightModes} />
+          </Grid>}
+        </>}
       </Grid>
       <div>
         {lightPanel.buttonGroups.map((group, index) => (

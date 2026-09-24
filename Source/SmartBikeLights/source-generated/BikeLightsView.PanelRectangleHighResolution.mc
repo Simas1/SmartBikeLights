@@ -1404,6 +1404,8 @@ class BikeLightsView extends  WatchUi.DataField  {
 
     protected var _showFooter = true;
 
+    private var _panelLightModes = [null, null];
+
     private var _panelControlModes = [[0, 1, 2], [0, 1, 2]];
 
     function configuredControlModes(lightType) {
@@ -1413,6 +1415,7 @@ class BikeLightsView extends  WatchUi.DataField  {
     private function setupHighMemoryConfiguration(configuration, setupSensors) {
         _showFooter = configuration[18] == null || configuration[18] == 1;
         var behavior = configuration[15];
+        _panelLightModes = behavior == null ? [null, null] : [behavior[0][1], behavior[1][1]];
         _panelControlModes = behavior == null ? [[0, 1, 2], [0, 1, 2]] : [behavior[0][0], behavior[1][0]];
         _individualNetwork = configuration[13];
         if (setupSensors && (_individualNetwork != null /* Is enabled */ || _lightNetwork instanceof AntLightNetwork.IndividualLightNetwork)) {
