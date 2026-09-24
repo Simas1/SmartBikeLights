@@ -56,7 +56,8 @@ export default observer(({ lightPanel, lightModes }) => {
           </Typography>
         </Grid>
         <Grid item xs={12} sm={4}>
-          <AppSelect required items={groupNameVisibility} label="Group name visibility"
+          <AppSelect required items={groupNameVisibility} label="Header visibility"
+            help="Show the active filter group or Network mode above the light buttons."
             setter={lightPanel.setGroupNameVisibility} value={lightPanel.groupNameVisibility} />
         </Grid>
       </Grid>
