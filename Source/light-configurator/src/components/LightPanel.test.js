@@ -1,10 +1,13 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act, within } from '@testing-library/react';
 import { observer } from 'mobx-react-lite';
 import Configuration from '../models/Configuration';
 import LightModeCycleBehavior from '../models/LightModeCycleBehavior';
 import LightPanelModel from '../models/LightPanel';
 import LightPanel from './LightPanel';
+import LightButton from '../models/LightButton';
+import LightButtonGroup from '../models/LightButtonGroup';
+import { runInAction } from 'mobx';
 import LightFooter from './LightFooter';
 
 jest.mock('nanoid', () => { let id = 0; return { nanoid: () => `footer-test-${id++}` }; });
@@ -39,4 +42,37 @@ test('specific mode selector appears beside Filter Light Mode and saves the choi
   fireEvent.mouseDown(screen.getByLabelText(/Filter Light Mode/, {selector: '[role="button"]'}));
   fireEvent.click(screen.getByText('Specific light modes'));
   expect(screen.getByLabelText(/^Light modes/, {selector: '[role="button"]'})).toBeTruthy();
+});
+
+test('filter choices follow unique panel modes and remove stale selections when buttons change', () => {
+  const panel = new LightPanelModel();
+  const group = new LightButtonGroup();
+  const buttons = [51, 53, 51].map(mode => {
+    const button = new LightButton();
+    button.setMode(mode);
+    return button;
+  });
+  runInAction(() => {
+    group.buttons.push(...buttons);
+    panel.buttonGroups.push(group);
+  });
+  const filter = new LightModeCycleBehavior();
+  filter.setManualModeBehavior(1);
+  filter.setLightModes([51, 53, 54]);
+  render(<LightPanel lightPanel={panel}
+    lightModes={[{id: 54, name: 'Unused'}, {id: 53, name: 'High'}, {id: 51, name: 'Low'}]}
+    lightModeFilter={filter} />);
+  const openChoices = () => {
+    fireEvent.mouseDown(screen.getByLabelText(/^Light modes/, {selector: '[role="button"]'}));
+    return within(screen.getByRole('listbox')).getAllByRole('option').map(option => option.textContent);
+  };
+  expect(openChoices()).toEqual(['Low', 'High']);
+  expect(filter.lightModes.slice()).toEqual([51, 53]);
+  fireEvent.keyDown(screen.getByRole('listbox'), {key: 'Escape'});
+  act(() => buttons[1].setMode(54));
+  expect(filter.lightModes.slice()).toEqual([51]);
+  expect(openChoices()).toEqual(['Low', 'Unused']);
+  fireEvent.keyDown(screen.getByRole('listbox'), {key: 'Escape'});
+  act(() => runInAction(() => panel.buttonGroups.clear()));
+  expect(filter.lightModes.slice()).toEqual([]);
 });

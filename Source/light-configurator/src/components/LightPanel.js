@@ -15,7 +15,17 @@ const getModes = (lightModes) => {
 };
 
 export default observer(({ lightPanel, lightModes, lightModeFilter }) => {
-  const [modes, setModes] = React.useState(getModes(lightModes));
+  const modes = getModes(lightModes);
+  const panelModeIds = [...new Set(lightPanel.buttonGroups.flatMap(group =>
+    group.buttons.map(button => button.mode)))];
+  const filterModes = panelModeIds.map(id => modes.find(mode => mode.id === id)).filter(Boolean);
+  const selectedModes = lightModeFilter?.lightModes;
+  useEffect(() => {
+    if (selectedModes) {
+      const validModes = selectedModes.filter(id => filterModes.some(mode => mode.id === id));
+      if (validModes.length !== selectedModes.length) lightModeFilter.setLightModes(validModes);
+    }
+  }, [filterModes, selectedModes, lightModeFilter]);
   const addButtonGroup = action(() => {
     const group = new LightButtonGroup();
     group.buttons.push(new LightButton());
@@ -38,10 +48,6 @@ export default observer(({ lightPanel, lightModes, lightModeFilter }) => {
     }
   });
 
-  useEffect(() => {
-    setModes(getModes(lightModes));
-  }, [lightModes]);
-
   return (
     <div>
       <Grid container spacing={3}>
@@ -57,7 +63,7 @@ export default observer(({ lightPanel, lightModes, lightModeFilter }) => {
             />
           </Grid>
           {lightModeFilter.manualModeBehavior === 1 && <Grid item xs={12} sm={4}>
-            <AppSelect required items={modes} label="Light modes" multiple
+            <AppSelect required items={filterModes} label="Light modes" multiple
               setter={lightModeFilter.setLightModes} value={lightModeFilter.lightModes} />
           </Grid>}
         </>}
