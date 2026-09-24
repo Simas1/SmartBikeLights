@@ -124,12 +124,12 @@ export default observer(({ filterGroups, lightData, device, totalLights }) => {
             <Grid container spacing={3}>
               <Grid item xs={12} sm={6}>
                 <AppTextInput
-                  label="Group name"
+                  label="Rule name"
                   setter={filterGroup.setName}
                   value={filterGroup.name}
                   help={
                     <Typography>
-                    The group name will be displayed above the light icon when the filter group is matched. Note that the name won't be displayed in case
+                    The rule name will be displayed above the light icon when the smart rule is matched. Note that the name won't be displayed in case
                     there is not enough space above the light icon.
                   </Typography>
                   }
@@ -172,14 +172,14 @@ export default observer(({ filterGroups, lightData, device, totalLights }) => {
                 : null
               }
               <Grid item xs={12} sm={12}>
-                <Typography variant="h5" gutterBottom>Filters</Typography>
+                <Typography variant="h5" gutterBottom>Conditions</Typography>
               </Grid>
             </Grid>
             <div>
               <Filters filters={filterGroup.filters} filterTypes={filterTypes} device={device} />
             </div>
             <AddButton onClick={() => createFilter(filterGroup)}>
-              Add Filter
+              Add condition
             </AddButton>
           </AccordionDetails>
         </Accordion>
@@ -187,7 +187,7 @@ export default observer(({ filterGroups, lightData, device, totalLights }) => {
       </List>
       <div>
         <AddButton onClick={createFilterGroup}>
-          Add Filter Group
+          Add smart rule
         </AddButton>
       </div>
     </div>

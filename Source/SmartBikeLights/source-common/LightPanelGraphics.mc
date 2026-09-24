@@ -45,7 +45,7 @@ module LightPanelGraphics {
         lines.add(title);
         var icon = "none";
         var last = lines[lines.size() - 1];
-        if (last.equals("@headlight-high") || last.equals("@headlight-medium") || last.equals("@headlight-low") || last.equals("@taillight-high") || last.equals("@taillight-medium") || last.equals("@taillight-low") || last.equals("@headlight") || last.equals("@taillight") || last.equals("@sun") || last.equals("@moon") || last.equals("@lightning") || last.equals("@none")) {
+        if (last.equals("@headlight-high") || last.equals("@headlight-medium") || last.equals("@headlight-low") || last.equals("@taillight-high") || last.equals("@taillight-medium") || last.equals("@taillight-low") || last.equals("@sun") || last.equals("@moon") || last.equals("@lightning") || last.equals("@none")) {
             icon = last.substring(1, last.length());
             lines = lines.slice(0, lines.size() - 1);
         }
@@ -131,22 +131,21 @@ module LightPanelGraphics {
         return steps < 1 ? 1 : steps > 6 ? 6 : steps;
     }
 
-    // Move configuration switching out of the mode grid. Leave configured Off,
-    // control and battery buttons in place, including mixed button groups.
-    function panelSettings(settings) {
+    // Filter only manual buttons; automation modes and the stored configuration stay intact.
+    function filterModes(settings, allowedModes) {
+        if (settings == null || allowedModes == null) { return settings; }
         var result = settings.slice(0, 6);
         result[0] = 0;
         result[1] = 0;
         var index = 6;
-        for (var i = 0; i < settings[1]; i++) {
+        for (var g = 0; g < settings[1]; g++) {
             var count = settings[index];
             var group = [0];
-            for (var j = 0; j < count; j++) {
-                var k = index + 1 + j * 2;
-                if (settings[k] != -2) {
+            for (var b = 0; b < count; b++) {
+                var k = index + 1 + b * 2;
+                if (allowedModes.indexOf(settings[k]) >= 0) {
                     group[0]++;
-                    group.add(settings[k]);
-                    group.add(settings[k + 1]);
+                    group.addAll([settings[k], settings[k + 1]]);
                 }
             }
             if (group[0] > 0) {
@@ -159,12 +158,18 @@ module LightPanelGraphics {
         return result;
     }
 
+    // Supply the fixed Control mode / Off row; configuration switching uses the footer.
+    function panelSettings(settings) {
+        var result = settings.slice(0, 6);
+        result[0] += 2;
+        result[1]++;
+        result.addAll([2, -1, null, 0, "Off"]);
+        result.addAll(settings.slice(6, null));
+        return result;
+    }
+
     function groupWeight(settings, index) {
-        for (var i = 0; i < settings[index]; i++) {
-            var mode = settings[index + 1 + i * 2];
-            if (mode != -1 && mode != 0) { return 1.0; }
-        }
-        return 0.5;
+        return index == 6 ? 0.5 : 1.0;
     }
 
     // Each text-only light panel uses the largest font that fits every mode.
@@ -396,9 +401,9 @@ module LightPanelGraphics {
             // Draw directly: no extra icon/font wrapper frame on the Edge VM stack.
             dc.drawText(layout[1]+iconSize/2, layout[2]+_modeTitleIconY,
                 iconSize == 36 ? _modeIconsXL : iconSize == 28 ? _modeIconsExtra : iconSize == 22 ? _modeIconsWide : _modeIconsLarge,
-                data[3].equals("sun") ? "S" : (data[3].equals("headlight") || data[3].equals("headlight-high")) ? "H"
+                data[3].equals("sun") ? "S" : data[3].equals("headlight-high") ? "H"
                 : data[3].equals("headlight-medium") ? "h" : data[3].equals("headlight-low") ? "L"
-                : (data[3].equals("taillight") || data[3].equals("taillight-high")) ? "T"
+                : data[3].equals("taillight-high") ? "T"
                 : data[3].equals("taillight-medium") ? "t" : data[3].equals("taillight-low") ? "l" : data[3].equals("moon") ? "N" : "F",
                 Graphics.TEXT_JUSTIFY_CENTER);
         }

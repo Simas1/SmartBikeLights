@@ -14,9 +14,14 @@ const selectedFont = process.argv.find(arg => arg.startsWith('--font='))?.slice(
 const powerOfTwo = n => 2 ** Math.ceil(Math.log2(n));
 
 async function main() {
+    const webControlIcons = path.resolve(app, '../light-configurator/src/icons/control-modes');
+    fs.mkdirSync(webControlIcons, {recursive: true});
+    for (const icon of ['smart', 'manual', 'network']) {
+        fs.copyFileSync(path.join(app, 'assets/control-icons', icon + '.svg'), path.join(webControlIcons, icon + '.svg'));
+    }
     const webIcons = path.resolve(app, '../light-configurator/src/icons/light-modes');
     fs.mkdirSync(webIcons, {recursive: true});
-    for (const icon of ((process.argv.includes('--panel-only') || selectedFont) ? [] : ['headlight', 'taillight', 'headlight-high', 'headlight-medium', 'headlight-low', 'taillight-high', 'taillight-medium', 'taillight-low', 'night', 'flash', 'sun'])) {
+    for (const icon of ((process.argv.includes('--panel-only') || selectedFont) ? [] : ['headlight-high', 'headlight-medium', 'headlight-low', 'taillight-high', 'taillight-medium', 'taillight-low', 'night', 'flash', 'sun'])) {
         fs.copyFileSync(path.join(app, 'assets/button-icons', icon + '.svg'), path.join(webIcons, icon + '.svg'));
     }
     for (const [name, size] of Object.entries(fonts)) {

@@ -139,7 +139,7 @@ Flare-specific settings may produce a normal app configuration error.
 ```
 
 With the default AT1600 and Flare RT fixtures, this configuration intentionally
-requests unsupported headlight mode `99` in filter group 1. It triggers **Error 3**
+requests unsupported headlight mode `99` in smart rule 1. It triggers **Error 3**
 during light initialization, without needing to start an activity. A full-screen
 field shows the affected headlight, filter/mode details, and a suggested fix.
 Smaller fields show the compact explanation or the original error code when space
@@ -157,7 +157,7 @@ are not simulated. Avoid these features in visual preview settings.
 ## Initial light state
 
 Each light starts in its catalog `onMode`, with battery status New (100%) unless
-changed with `--battery`. AT1600 starts at preset 1 (51, Low). App filters and taps
+changed with `--battery`. AT1600 starts at preset 1 (51, Low). App smart rules and taps
 can subsequently change modes. The fake network remains connected; battery states
 stay fixed for the run. AT1600 mode IDs come from the configurator. Its manufacturer/
 model numbers are synthetic placeholders, not physical ANT identification.
@@ -244,3 +244,5 @@ Light-button names use `~br` for a forced line break. Graphics metadata uses
 Connect IQ settings saves. The configurator converts pasted literal `\n` and
 actual newlines in names to `~br` when exporting. Legacy metadata separators
 must still be changed to `~n`.
+
+Local previews require `SBL1#` configuration strings. The shared example uses the touchscreen format; previews for Edge 540/550 and Forerunner 965 convert the controls to the current menu format, preserve the control-mode cycle, and set the target device ID. Upstream previews retain the upstream configuration format.

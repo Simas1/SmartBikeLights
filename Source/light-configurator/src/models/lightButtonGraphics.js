@@ -3,8 +3,6 @@
 export const buttonIcons = [
   { id: 'none', name: 'None' },
   { id: 'sun', name: 'Sun' },
-  { id: 'headlight', name: 'Headlight' },
-  { id: 'taillight', name: 'Taillight' },
   { id: 'headlight-high', name: 'Headlight High' },
   { id: 'headlight-medium', name: 'Headlight Medium' },
   { id: 'headlight-low', name: 'Headlight Low' },

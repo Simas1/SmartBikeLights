@@ -66,8 +66,6 @@ export default observer(({ configuration, setConfiguration }) => {
             setDeviceNumber={configuration.setHeadlightDeviceNumber}
             serialNumber={configuration.headlightSerialNumber}
             setSerialNumber={configuration.setHeadlightSerialNumber}
-            lightIconColor={configuration.headlightIconColor}
-            setLightIconColor={configuration.setHeadlightIconColor}
           />
           <LightConfiguration
             useIndividualNetwork={configuration.useIndividualNetwork}
@@ -87,8 +85,6 @@ export default observer(({ configuration, setConfiguration }) => {
             setDeviceNumber={configuration.setTaillightDeviceNumber}
             serialNumber={configuration.taillightSerialNumber}
             setSerialNumber={configuration.setTaillightSerialNumber}
-            lightIconColor={configuration.taillightIconColor}
-            setLightIconColor={configuration.setTaillightIconColor}
           />
           <ConfigurationResult
             configuration={configuration}

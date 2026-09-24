@@ -34,8 +34,8 @@ export default class LightButton {
   setIcon = (value) => { this.icon = value ?? 'none'; }
 
   isValid(lightData) {
-    const validRatings = this.mode <= 0 || ((this.lumens == null && this.runtimeHours == null) ||
+    const validRatings = ((this.lumens == null && this.runtimeHours == null) ||
       (Number.isFinite(this.lumens) && this.lumens > 0 && Number.isFinite(this.runtimeHours) && this.runtimeHours > 0));
-    return validRatings && buttonIcons.some(item => item.id === this.icon) && this.mode != null && lightData != null && (this.mode < 0 || (this.name && lightData.modes.find(m => m.id === this.mode) !== undefined));
+    return validRatings && buttonIcons.some(item => item.id === this.icon) && this.mode > 0 && lightData != null && this.name && lightData.modes.find(m => m.id === this.mode) !== undefined;
   }
 }

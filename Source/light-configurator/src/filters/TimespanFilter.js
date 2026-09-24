@@ -51,7 +51,7 @@ export default observer(({ filter }) => {
     <Grid container spacing={3}>
       <Grid item xs={12} sm={12}>
         <Typography>
-          NOTE: When using Sunset and Sunrise, the filter will start working only when a GPS position will be acquired, as it is required
+          NOTE: When using Sunset and Sunrise, the condition will start working only when a GPS position will be acquired, as it is required
           to calculate the sunrise and sunset time.
         </Typography>
       </Grid>

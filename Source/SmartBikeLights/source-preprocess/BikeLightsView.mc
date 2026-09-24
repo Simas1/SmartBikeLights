@@ -55,7 +55,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
     // 13. Next filter group activation delay
     // 14. Light modes
     // 15. Serial number
-    // 16. Icon color
+    // 16. Configured light (derived from a non-empty configuration section)
     // 17. Additional supported light modes
     // 18. Filters
     var headlightData = new [19];
@@ -435,8 +435,8 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
             _globalFilters = configuration[0];
 // #if dataField
   // #if highMemory
-            remoteControllers = configuration[17];
-            _bikeRadarNumber = configuration[18];
+            remoteControllers = configuration[16];
+            _bikeRadarNumber = configuration[17];
             if (setupSensors) {
                 setupLightSensors();
                 setupBikeRadarSensor();
@@ -446,12 +446,12 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
 
             // configuration[1];  // Headlight modes
             // configuration[2];  // Headlight serial number
-            // configuration[3];  // Headlight color
+            // configuration[3];  // Headlight configured
             // configuration[4];  // Headlight additional light modes
             // configuration[5];  // Headlight filters
             // configuration[6];  // Taillight modes
             // configuration[7];  // Taillight serial number
-            // configuration[8];  // Taillight color
+            // configuration[8];  // Taillight configured
             // configuration[9];  // Taillight filters
             // configuration[10]; // Taillight additional light modes
             for (var i = 0; i < 10; i++) {
@@ -1038,7 +1038,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
 
 // #if touchScreen
     private function isConfigurationButton(location) {
-        return _isFullScreen && /* #if !watchPanel */ _panelInitialized && /* #endif */ _panelFooter != null &&
+        return _showFooter && _isFullScreen && /* #if !watchPanel */ _panelInitialized && /* #endif */ _panelFooter != null &&
             location[0] >= _panelFooter[0] && location[0] < _panelFooter[0] + _panelFooter[2] &&
             location[1] >= _panelFooter[1] && location[1] < _panelFooter[1] + _panelFooter[3];
     }
@@ -1175,9 +1175,10 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
         return true;
     }
 
-    private function configuredTapModes(lightType, supportedModes) {
+    protected function configuredTapModes(lightType, supportedModes) {
         var settings = lightType == 0 ? headlightPanelSettings : taillightPanelSettings;
         var modes = [];
+        var allowed = _panelLightModes[lightType == 0 ? 0 : 1];
         if (settings == null) { return modes; }
         var index = 6;
         for (var group = 0; group < settings[1]; group++) {
@@ -1188,7 +1189,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
                 index += 2;
                 // Exclude control/configuration actions and unsupported modes.
                 // Repeated buttons retain their first position in the sequence.
-                if (mode >= 0 && supportedModes.indexOf(mode) >= 0 && modes.indexOf(mode) < 0) {
+                if (mode > 0 && (allowed == null || allowed.indexOf(mode) >= 0) && supportedModes.indexOf(mode) >= 0 && modes.indexOf(mode) < 0) {
                     modes.add(mode);
                 }
             }
@@ -1283,7 +1284,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
 
         var recordLightModes = getPropertyValue("RL");
         var initializedLights = 0;
-        var isConfigSet = headlightData[16] != null || taillightData[16] != null;
+        var isConfigSet = headlightData[16] == true || taillightData[16] == true;
         for (var i = 0; i < lights.size(); i++) {
             var light = lights[i];
             var lightType = light != null ? light.type : 7;
@@ -1299,7 +1300,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
             var serial = lightData[15];
             // In case only one light type is configured, ignore other light types (e.g. when only headlight is set, ignore taillights).
             // But if no light is configured, initialize all of them
-            if ((isConfigSet && lightData[16] /* Icon color */ == null) ||
+            if ((isConfigSet && lightData[16] /* Configured */ != true) ||
                 (serial != null && serial != lightNetwork.getProductInfo(light.identifier).serial)) {
                 continue;
             }
@@ -1327,7 +1328,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
                     if (capableModes.indexOf(filters[j + 2]) < 0) {
                         errorCode = 3;
 // #if highMemory
-                        recordModeError(light, filters[j + 2], "Filter group " + filterGroup);
+                        recordModeError(light, filters[j + 2], "Smart rule " + filterGroup);
 // #endif
                         break;
                     }
@@ -1490,16 +1491,28 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
         applyConfiguration(findNextConfiguration());
     }
 
-    protected function onLightPanelModeChange(lightData, lightType, lightMode, controlMode) {
-        if (lightMode == -2) {
-            cycleConfiguration();
-            return;
-        }
-
   // #if dataField
-        var newControlMode = lightMode < 0 ? controlMode != 0 /* SMART */ && lightData[18] /* Filters */ != null ? 0 : 1 /* NETWORK */
-            : controlMode != 2 /* MANUAL */ ? 2
-            : null;
+    protected function nextPanelControlMode(lightData, lightType, current) {
+        var modes = _panelControlModes[lightType == 0 ? 0 : 1];
+        var index = modes.indexOf(current);
+        if (index == null) { index = -1; }
+        for (var step = 1; step <= modes.size(); step++) {
+            var mode = modes[(index + step) % modes.size()];
+            if (mode != 0 || (lightData[18] != null && lightData[18].size() > 0)) { return mode; }
+        }
+        return 2; // Manual is always available.
+    }
+  // #endif
+
+    protected function onLightPanelModeChange(lightData, lightType, lightMode, controlMode) {
+  // #if dataField
+        var newControlMode = lightMode < 0 ? nextPanelControlMode(lightData, lightType, controlMode)
+            : controlMode != 2 /* MANUAL */ ? 2 : null;
+        if (lightMode < 0) {
+            if (newControlMode == controlMode) { return; }
+            // Enter Manual at the current/requested brightness; do not cycle light modes.
+            lightMode = lightData[7] != null ? lightData[7] : lightData[2];
+        }
   // #else
         var newControlMode = lightMode < 0 ? 1 /* NETWORK */
             : controlMode != 2 ? 2 /* MANUAL */
@@ -1663,8 +1676,8 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
             return;
         }
 
-        // Icon color will be always set when a light is set in the configurator
-        var isHeadlightSet = headlightData[16] /* Icon color */ != null;
+        // Presence of each light section identifies which light types were configured.
+        var isHeadlightSet = headlightData[16] /* Configured */ == true;
         var headlightDeviceNumbers = isHeadlightSet ? _individualNetwork[0] as Lang.Array<Lang.Number> : [];
         if (isHeadlightSet && headlightDeviceNumbers.size() == 0) {
             var deviceNumbers = Application.Storage.getValue("HDN") as Lang.Array<Lang.Number> or Null;
@@ -1673,7 +1686,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
             }
         }
 
-        var isTaillightSet = taillightData[16] /* Icon color */ != null;
+        var isTaillightSet = taillightData[16] /* Configured */ == true;
         var taillightDeviceNumbers = isTaillightSet ? _individualNetwork[2] as Lang.Array<Lang.Number> : [];
         if (isTaillightSet && taillightDeviceNumbers.size() == 0) {
             var deviceNumbers = Application.Storage.getValue("TDN") as Lang.Array<Lang.Number> or Null;
@@ -1773,14 +1786,10 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
         }
 
         var modes = getLightModes(light, extraModes);
-        var data = new [2 * modes.size() + 1];
-        var dataIndex = 1;
-        data[0] = light.type == 0 /* LIGHT_TYPE_HEADLIGHT */ ? "Headlight" : "Taillight";
+        var data = [light.type == 0 /* LIGHT_TYPE_HEADLIGHT */ ? "Headlight" : "Taillight", "Off", 0];
         for (var i = 0; i < modes.size(); i++) {
             var mode = modes[i];
-            data[dataIndex] = mode == 0 ? "Off" : mode.toString();
-            data[dataIndex + 1] = mode;
-            dataIndex += 2;
+            if (mode != 0) { data.addAll([mode.toString(), mode]); }
         }
 
         return data;
@@ -1827,7 +1836,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
 // #if buttonPanel || watchPanel
     private function panelMenuSettings(panel) {
         if (panel == null) { return null; }
-        var result = [panel[2]];
+        var result = [panel[2], "Off", 0];
         var index = 6;
         for (var g = 0; g < panel[1]; g++) {
             var count = panel[index];
@@ -1848,7 +1857,23 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
     }
 // #endif
 
+    protected var _showFooter = true;
+
+    private var _panelLightModes = [null, null];
+
+    private var _panelControlModes = [[0, 1, 2], [0, 1, 2]];
+
+    function configuredControlModes(lightType) {
+        return _panelControlModes[lightType == 0 ? 0 : 1];
+    }
+
     private function setupHighMemoryConfiguration(configuration, setupSensors) {
+// #if dataField
+        _showFooter = configuration[18] == null || configuration[18] == 1;
+        var behavior = configuration[15];
+        _panelLightModes = behavior == null ? [null, null] : [behavior[0][1], behavior[1][1]];
+        _panelControlModes = behavior == null ? [[0, 1, 2], [0, 1, 2]] : [behavior[0][0], behavior[1][0]];
+// #endif
         _individualNetwork = configuration[13];
         if (setupSensors && (_individualNetwork != null /* Is enabled */ || _lightNetwork instanceof AntLightNetwork.IndividualLightNetwork)) {
             recreateLightNetwork();
@@ -1866,7 +1891,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
     private function drawWatchFull(dc, width, height, fg, bg) {
         // Geometry and card data share one frame to stay within Garmin's VM stack.
         // [left, top, card width, height, first light, second light, first card, second card]
-        var v = [width * 0.11, height * 0.24, 0, height * 0.52,
+        var v = [width * 0.11, height * 0.24, 0, height * (_showFooter ? 0.52 : 0.64),
             _invertLights ? taillightData : headlightData,
             _invertLights ? headlightData : taillightData, null, null];
         if (v[4][0] == null) { v[4] = v[5]; v[5] = null; }
@@ -1884,13 +1909,14 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
         includeWatchModes(dc, headlightPanelSettings, v[2], contentHeight);
         includeWatchModes(dc, taillightPanelSettings, v[2], contentHeight);
         drawActiveLightCardFace(dc, v[4], v[6], v[0], v[1], v[2], v[3], fg, bg);
-        drawWatchCardLabel(dc, v[4], v[6], v[0], v[1], v[2], v[3], fg);
+        if (_showFooter) { drawWatchCardLabel(dc, v[4], v[6], v[0], v[1], v[2], v[3], fg); }
         if (v[7] != null) {
             drawActiveLightCardFace(dc, v[5], v[7], v[0] + v[2] + 8, v[1], v[2], v[3], fg, bg);
-            drawWatchCardLabel(dc, v[5], v[7], v[0] + v[2] + 8, v[1], v[2], v[3], fg);
+            if (_showFooter) { drawWatchCardLabel(dc, v[5], v[7], v[0] + v[2] + 8, v[1], v[2], v[3], fg); }
         }
         dc.setColor(bg == 0 ? AppTheme.onDark : AppTheme.accent, -1);
         dc.drawText(width / 2, height * 0.075, Graphics.FONT_XTINY, "LIGHTS", Graphics.TEXT_JUSTIFY_CENTER);
+        if (!_showFooter) { _panelFooter = null; return; }
         var current = getPropertyValue("CC");
         var name = getPropertyValue("CN" + (current == null ? 1 : current));
         _panelFooter = [width * 0.2, height * 0.87, width * 0.6, height * 0.11];
@@ -2162,25 +2188,13 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
     }
 
     private function getDefaultLightPanelSettings(lightType, capableModes) {
-        var totalButtonGroups = capableModes.size();
-        var data = [];
-        data.add(totalButtonGroups); // Total buttons
-        data.add(totalButtonGroups); // Total button groups
-        data.add(lightType == 0 /* LIGHT_TYPE_HEADLIGHT */ ? "Headlight" : "Taillight"); // Light name
-        data.add(0 /* Theme */); // Button color
-        data.add(0xFFFFFF /* White */); // Button text color
-        data.add(-1 /* Do not display */); // Display group name text size
-        for (var i = 0; i < totalButtonGroups; i++) {
+        var data = [0, 0, lightType == 0 ? "Headlight" : "Taillight", 0, 0xFFFFFF, -1];
+        for (var i = 0; i < capableModes.size(); i++) {
             var mode = capableModes[i];
-            var totalGroupButtons = mode == 0 /* Off */ ? 2 : 1; // Number of buttons;
-            data.add(totalGroupButtons); // Total buttons in the group
-            data.add(mode == 0 ? -1 : mode); // Light mode
-            data.add(mode == 0 ? null : mode.toString()); // Mode name
-            if (mode == 0 /* Off */) {
-                data[0]++;
-                data.add(mode);
-                data.add("Off");
-            }
+            if (mode == 0) { continue; }
+            data[0]++;
+            data[1]++;
+            data.addAll([1, mode, mode.toString()]);
         }
 
         return data;
@@ -2197,7 +2211,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
         var currentConfig = getPropertyValue("CC");
         var configName = getPropertyValue("CN" + (currentConfig == null ? 1 : currentConfig));
         if (configName == null) { configName = "Config"; }
-        _panelFooter = [width * 0.3, height - footerHeight, width * 0.4, footerHeight, configName];
+        _panelFooter = _showFooter ? [width * 0.3, height - footerHeight, width * 0.4, footerHeight, configName] : null;
         if (_initializedLights == 1) {
             initializeLightPanel(dc, getLightData(null), 2, width, height);
         } else {
@@ -2219,6 +2233,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
             panelSettings = getDefaultLightPanelSettings(lightData[0].type, capableModes);
         }
 
+        panelSettings = LightPanelGraphics.filterModes(panelSettings, _panelLightModes[lightData[0].type == 0 ? 0 : 1]);
         panelSettings = LightPanelGraphics.panelSettings(panelSettings);
         // This is the active automation/filter group, not a light-type heading.
         var groupName = null;
@@ -2237,7 +2252,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
         // <TitlePart> := [(:Title:, :TitleY:)+]
         var panelData = new [9 + (8 * panelSettings[0]) + totalButtonGroups];
         panelData[0] = totalButtonGroups;
-        var footerHeight = _panelFooter[3];
+        var footerHeight = _showFooter ? _panelFooter[3] : 0;
         var compactGroups = 0;
         var weightIndex = 6;
         for (var g = 0; g < totalButtonGroups; g++) {
@@ -2277,11 +2292,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
                 }
 
                 var modeTitle;
-                if (mode == -2) {
-                    var currentConfig = getPropertyValue("CC");
-                    var currentConfigName = getPropertyValue("CN" + (currentConfig == null ? 1 : currentConfig));
-                    modeTitle = currentConfigName == null ? "" : currentConfigName;
-                } else if (mode < 0) {
+                if (mode < 0) {
                     modeTitle = "M";
                 } else {
                     modeTitle = panelSettings[modeIndex + 1];
@@ -2340,9 +2351,9 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
         panelData[2] = AppTheme.accent;
         panelData[3] = LightPanelGraphics.WHITE;
         panelData[4] = x;
-        panelData[5] = _panelFooter[1] + 4;
+        panelData[5] = _showFooter ? _panelFooter[1] + 4 : 0;
         panelData[6] = x;
-        panelData[7] = _panelFooter[1] + dc.getFontHeight(0) + 5;
+        panelData[7] = _showFooter ? _panelFooter[1] + dc.getFontHeight(0) + 5 : 0;
         panelData[8] = maxLumens;
 
         if (lightData[0].type == 0 /* LIGHT_TYPE_HEADLIGHT */) {
@@ -2405,9 +2416,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
                 setTextColor(dc, isSelected && isModeCard ? (bgColor == 0x000000 ? AppTheme.onDark : AppTheme.accent) : isSelected ? panelData[2] : fgColor);
                 dc.drawRoundedRectangle(buttonX, buttonY, buttonWidth, buttonHeight, radius);
                 setTextColor(dc, isSelected && !isModeCard ? panelData[3] : fgColor);
-                if (mode == -3) {
-                    drawButtonBattery(dc, fgColor, bgColor, buttonX, buttonY, buttonWidth, buttonHeight, batteryStatus);
-                } else if (mode == -1 || mode == 0) {
+                if (mode == -1 || mode == 0) {
                     // Fit the square icon inside the face, keeping a two-pixel margin.
                     var iconSize = (buttonHeight < buttonWidth ? buttonHeight : buttonWidth) - 4;
                     var icon = mode == 0 ? "P" : $.controlModes[controlMode];
@@ -2425,6 +2434,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
             groupIndex += 1 + (totalButtons * 8);
         }
 
+        if (!_showFooter) { return; }
         setTextColor(dc, fgColor);
         if (panelData[1] != null) {
             dc.drawText(panelData[4], panelData[5], 0, panelData[1], 1 /* TEXT_JUSTIFY_CENTER */);
@@ -2487,37 +2497,6 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
         dc.drawText(left + iconSize + 6, y + (height - dc.getFontHeight(0)) / 2, 0, text, Graphics.TEXT_JUSTIFY_LEFT);
     }
 
-    private function drawButtonBattery(dc, fgColor, bgColor, buttonX, buttonY, buttonWidth, buttonHeight, batteryStatus) {
-        var maxBatteryWidth = buttonWidth > buttonHeight * 2
-            ? ((buttonHeight * 0.8) * 2).toNumber()
-            : (((buttonWidth / 2 - buttonWidth / 8 /* battery top */) * 0.8) * 2).toNumber();
-        var padding =  maxBatteryWidth > 180 ? 5
-            : maxBatteryWidth > 90 ? 4
-            : maxBatteryWidth > 45 ? 3
-            : 2;
-        var totalPadding = padding * 6;
-        var diff = (maxBatteryWidth - totalPadding) % 5;
-        var batteryWidth = maxBatteryWidth - diff;
-        var batteryHeight = batteryWidth / 2;
-        var x = buttonX + buttonWidth / 2 - (batteryWidth / 2) - (batteryHeight / 8) /* battery top */;
-        var y = buttonY + buttonHeight / 2 - (batteryHeight / 2);
-        var barWidth = (batteryWidth - totalPadding) / 5;
-        var barHeight = batteryHeight - ((padding + 1) * 2) - 1;
-        var topHeight = batteryHeight - batteryHeight / 3;
-        var color = batteryStatus == 6 /* BATT_STATUS_CHARGE */ ? fgColor
-            : batteryStatus == 5 /* BATT_STATUS_CRITICAL */ ? 0xFF0000 /* COLOR_RED */
-            : batteryStatus > 2 /* BATT_STATUS_GOOD */ ? 0xFF5500 /* COLOR_ORANGE */
-            : 0x00AA00; /* COLOR_DK_GREEN */
-        //System.println("h=" + batteryHeight + " bw=" + barWidth + " bh" + barHeight + " th=" + topHeight);
-        dc.setPenWidth(2);
-        dc.drawRectangle(x, y, batteryWidth + 3, batteryHeight);
-        dc.drawRectangle(x + batteryWidth + 2, y + batteryHeight / 6, batteryHeight / 4, topHeight);
-        dc.setColor(color, bgColor);
-
-        for (var i = 0; i < (6 - batteryStatus); i++) {
-            dc.fillRectangle(x + (1 + padding) + (barWidth + padding) * i, y + (1 + padding), barWidth, barHeight);
-        }
-    }
 // #endif
 
     (:lightButtons)
@@ -2676,8 +2655,8 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
 
     private function checkOperatorValue(operator, value, filterValue, isTarget) {
         return value == null ? isTarget ? filterValue < 0 : false // For bike radar target filterValue will be -1 in case not set
-            : operator == '<' || operator == '[' ? value < filterValue
-            : operator == '>' || operator == ']' ? value > filterValue
+            : operator == '[' ? value < filterValue
+            : operator == ']' ? value > filterValue
             : operator == '{' ? value <= filterValue
             : operator == '}' ? value >= filterValue
             // Use equals method only for string values as it checks also the type. When comparing
@@ -2789,6 +2768,45 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
     }
 // #endif
 
+    private function expectDelimiter(chars, delimiter, result) {
+        if (result[0] >= chars.size() || chars[result[0]] != delimiter) { throw new Lang.Exception(); }
+    }
+
+    private function requiredNumber(chars, delimiter, result) {
+        expectDelimiter(chars, delimiter, result);
+        var value = parse(1 /* NUMBER */, chars, null, result);
+        if (value == null) { throw new Lang.Exception(); }
+        return value;
+    }
+
+    private function validateConfigurationShape(chars) {
+        var boundaries = [-1];
+        for (var i = 0; i < chars.size(); i++) {
+            if (chars[i] == '#') { boundaries.add(i); }
+        }
+        boundaries.add(chars.size());
+// #if highMemory
+  // #if dataField
+        var sections = 18;
+  // #else
+        var sections = 16;
+  // #endif
+// #else
+        var sections = 10;
+// #endif
+        if (boundaries.size() != sections + 1) { throw new Lang.Exception(); }
+        for (var section = 0; section < 7; section++) {
+            var colons = 0;
+            for (var j = boundaries[section] + 1; j < boundaries[section + 1]; j++) {
+                if (chars[j] == ':') { colons++; }
+                if (chars[j] == '|') { throw new Lang.Exception(); }
+            }
+            if ((section == 1 || section == 3) && boundaries[section + 1] > boundaries[section] + 1 && colons != 2) {
+                throw new Lang.Exception();
+            }
+        }
+    }
+
     // <GlobalFilters>#<HeadlightModes>:<HeadlightSerialNumber>#<HeadlightFilters>#<TaillightModes>:<TaillightSerialNumber>#<TaillightFilters>
     private function parseConfiguration() {
 // #if highMemory
@@ -2807,22 +2825,24 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
 // #if highMemory
             return new [19];
 // #else
-            return new [12];
+            return new [11];
 // #endif
         }
 
         var filterResult = [0 /* next index */, 0 /* operator type */];
-        var chars = value.toCharArray();
+        if (value.length() < 5 || !value.substring(0, 5).equals("SBL1#")) { throw new Lang.Exception(); }
+        var chars = value.substring(5, value.length()).toCharArray();
+        validateConfigurationShape(chars);
 
         // lightData[0]  // Global filter
         // lightData[1]  // Headlight light modes
         // lightData[2]  // Headlight serial number
-        // lightData[3]  // Headlight icon color
+        // lightData[3]  // Headlight configured
         // lightData[4]  // Headlight additional supported light modes
         // lightData[5]  // Headlight filters
         // lightData[6]  // Taillight light modes
         // lightData[7]  // Taillight serial number
-        // lightData[8]  // Taillight icon color
+        // lightData[8]  // Taillight configured
         // lightData[9]  // Taillight additional supported light modes
         // lightData[10] // Taillight filters
         var lightData = new [11];
@@ -2839,7 +2859,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
             parseLightButtons(chars, null, filterResult),      // Taillight panel/settings buttons
             parseIndividualNetwork(chars, null, filterResult), // Individual network settings
             parseForceSmartMode(chars, null, filterResult),    // Force smart mode
-  // #if touchScreen && dataField
+  // #if dataField
             parseLightsTapBehavior(chars, null, filterResult), // Light icons tap behavior
   // #else
             null,
@@ -2847,26 +2867,32 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
 // #endif
 // #if dataField
   // #if highMemory
-            parseSeparatorColor(chars, null, filterResult),    // Separator color
             parseRemoteControllers(chars, null, filterResult), // Remote controllers
-            parseBikeRadarNumber(chars, null, filterResult)    // Bike radar number
-  // #else
-            parse(1 /* NUMBER */, chars, null, filterResult)   // Separator color
+            parseBikeRadarNumber(chars, null, filterResult),   // Bike radar number
+            parseFooterVisibility(chars, filterResult)        // Shared footer
   // #endif
 // #endif
         ]);
     }
 
 // #if highMemory
+    private function parseFooterVisibility(chars, filterResult) {
+        var value = requiredNumber(chars, '#', filterResult);
+        if (value != 0 && value != 1) { throw new Lang.Exception(); }
+        return value;
+    }
+
     private function parseIndividualNetwork(chars, i, filterResult) {
-        var enabled = parse(1 /* NUMBER */, chars, i, filterResult);
-        if (enabled == null) { // Old configuration
-            filterResult[0] = filterResult[0] - 1; // Avoid parseForceSmartMode from parsing the next value
-            return null;
-        } else if (enabled != 1) { // 0::
-            filterResult[0] = filterResult[0] + 2;
+        var enabled = requiredNumber(chars, '#', filterResult);
+        if (enabled == 0) {
+            var index = filterResult[0];
+            if (chars[index] != ':' || chars[index + 1] != ':' || chars[index + 2] != '#') {
+                throw new Lang.Exception();
+            }
+            filterResult[0] = index + 2;
             return null;
         }
+        if (enabled != 1) { throw new Lang.Exception(); }
 
         var headlightSettings = parseIndividualLightSettings(chars, filterResult);
         var taillightSettings = parseIndividualLightSettings(chars, filterResult);
@@ -2891,33 +2917,27 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
         } while (chars[filterResult[0]] == ',');
 
         var manualModeTracking = false;
-        if (chars[filterResult[0]] == '!') {
-            manualModeTracking = parse(1 /* NUMBER */, chars, null, filterResult) == 1;
+        if (deviceNumbers.size() > 0) {
+            var tracking = requiredNumber(chars, '!', filterResult);
+            if (tracking != 0 && tracking != 1) { throw new Lang.Exception(); }
+            manualModeTracking = tracking == 1;
         }
 
         return [deviceNumbers, manualModeTracking];
     }
 
     private function parseForceSmartMode(chars, i, filterResult) {
-        var headlightForceSmartMode = parse(1 /* NUMBER */, chars, i, filterResult);
-        if (headlightForceSmartMode == null) {
-            filterResult[0] = filterResult[0] - 1; // Avoid parseLightsTapBehavior from parsing the next value
-            return null;
-        }
-
-        return [
-            headlightForceSmartMode, // Headlight force smart mode
-            parse(1 /* NUMBER */, chars, null, filterResult)  // Taillight force smart mode
-        ];
+        var headlightForceSmartMode = requiredNumber(chars, '#', filterResult);
+        var taillightForceSmartMode = requiredNumber(chars, ':', filterResult);
+        if ((headlightForceSmartMode != 0 && headlightForceSmartMode != 1) ||
+            (taillightForceSmartMode != 0 && taillightForceSmartMode != 1)) { throw new Lang.Exception(); }
+        return [headlightForceSmartMode, taillightForceSmartMode];
     }
 
     private function parseBikeRadarNumber(chars, i, filterResult) {
+        expectDelimiter(chars, '#', filterResult);
         var deviceNumber = parse(1 /* NUMBER */, chars, i, filterResult);
-        if (deviceNumber == null) {
-            filterResult[0] = filterResult[0] - 1; // Old configuration
-            return null;
-        }
-
+        expectDelimiter(chars, '#', filterResult);
         return deviceNumber;
     }
 
@@ -2955,8 +2975,10 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
         var dataIndex = 1;
 
         for (var j = 0; j < totalButtons; j++) {
+            expectDelimiter(chars, '!', filterResult);
             data[dataIndex] = parse(0 /* STRING */, chars, null, filterResult);
-            data[dataIndex + 1] = parse(1 /* NUMBER */, chars, null, filterResult);
+            data[dataIndex + 1] = requiredNumber(chars, ':', filterResult);
+            if (data[dataIndex + 1] <= 0) { throw new Lang.Exception(); }
             dataIndex += 2;
         }
 
@@ -2968,7 +2990,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
     // <TotalButtons>,<TotalButtonGroups>:<LightName>:<ButtonColor>:<ButtonTextColor>|[<ButtonGroup>| ...]
     // <ButtonGroup> := <ButtonsNumber>,[<Button>, ...]
     // <Button> := <ModeTitle>:<LightMode>
-    // Example: 7,6:Ion Pro RT|2,:-1,Off:0|1,High:1|1,Medium:2|1,Low:5|1,Night Flash:62|1,Day Flash:63
+    // Control mode and Off are supplied by the device, not serialized here.
     private function parseLightButtons(chars, i, filterResult) {
 // #if buttonPanel || watchPanel
         var startCursor = filterResult[0];
@@ -2981,14 +3003,15 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
 // #if buttonPanel || watchPanel
         if (chars[filterResult[0]] == ':') {
             filterResult[0] = startCursor;
-            var legacy = parseMenuLightButtons(chars, i, filterResult);
-            if (legacy == null) { throw new Lang.Exception(); }
-            var panel = [totalButtons, totalButtons, legacy[0], 0, 0xFFFFFF, -1];
-            for (var n = 1; n < legacy.size(); n += 2) {
-                panel.add(1); panel.add(legacy[n + 1]); panel.add(legacy[n]);
+            var menu = parseMenuLightButtons(chars, i, filterResult);
+            if (menu == null) { throw new Lang.Exception(); }
+            var panel = [totalButtons, totalButtons, menu[0], 0, 0xFFFFFF, -1];
+            for (var n = 1; n < menu.size(); n += 2) {
+                panel.add(1); panel.add(menu[n + 1]); panel.add(menu[n]);
             }
             return panel;
         }
+        throw new Lang.Exception();
 // #endif
         var totalButtonGroups = parse(1 /* NUMBER */, chars, null, filterResult);
         // [:TotalButtons:, :TotalButtonGroups:, :LightName:, :ButtonColor:, :ButtonTextColor:, :ModeScales [max lumens, max full-charge hours]:, (<ButtonGroup>)+]
@@ -2998,15 +3021,9 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
         data[0] = totalButtons;
         data[1] = totalButtonGroups;
         data[2] = parse(0 /* STRING */, chars, null, filterResult);
-        data[3] = chars[filterResult[0]] == ':'
-            ? parse(1 /* NUMBER */, chars, null, filterResult)
-            : 0 /* Theme */; // Old configuration
-        data[4] = chars[filterResult[0]] == ':'
-            ? parse(1 /* NUMBER */, chars, null, filterResult)
-            : 0xFFFFFF /* White */; // Old configuration
-        data[5] = chars[filterResult[0]] == ':' // Display group name text size
-            ? parse(1 /* NUMBER */, chars, null, filterResult)
-            : -1 /* Do not display */; // Old configuration
+        data[3] = requiredNumber(chars, ':', filterResult);
+        data[4] = requiredNumber(chars, ':', filterResult);
+        data[5] = requiredNumber(chars, ':', filterResult);
         i = filterResult[0];
         var dataIndex = 6;
 
@@ -3016,13 +3033,14 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
                 break;
             }
 
-            if (char == '|' || char == '!') {
+            if (char == '!') {
                 var numberOfButtons = parse(1 /* NUMBER */, chars, null, filterResult); // Number of buttons in the group
                 data[dataIndex] = numberOfButtons;
                 dataIndex++;
                 for (var j = 0; j < numberOfButtons; j++) {
                     data[dataIndex + 1] = parse(0 /* STRING */, chars, null, filterResult);
                     data[dataIndex] = parse(1 /* NUMBER */, chars, null, filterResult);
+                    if (data[dataIndex] <= 0) { throw new Lang.Exception(); }
                     dataIndex += 2;
                 }
 
@@ -3037,16 +3055,12 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
 
   // #if dataField
     private function parseLightsTapBehavior(chars, i, filterResult) {
+        expectDelimiter(chars, '#', filterResult);
         var headlightBehavior = parseLightTapBehavior(chars, i, filterResult);
-        if (headlightBehavior == null) {
-            filterResult[0] = filterResult[0] - 1; // Avoid separatorColor from parsing the next value
-            return null;
-        }
-
-        return [
-            headlightBehavior,
-            parseLightTapBehavior(chars, i, filterResult)
-        ];
+        expectDelimiter(chars, ':', filterResult);
+        var taillightBehavior = parseLightTapBehavior(chars, i, filterResult);
+        if (headlightBehavior[0].indexOf(2) < 0 || taillightBehavior[0].indexOf(2) < 0) { throw new Lang.Exception(); }
+        return [headlightBehavior, taillightBehavior];
     }
   // #endif
 // #endif
@@ -3080,7 +3094,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
                 break;
             }
 
-            if (charNumber == 124 /* | */ || charNumber == 33 /* ! */) {
+            if (charNumber == 33 /* ! */) {
                 groups++;
                 data.add(parse(0 /* STRING */, chars, null, filterResult)); // Group title
                 data.add(parse(1 /* NUMBER */, chars, null, filterResult)); // Number of filters in the group
@@ -3088,9 +3102,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
                     data.add(parse(1 /* NUMBER */, chars, null /* Skip : */, filterResult)); // The light mode id
                     // Parse filter group deactivation and activation delay
                     for (var j = 0; j < 2; j++) {
-                        data.add(chars[filterResult[0]] == ':' // For back compatibility
-	                        ? parse(1 /* NUMBER */, chars, null /* Skip : */, filterResult)
-	                        : 0);
+                        data.add(requiredNumber(chars, ':', filterResult));
                     }
                 }
 
@@ -3100,6 +3112,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
                 var filterType = chars[i];
                 i++;
                 filterResult[1] = chars[i]; // Filter operator
+                if (chars[i] == '<' || chars[i] == '>') { throw new Lang.Exception(); }
                 var filterValue = charNumber == 69 /* E */ ? parseTimespan(chars, i, filterResult)
   // #if highMemory
                     : charNumber == 70 /* F */? parsePolygons(chars, i, filterResult)
@@ -3179,22 +3192,9 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
         return data;
     }
 
-    private function parseSeparatorColor(chars, index, filterResult) {
-        var color = parse(1 /* NUMBER */, chars, index, filterResult);
-        if (color == null) { // Old configuration
-            filterResult[0] = filterResult[0] - 1; // Avoid parseRemoteControllers from parsing the next value
-            return null;
-        }
-
-        return color;
-    }
-
     private function parseRemoteControllers(chars, index, filterResult) {
-        var totalControllers = parse(1 /* NUMBER */, chars, index, filterResult);
-        if (totalControllers == null) {
-            filterResult[0] = filterResult[0] - 1; // Reset current index
-            return null; // Old configuration
-        }
+        var totalControllers = requiredNumber(chars, '#', filterResult);
+        if (totalControllers < 0) { throw new Lang.Exception(); }
 
         var remoteControllers = [];
         for (var i = 0; i < totalControllers; i++) {
@@ -3313,9 +3313,10 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
         // Disabled: 0!:0!
         var value = parse(1 /* NUMBER */, chars, i, filterResult);
         if (value == null) {
-            return null; // Old configuration or widget
+            throw new Lang.Exception();
         }
 
+        expectDelimiter(chars, '!', filterResult);
         var controlModes = [];
         var manualModes = [];
         var controlModeChars = value.toString().toCharArray();
@@ -3346,20 +3347,23 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
   // #endif
 // #endif
 
-    // <LightModes>(:<LightSerialNumber>)*(:<LightIconColor>)*(:<AdditionalLightModes>)*
+    // <LightModes>:<LightSerialNumber>:<AdditionalLightModes>; an empty section means no light.
     private function parseLightInfo(chars, dataType, resultIndex) {
         var index = resultIndex[0];
+        // This internal flag occupies no field in the configuration string.
+        // After the serial field, a configured light still has the ':' before additional modes.
+        if (dataType == 2) { return index < chars.size() && chars[index] == ':'; }
         if (dataType > 0 && (index >= chars.size() || chars[index] == '#')) {
             return null;
         }
 
         var left = parse(1 /* NUMBER */, chars, null, resultIndex);
-        if (left == null || dataType == 2 /* Icon color */) {
+        if (left == null) {
             return left;
         }
 
         var serial = dataType == 1;
-        var result = (left.toLong() << (serial ? 31 : 32)) | parse(1 /* NUMBER */, chars, null, resultIndex);
+        var result = (left.toLong() << (serial ? 31 : 32)) | requiredNumber(chars, ',', resultIndex);
         return serial
             ? result.toNumber()
             : result;
@@ -3380,7 +3384,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
                 isFloat = true;
             }
 
-            if (char == ':' || char == '|' || char == '!' || (type == 1 /* NUMBER */ && (char == '/' || char > 57 /* 9 */ || char < 45 /* - */))) {
+            if (char == '#' || char == ':' || char == '|' || char == '!' || (type == 1 /* NUMBER */ && (char == '/' || char > 57 /* 9 */ || char < 45 /* - */))) {
                 break;
             }
 

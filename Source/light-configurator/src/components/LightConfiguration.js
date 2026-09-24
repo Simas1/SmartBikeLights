@@ -12,13 +12,13 @@ import AppTextInput from '../inputs/AppTextInput';
 import AppCheckbox from '../inputs/AppCheckbox';
 import ElementWithHelp from './ElementWithHelp';
 import LightPanel from './LightPanel';
-import { createMenuItemColorTemplateFunc } from './Templates';
+import LightFooter from './LightFooter';
+import { groupNameVisibility } from '../constants';
 import LightIconTapBehavior from './LightIconTapBehavior';
 import LightSettings from './LightSettings';
 import LightPanelModel from '../models/LightPanel';
 import LightSettingsModel from '../models/LightSettings';
 import LightModeCycleBehavior from '../models/LightModeCycleBehavior';
-import { getLightIconColors } from '../constants';
 
 const PREFIX = 'LightConfiguration';
 
@@ -40,12 +40,11 @@ const getLightData = (value, lights) => {
 const getDefaultPanel = (value, lights) => {
   return value !== null ? lights.find(l => l.id === value)?.defaultLightPanel : null;
 };
-const itemTemplate = createMenuItemColorTemplateFunc();
 
 export default observer(({
-  device, totalLights, useIndividualNetwork, globalFilterGroups, lightType, lightList, lightFilterGroups, setLight, light,
+  showFooter, setShowFooter, device, totalLights, useIndividualNetwork, globalFilterGroups, lightType, lightList, lightFilterGroups, setLight, light,
   setLightModes, setAdditionalLightModes, setDefaultMode, defaultMode, lightPanel, setLightPanel, lightSettings, setLightSettings, deviceNumber, setDeviceNumber,
-  serialNumber, setSerialNumber, forceSmartMode, setForceSmartMode, lightIconTapBehavior, setLightIconTapBehavior, lightIconColor, setLightIconColor,
+  serialNumber, setSerialNumber, forceSmartMode, setForceSmartMode, lightIconTapBehavior, setLightIconTapBehavior,
   bikeRadarNumber, setBikeRadarNumber, createBikeRadarConnection, setCreateBikeRadarConnection }) => {
   const [lightData, setLightData] = React.useState(getLightData(light, lightList));
   const setValue = (value) => {
@@ -103,7 +102,7 @@ export default observer(({
                   help={
                     <React.Fragment>
                       <Typography>
-                        The default mode is used only by the Smart control mode as a fallback light mode, when none of the below filter groups
+                        The default mode is used only by the Smart control mode as a fallback light mode, when none of the below smart rules
                         is matched.
                       </Typography>
                     </React.Fragment>
@@ -159,14 +158,6 @@ export default observer(({
                 }
               />
             </Grid>
-          }
-          {
-            light
-            ?
-            <Grid item xs={12} sm={4}>
-              <AppSelect required items={getLightIconColors(device)} label="Icon color" setter={setLightIconColor} value={lightIconColor} itemTemplateFunc={itemTemplate} />
-            </Grid>
-            : null
           }
           {
             setBikeRadarNumber && lightData && lightData.allowRadarSensor && device && device.highMemory && device.nativePairing !== true
@@ -229,12 +220,12 @@ export default observer(({
           ? <React.Fragment>
               <ElementWithHelp
                 sx={{marginBottom: 1, marginTop: 1}}
-                element={<Typography variant="h5">Filter groups</Typography>}
+                element={<Typography variant="h5">Smart rules</Typography>}
                 help={
                   <Typography>
-                    Filter groups contains a group of filters, which are used by the Smart control mode to determine the light mode. Every filter group defines
-                    a light mode, which will be used when every filter inside the group is matched. The order of filter groups is important
-                    as in case multiple filter groups are matched, only the light mode of the topmost matched group will be used.
+                    Smart rules contain sets of conditions, which are used by the Smart control mode to determine the light mode. Each smart rule defines
+                    a light mode, which will be used when every condition in the rule is matched. The order of smart rules is important
+                    as in case multiple smart rules are matched, only the light mode of the topmost matching rule will be used.
                   </Typography>
                 }
               />
@@ -243,18 +234,25 @@ export default observer(({
           : null
         }
         {
-          lightData && lightIconTapBehavior && device?.touchScreen
+          lightData && lightIconTapBehavior && device?.highMemory
           ? <React.Fragment>
               <ElementWithHelp
                 className={classes.sectionTitle}
-                element={<Typography variant="h5">Light icon tap behavior</Typography>}
+                element={<Typography variant="h5">Header</Typography>}
                 help={
                   <Typography>
-                    Configure which control modes and light modes (for Manual mode) can be selected by tapping on the light icon.
+                    Choose the control modes the button cycles through. Manual is always included. Smart is used only when this light has smart rules. Selecting any light-mode button enters Manual.
                   </Typography>
                 }
               />
-              <LightIconTapBehavior lightIconTapBehavior={lightIconTapBehavior} lightModes={lightData.modes} />
+              {lightPanel && device?.touchScreen && <Grid container spacing={3} sx={{ marginBottom: 3 }}>
+                <Grid item xs={12}>
+                  <AppSelect required items={groupNameVisibility} label="Header visibility"
+                    help="Show the active smart rule or Network mode above the light buttons."
+                    setter={lightPanel.setGroupNameVisibility} value={lightPanel.groupNameVisibility} />
+                </Grid>
+              </Grid>}
+              <LightIconTapBehavior controlButton lightIconTapBehavior={lightIconTapBehavior} lightModes={lightData.modes} />
           </React.Fragment>
           : null
         }
@@ -266,13 +264,13 @@ export default observer(({
                 element={<Typography variant="h5">Light panel</Typography>}
                 help={
                   <Typography>
-                    The Light panel will be displayed only when putting the data field on a "1 Field Layout" data screen on your device. Here you can
-                    modify how the light panel will look like on the screen by renaming buttons, order them in a different way, remove those that won't be
-                    used, change to two buttons per row and change the short light name that will be displayed at the bottom of the screen.
+                    Fullscreen (1 Field Layout) shows your configured light-mode buttons. Rename, reorder, group, or remove buttons and choose their icons, brightness, and runtime details here.
+                    In Field view, the card shows the active light mode; tapping it cycles through the configured modes in button order, followed by Off, and enters Manual.
+                    Filter Light Mode limits the buttons shown full-screen and the modes included in field cycling, while Smart rules can still use hidden modes. The short light name appears in the footer when enabled.
                   </Typography>
                 }
               />
-            <LightPanel lightPanel={lightPanel} lightModes={lightData.modes} />
+            <LightPanel lightPanel={lightPanel} lightModes={lightData.modes} lightModeFilter={lightIconTapBehavior} />
           </React.Fragment>
           : null
         }
@@ -295,6 +293,8 @@ export default observer(({
           </React.Fragment>
           : null
         }
+        {lightData && lightPanel && device?.touchScreen &&
+          <LightFooter className={classes.sectionTitle} showFooter={showFooter} setShowFooter={setShowFooter} />}
       </CardContent>
     </StyledCard>
   );

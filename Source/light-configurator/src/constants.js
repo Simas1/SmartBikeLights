@@ -464,9 +464,6 @@ const mageneAt1600Modes = [
   { id: 7, name: 'Strobe' }
 ];
 
-export const controlMode = {id: -1, name: "Control mode"};
-export const currentConfiguration = {id: -2, name: "Current configuration"};
-export const battery = {id: -3, name: "Battery"};
 
 export const headlightList = [
   {
@@ -480,7 +477,6 @@ export const headlightList = [
     defaultLightPanel: {
       shortName: 'Ion Pro RT',
       buttonGroups: [
-        [controlMode, bontragerIonProRtModes[0]],
         [bontragerIonProRtModes[1]],
         [bontragerIonProRtModes[2]],
         [bontragerIonProRtModes[3]],
@@ -500,7 +496,6 @@ export const headlightList = [
     defaultLightPanel: {
       shortName: 'Ion 200 RT',
       buttonGroups: [
-        [controlMode, bontragerIonProRtModes[0]],
         [bontragerIonProRtModes[1]],
         [bontragerIonProRtModes[2]],
         [bontragerIonProRtModes[3]],
@@ -520,7 +515,6 @@ export const headlightList = [
     defaultLightPanel: {
       shortName: 'Ion 800 RT',
       buttonGroups: [
-        [controlMode, bontragerIonProRtModes[0]],
         [bontragerIonProRtModes[1]],
         [bontragerIonProRtModes[2]],
         [bontragerIonProRtModes[3]],
@@ -540,7 +534,6 @@ export const headlightList = [
     defaultLightPanel: {
       shortName: 'Fly12 CE',
       buttonGroups: [
-        [controlMode, cycliqFly12Ce[0]],
         [cycliqFly12Ce[1]],
         [cycliqFly12Ce[2]],
         [cycliqFly12Ce[3]],
@@ -564,7 +557,6 @@ export const headlightList = [
     defaultLightPanel: {
       shortName: 'Varia 500',
       buttonGroups: [
-        [controlMode, garminVariaHl500[0]],
         [garminVariaHl500[1]],
         [garminVariaHl500[2]],
         [garminVariaHl500[3]],
@@ -584,7 +576,6 @@ export const headlightList = [
     defaultLightPanel: {
       shortName: 'Varia 800',
       buttonGroups: [
-        [controlMode, garminVariaUt800[0]],
         [garminVariaUt800[1]],
         [garminVariaUt800[2]],
         [garminVariaUt800[3]],
@@ -604,7 +595,6 @@ export const headlightList = [
     defaultLightPanel: {
       shortName: 'Varia Vue',
       buttonGroups: [
-        [controlMode, garminVariaUt800[0]],
         [garminVariaUt800[1]],
         [garminVariaUt800[2]],
         [garminVariaUt800[3]],
@@ -624,7 +614,6 @@ export const headlightList = [
     defaultLightPanel: {
       shortName: 'Varia Vue',
       buttonGroups: [
-        [controlMode, garminVariaVueStvzo[0]],
         [garminVariaVueStvzo[1]],
         [garminVariaVueStvzo[2]]
       ]
@@ -641,7 +630,6 @@ export const headlightList = [
     defaultLightPanel: {
       shortName: 'HL 1400',
       buttonGroups: [
-        [controlMode, giantReconHl1400[0]],
         [giantReconHl1400[1]],
         [giantReconHl1400[2]],
         [giantReconHl1400[3]],
@@ -660,7 +648,6 @@ export const headlightList = [
     defaultLightPanel: {
       shortName: 'HL 1800',
       buttonGroups: [
-        [controlMode, giantReconHl1800[0]],
         [giantReconHl1800[1]],
         [giantReconHl1800[2]],
         [giantReconHl1800[3]],
@@ -680,7 +667,6 @@ export const headlightList = [
     defaultLightPanel: {
       shortName: 'React Drive',
       buttonGroups: [
-        [controlMode, lezyneReactDrive[0]],
         [lezyneReactDrive[1]],
         [lezyneReactDrive[2]],
         [lezyneReactDrive[3]],
@@ -701,7 +687,6 @@ export const headlightList = [
     defaultLightPanel: {
       shortName: 'AT 1200',
       buttonGroups: [
-        [controlMode, mageneAt1600Modes[0]],
         [mageneAt1600Modes[10]],
         [mageneAt1600Modes[9]],
         [mageneAt1600Modes[8]],
@@ -726,7 +711,6 @@ export const headlightList = [
     defaultLightPanel: {
       shortName: 'AT 1600',
       buttonGroups: [
-        [controlMode, mageneAt1600Modes[0]],
         [mageneAt1600Modes[10]],
         [mageneAt1600Modes[9]],
         [mageneAt1600Modes[8]],
@@ -752,7 +736,6 @@ export const headlightList = [
     defaultLightPanel: {
       shortName: 'FR300',
       buttonGroups: [
-        [controlMode, ravemenFr300[0]],
         [ravemenFr300[1]],
         [ravemenFr300[2]],
         [ravemenFr300[3]],
@@ -771,7 +754,6 @@ export const headlightList = [
     defaultLightPanel: {
       shortName: 'ACE F',
       buttonGroups: [
-        [controlMode, seeSenseBeam[0]],
         [seeSenseBeam[1]],
         [seeSenseBeam[2]],
         [seeSenseBeam[3]],
@@ -793,7 +775,6 @@ export const headlightList = [
     defaultLightPanel: {
       shortName: 'BEAM',
       buttonGroups: [
-        [controlMode, seeSenseBeam[0]],
         [seeSenseBeam[1]],
         [seeSenseBeam[2]],
         [seeSenseBeam[3]],
@@ -815,7 +796,6 @@ export const headlightList = [
     defaultLightPanel: {
       shortName: 'Pro RT',
       buttonGroups: [
-        [controlMode, trekCommuterProRtModes[0]],
         [trekCommuterProRtModes[1]],
         [trekCommuterProRtModes[2]],
         [trekCommuterProRtModes[3]]
@@ -996,7 +976,6 @@ export const taillightList = [
     defaultLightPanel: {
       shortName: 'Flare RT',
       buttonGroups: [
-        [controlMode, bontragerFlareRtModes[0]],
         [bontragerFlareRtModes[1]],
         [bontragerFlareRtModes[2]],
         [bontragerFlareRtModes[3]],
@@ -1016,7 +995,6 @@ export const taillightList = [
     defaultLightPanel: {
       shortName: 'Gardia 300',
       buttonGroups: [
-        [controlMode, brytonGardia300[0]],
         [brytonGardia300[1]],
         [brytonGardia300[2]],
         [brytonGardia300[3]],
@@ -1036,7 +1014,6 @@ export const taillightList = [
     defaultLightPanel: {
       shortName: 'TR70',
       buttonGroups: [
-        [controlMode, coospoTr70[0]],
         [coospoTr70[1]],
         [coospoTr70[2]],
         [coospoTr70[3]],
@@ -1057,7 +1034,6 @@ export const taillightList = [
     defaultLightPanel: {
       shortName: 'Fly6 CE',
       buttonGroups: [
-        [controlMode, cycliqFly6Ce[0]],
         [cycliqFly6Ce[1]],
         [cycliqFly6Ce[2]],
         [cycliqFly6Ce[3]],
@@ -1081,7 +1057,6 @@ export const taillightList = [
     defaultLightPanel: {
       shortName: 'Cycplus L7',
       buttonGroups: [
-        [controlMode, cycplusL7[0]],
         [cycplusL7[1]],
         [cycplusL7[2]],
         [cycplusL7[3]],
@@ -1100,7 +1075,6 @@ export const taillightList = [
     defaultLightPanel: {
       shortName: 'Varia 300',
       buttonGroups: [
-        [controlMode, garminVariaTl300[0]],
         [garminVariaTl300[1]],
         [garminVariaTl300[2]],
         [garminVariaTl300[3]],
@@ -1119,7 +1093,6 @@ export const taillightList = [
     defaultLightPanel: {
       shortName: 'Varia 820',
       buttonGroups: [
-        [controlMode, garminVariaRtl515[0]],
         [garminVariaRtl515[1]],
         [garminVariaRtl515[2]],
         [garminVariaRtl515[3]],
@@ -1138,7 +1111,6 @@ export const taillightList = [
     defaultLightPanel: {
       shortName: 'Varia 500',
       buttonGroups: [
-        [controlMode, garminVariaRtl500[0]],
         [garminVariaRtl500[1]],
         [garminVariaRtl500[2]]
       ]
@@ -1155,7 +1127,6 @@ export const taillightList = [
     defaultLightPanel: {
       shortName: 'Varia 501',
       buttonGroups: [
-        [controlMode, garminVariaRtl501[0]],
         [garminVariaRtl501[1]]
       ]
     }
@@ -1171,7 +1142,6 @@ export const taillightList = [
     defaultLightPanel: {
       shortName: 'Varia 510',
       buttonGroups: [
-        [controlMode, garminVariaRtl510[0]],
         [garminVariaRtl510[1]],
         [garminVariaRtl510[2]],
         [garminVariaRtl510[3]],
@@ -1189,7 +1159,6 @@ export const taillightList = [
     defaultLightPanel: {
       shortName: 'Varia 511',
       buttonGroups: [
-        [controlMode, garminVariaRtl511[0]],
         [garminVariaRtl511[1]]
       ]
     }
@@ -1205,7 +1174,6 @@ export const taillightList = [
     defaultLightPanel: {
       shortName: 'Varia 515',
       buttonGroups: [
-        [controlMode, garminVariaRtl515[0]],
         [garminVariaRtl515[1]],
         [garminVariaRtl515[2]],
         [garminVariaRtl515[3]],
@@ -1224,7 +1192,6 @@ export const taillightList = [
     defaultLightPanel: {
       shortName: 'Varia 516',
       buttonGroups: [
-        [controlMode, garminVariaRtl511[0]],
         [garminVariaRtl511[1]]
       ]
     }
@@ -1240,7 +1207,6 @@ export const taillightList = [
     defaultLightPanel: {
       shortName: 'Varia 615',
       buttonGroups: [
-        [controlMode, garminVariaRtl515[0]],
         [garminVariaRtl515[1]],
         [garminVariaRtl515[2]],
         [garminVariaRtl515[3]],
@@ -1259,7 +1225,6 @@ export const taillightList = [
     defaultLightPanel: {
       shortName: 'Varia 616',
       buttonGroups: [
-        [controlMode, garminVariaRtl511[0]],
         [garminVariaRtl511[1]]
       ]
     }
@@ -1275,7 +1240,6 @@ export const taillightList = [
     defaultLightPanel: {
       shortName: 'Varia 715',
       buttonGroups: [
-        [controlMode, garminVariaRtl515[0]],
         [garminVariaRtl515[1]],
         [garminVariaRtl515[2]],
         [garminVariaRtl515[3]],
@@ -1294,7 +1258,6 @@ export const taillightList = [
     defaultLightPanel: {
       shortName: 'Varia 716',
       buttonGroups: [
-        [controlMode, garminVariaRtl511[0]],
         [garminVariaRtl511[1]]
       ]
     }
@@ -1310,7 +1273,6 @@ export const taillightList = [
     defaultLightPanel: {
       shortName: 'TL 150',
       buttonGroups: [
-        [controlMode, giantReconTl150[0]],
         [giantReconTl150[1]],
         [giantReconTl150[2]],
         [giantReconTl150[3]],
@@ -1330,7 +1292,6 @@ export const taillightList = [
     defaultLightPanel: {
       shortName: 'Radar Drive',
       buttonGroups: [
-        [controlMode, lezyneRadarDrive[0]],
         [lezyneRadarDrive[1]],
         [lezyneRadarDrive[2]],
         [lezyneRadarDrive[3]],
@@ -1351,7 +1312,6 @@ export const taillightList = [
     defaultLightPanel: {
       shortName: 'Radar StVZO',
       buttonGroups: [
-        [controlMode, lezyneRadarStVzo[0]],
         [lezyneRadarStVzo[1]],
         [lezyneRadarStVzo[2]]
       ]
@@ -1368,7 +1328,6 @@ export const taillightList = [
     defaultLightPanel: {
       shortName: 'Magene 508',
       buttonGroups: [
-        [controlMode, mageneL508[0]],
         [mageneL508[1]],
         [mageneL508[2]],
         [mageneL508[3]],
@@ -1389,7 +1348,6 @@ export const taillightList = [
     defaultLightPanel: {
       shortName: 'ACE R',
       buttonGroups: [
-        [controlMode, seeSenseIcon2[0]],
         [seeSenseIcon2[1]],
         [seeSenseIcon2[2]],
         [seeSenseIcon2[3]],
@@ -1411,7 +1369,6 @@ export const taillightList = [
     defaultLightPanel: {
       shortName: 'ICON2',
       buttonGroups: [
-        [controlMode, seeSenseIcon2[0]],
         [seeSenseIcon2[1]],
         [seeSenseIcon2[2]],
         [seeSenseIcon2[3]],
@@ -1433,7 +1390,6 @@ export const taillightList = [
     defaultLightPanel: {
       shortName: 'CarBack',
       buttonGroups: [
-        [controlMode, trekCarBack[0]],
         [trekCarBack[1]],
         [trekCarBack[2]],
         [trekCarBack[3]],
@@ -1452,7 +1408,6 @@ export const taillightList = [
     defaultLightPanel: {
       shortName: 'TRACKR',
       buttonGroups: [
-        [controlMode, wahooTrackrRadar[0]],
         [wahooTrackrRadar[1]],
         [wahooTrackrRadar[2]],
         [wahooTrackrRadar[3]],
@@ -1483,19 +1438,6 @@ export const getLight = (taillight, light) => {
 
 export const getDeviceLights = (device, lightsList, useIndividualNetwork) => {
   return device.highMemory && useIndividualNetwork ? lightsList : lightsList.filter(o => !o.individualNetworkOnly);
-};
-
-export const getSeparatorColors = (device) => {
-  var noSeparator = { id: -1, name: 'No separator' };
-  return device.highMemory && device.bitsPerPixel > 1 ? [noSeparator, { id: 0, name: 'Theme' }].concat(colors)
-    : device.bitsPerPixel === 1 ? [noSeparator, { id: 0, name: 'Black/White' }]
-    : [noSeparator].concat(colors.map(val => val.id !== 43775 /* Blue */ ? val : { id: 0, name: 'Blue' }));
-};
-
-export const getLightIconColors = (device) => {
-  return device.bitsPerPixel === 1
-    ? colors.filter(o => o.id === 1 /* Black/White */)
-    : colors;
 };
 
 export const getButtonColors = () => {

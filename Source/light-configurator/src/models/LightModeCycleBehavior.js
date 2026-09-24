@@ -34,7 +34,11 @@ export default class LightModeCycleBehavior {
     }
   }
 
-  setControlModes = (value) => {
+  setControlModes = (value, requireManual = false) => {
+    if (requireManual) {
+      value = [...(value || [])];
+      if (!value.includes(2)) value.push(2);
+    }
     if (!value || value.indexOf(2 /* MANUAL */) < 0) {
       this.lightModes = null;
       this.manualModeBehavior = 0;

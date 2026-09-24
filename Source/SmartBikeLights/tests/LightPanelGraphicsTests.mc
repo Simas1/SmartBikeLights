@@ -10,7 +10,7 @@ function graphicsLegacyTitleTest(logger) {
     Test.assert(data[1] == 5);
     Test.assert(data[2] == 13.5);
     Test.assert(data[3].equals("lightning"));
-    var icons = ["headlight", "taillight", "moon", "lightning", "headlight-high", "headlight-medium", "headlight-low", "taillight-high", "taillight-medium", "taillight-low"];
+    var icons = ["moon", "lightning", "headlight-high", "headlight-medium", "headlight-low", "taillight-high", "taillight-medium", "taillight-low"];
     for (var i = 0; i < icons.size(); i++) {
         var named = LightPanelGraphics.parseTitle("Custom mode~n@" + icons[i]);
         Test.assert(named[0].equals("Custom mode"));
@@ -57,15 +57,16 @@ function graphicsBrightnessAndRuntimeTest(logger) {
 
 (:test, :touchScreen)
 function graphicsOptionalButtonsTest(logger) {
-    var original = [4,3,"Front",0,0,-1,2,-1,null,0,"Off",1,51,"Low",1,-2,null];
+    var original = [1,1,"Front",0,0,-1,1,51,"Low"];
     var result = LightPanelGraphics.panelSettings(original);
-    Test.assert(original[0] == 4); // Never mutate the saved configuration.
+    Test.assert(original[0] == 1); // Never mutate the saved configuration.
     Test.assert(result[0] == 3 && result[1] == 2);
     Test.assert(result[6] == 2 && result[7] == -1 && result[9] == 0);
-    result = LightPanelGraphics.panelSettings([1,1,"Front",0,0,-1,1,-2,null]);
-    Test.assert(result[0] == 0 && result[1] == 0);
-    result = LightPanelGraphics.panelSettings([2,1,"Front",0,0,-1,2,-2,null,51,"Low"]);
-    Test.assert(result[0] == 1 && result[1] == 1 && result[6] == 1 && result[7] == 51);
+    Test.assert(result[12] == 51);
+    result = LightPanelGraphics.panelSettings([0,0,"Front",0,0,-1]);
+    Test.assert(result[0] == 2 && result[1] == 1);
+    Test.assert(result[6] == 2 && result[7] == -1 && result[9] == 0);
+    Test.assert(LightPanelGraphics.groupWeight(result, 6) == 0.5);
     result = LightPanelGraphics.panelSettings([1,1,"Front",0,0,2,1,51,"Low"]);
     Test.assert(result[5] == 2); // Preserve the configured automation-name font.
     return true;
@@ -106,5 +107,22 @@ function graphicsActualNameNewlineTest(logger) {
     var mixed = StringHelper.getTextStack("A\nB~brC", 90);
     Test.assert(mixed.size() == 3 && mixed[2][0].equals("C"));
     Test.assert(mixed[0][1] == 30);
+    return true;
+}
+
+(:test :highMemory)
+function graphicsFilteredModesTest(logger) {
+    var original = [4,3,"Front",0,0,-1,2,51,"Low",52,"Medium",1,53,"High",1,51,"Low copy"];
+    var filtered = LightPanelGraphics.filterModes(original, [53, 51]);
+    Test.assert(original[0] == 4 && original[6] == 2);
+    Test.assert(filtered[0] == 3 && filtered[1] == 3);
+    Test.assert(filtered[6] == 1 && filtered[7] == 51 && filtered[10] == 53 && filtered[13] == 51);
+    var panel = LightPanelGraphics.panelSettings(filtered);
+    Test.assert(panel[0] == 5 && panel[7] == -1 && panel[9] == 0);
+    filtered = LightPanelGraphics.filterModes(original, [99]);
+    Test.assert(filtered[0] == 0 && filtered[1] == 0);
+    panel = LightPanelGraphics.panelSettings(filtered);
+    Test.assert(panel[0] == 2 && panel[1] == 1);
+    Test.assert(LightPanelGraphics.filterModes(original, null) == original);
     return true;
 }

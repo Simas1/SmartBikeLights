@@ -128,8 +128,10 @@ module LightsSettings {
             _lightType = lightType;
             _menuItem = menuItem.weak();
             var lightData = view.getLightData(_lightType);
-            for (var i = 0; i < controlModeNames.size(); i++) {
-                if (i == 0 && lightData[18] /* Filters */ == null) {
+            var modes = view.configuredControlModes(_lightType);
+            for (var j = 0; j < modes.size(); j++) {
+                var i = modes[j];
+                if (i == 0 && (lightData[18] == null || lightData[18].size() == 0)) {
                     continue; // Do not show smart mode when there are no filters
                 }
 

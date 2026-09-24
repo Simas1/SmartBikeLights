@@ -9,7 +9,7 @@ import LightButton from './LightButton';
 import { serializeButtonGraphics } from './lightButtonGraphics';
 import LightSettings from './LightSettings';
 import LightModeCycleBehavior from './LightModeCycleBehavior';
-import { getLight, isDataField, getLightIconColors, getSeparatorColors } from '../constants';
+import { getLight, isDataField } from '../constants';
 import RemoteController from './RemoteController';
 import RemoteControllerButton from './RemoteControllerButton';
 import RemoteControllerButtonAction from './RemoteControllerButtonAction';
@@ -177,7 +177,7 @@ const parseLightsModes = (chars, index, filterResult, hasOperator) => {
 
 const parseLightPanel = (chars, i, filterResult) => {
   const totalButtons = parseNumber(chars, i, filterResult);
-  if (!totalButtons) {
+  if (totalButtons === null) {
       return null;
   }
 
@@ -188,15 +188,9 @@ const parseLightPanel = (chars, i, filterResult) => {
   const panel = new LightPanel();
   parseNumber(chars, filterResult[0] + 1, filterResult);
   panel.lightName = parseTitle(chars, filterResult[0] + 1, filterResult);
-  panel.buttonColor = chars[filterResult[0]] === ':'
-      ? parseNumber(chars, filterResult[0] + 1, filterResult)
-      : 0 /* Theme */; // Old configuration
-  panel.buttonTextColor = chars[filterResult[0]] === ':'
-      ? parseNumber(chars, filterResult[0] + 1, filterResult)
-      : 0xFFFFFF /* White */; // Old configuration
-  panel.groupNameVisibility = chars[filterResult[0]] === ':'
-      ? parseNumber(chars, filterResult[0] + 1, filterResult)
-      : -1 /* Not visible */; // Old configuration
+  panel.buttonColor = requiredNumber(chars, ':', filterResult);
+  panel.buttonTextColor = requiredNumber(chars, ':', filterResult);
+  panel.groupNameVisibility = requiredNumber(chars, ':', filterResult);
   i = filterResult[0];
   while (i < chars.length) {
     const char = chars[i];
@@ -204,13 +198,14 @@ const parseLightPanel = (chars, i, filterResult) => {
         break;
     }
 
-    if (char === '|' || char === '!') {
+    if (char === '!') {
         const lightButtonGroup = new LightButtonGroup();
         const numberOfButtons = parseNumber(chars, filterResult[0] + 1, filterResult); // Number of buttons in the group
         for (let j = 0; j < numberOfButtons; j++) {
             let lightButton = new LightButton();
             lightButton.loadPanelName(parseTitle(chars, filterResult[0] + 1, filterResult));
             lightButton.mode = parseNumber(chars, filterResult[0] + 1, filterResult);
+            if (lightButton.mode <= 0) throw new Error("Editable buttons require a positive light mode");
             lightButtonGroup.buttons.push(lightButton);
         }
 
@@ -227,9 +222,10 @@ const parseLightPanel = (chars, i, filterResult) => {
 const parseLightIconTapBehavior = (chars, i, filterResult) => {
   let value = parseNumber(chars, i, filterResult);
   if (value === null) {
-    return null; // Old configuration
+    throw new Error('Missing configuration value');
   }
 
+  if (chars[filterResult[0]] !== '!') throw new Error('Invalid tap behavior');
   const controlModes = [];
   const manualModes = [];
   const controlModeChars = value.toString();
@@ -262,7 +258,7 @@ const parseLightIconTapBehavior = (chars, i, filterResult) => {
 const parseRemoteControllers = (chars, i, filterResult) => {
   let totalControllers = parseNumber(chars, i, filterResult);
   if (totalControllers === null) {
-    return null; // Old configuration
+    throw new Error('Missing configuration value');
   }
 
   const remoteControllers = [];
@@ -297,8 +293,8 @@ const parseRemoteControllers = (chars, i, filterResult) => {
         action.setToneId(parseNumber(chars, filterResult[0] + 1, filterResult));
 
         if (actionType === 1 /* Cycle light modes */) {
-          action.setHeadlightTapBehavior(parseLightIconTapBehavior(chars, filterResult[0] + 1, filterResult) || new LightModeCycleBehavior());
-          action.setTaillightTapBehavior(parseLightIconTapBehavior(chars, filterResult[0] + 1, filterResult) || new LightModeCycleBehavior());
+          action.setHeadlightTapBehavior(parseLightIconTapBehavior(chars, filterResult[0] + 1, filterResult));
+          action.setTaillightTapBehavior(parseLightIconTapBehavior(chars, filterResult[0] + 1, filterResult));
         } else if (actionType === 2 /* Change light mode */) {
           const values = parseLightsModes(chars, filterResult[0] + 1, filterResult, false);
           action.headlightMode.setControlMode(values[0]);
@@ -364,10 +360,6 @@ const parseRemoteControllers = (chars, i, filterResult) => {
 
 const parseBikeRadarNumber = (chars, i, filterResult) => {
   const deviceNumber = parseNumber(chars, i, filterResult);
-  if (deviceNumber === null) {
-    return null; // Old configuration
-  }
-
   return deviceNumber;
 };
 
@@ -378,6 +370,7 @@ const parseLightSettings = (totalButtons, chars, filterResult) => {
     let lightButton = new LightButton();
     lightButton.name = parseTitle(chars, filterResult[0] + 1, filterResult);
     lightButton.mode = parseNumber(chars, filterResult[0] + 1, filterResult);
+    if (lightButton.mode <= 0) throw new Error("Editable buttons require a positive light mode");
     settings.buttons.push(lightButton);
   }
 
@@ -402,16 +395,14 @@ const parseFilters = (chars, i, lightMode, filterResult) => {
       break;
     }
 
-    if (charNumber === 124 /* | */ || charNumber === 33 /* ! */) {
+    if (charNumber === 33 /* ! */) {
       data[dataIndex] = parseTitle(chars, i + 1, filterResult); // Group title
       data[dataIndex + 1] = parseNumber(chars, filterResult[0] + 1, filterResult); // Number of filters in the group
       if (lightMode) {
         data[dataIndex + 2] = parseNumber(chars, filterResult[0] + 1 /* Skip : */, filterResult); // The light mode id
         for (var j = 0; j < 2; j++) {
           // Parse the deactivation and activation delay
-          data[dataIndex + 3 + j] = chars[filterResult[0]] === ':' // For back compatibility
-            ? parseNumber(chars, filterResult[0] + 1 /* Skip : */, filterResult)
-            : 0;
+          data[dataIndex + 3 + j] = requiredNumber(chars, ':', filterResult);
         }
       }
 
@@ -434,6 +425,7 @@ const parseFilters = (chars, i, lightMode, filterResult) => {
 };
 
 const parseFilter = (charNumber, chars, i, filterResult) => {
+  if (chars[i + 1] === '<' || chars[i + 1] === '>') throw new Error('Invalid filter operator');
   return charNumber === 69 /* E */ ? parseTimespan(chars, i + 1, filterResult)
       : charNumber === 70 /* F */ ? parsePolygons(chars, i + 1, filterResult)
       : charNumber === 73 /* I */ ? parseBikeRadar(chars, i + 1, filterResult)
@@ -518,40 +510,52 @@ const parseToFilterGroups = (chars, i, hasLightMode, filterResult) => {
   return filterGroups;
 };
 
-const parseDevice = (configurationValue, deviceList) => {
-  if (!configurationValue || configurationValue.length === 0) {
-    return { device: null, deviceIndex: null };
-  }
-
-  let hashCount = 0;
-  let index = configurationValue.length - 1;
-  while (hashCount < 5 && index > 0) {
-    index--;
-    if (configurationValue[index] === '#') {
-      hashCount++;
+const parseDevice = (value, deviceList) => {
+  if (typeof value !== 'string') return { device: null };
+  const sections = value.split('#');
+  const device = deviceList.find(item => item.id === sections[sections.length - 5]);
+  if (!device) return { device: null };
+  const dataField = isDataField();
+  const total = device.highMemory ? (dataField ? 18 : 15) : 10;
+  if (sections.length !== total) return { device: null };
+  // Light fields have fixed positions; serial number and additional modes may be empty.
+  const pair = '(?:-?\\d+,-?\\d+)?';
+  const light = new RegExp(`^${pair}:${pair}:${pair}$`);
+  if ([1, 3].some(i => sections[i] !== '' && !light.test(sections[i]))) return { device: null };
+  if ([0, 2, 4, 5, 6].some(i => sections[i]?.includes('|'))) return { device: null };
+  if (device.highMemory) {
+    if (!/^(?:0::|1:(?:\d+(?:,\d+)*![01])?:(?:\d+(?:,\d+)*![01])?)$/.test(sections[7]) ||
+        !/^[01]:[01]$/.test(sections[8])) return { device: null };
+    if (dataField && !/^[0-3]+!(?:\d+(?:,\d+)*)?:[0-3]+!(?:\d+(?:,\d+)*)?$/.test(sections[9])) return { device: null };
+    if (dataField && sections[9].split(':').some(cycle => !cycle.split('!')[0].includes('3'))) return { device: null };
+    const radarIndex = total - (dataField ? 7 : 6);
+    if (dataField && !/^[01]$/.test(sections[12])) return { device: null };
+    if (!/^\d*$/.test(sections[radarIndex])) return { device: null };
+    if (dataField && !/^\d+(?:\||$)/.test(sections[radarIndex - 1])) return { device: null };
+    for (const i of [5, 6]) {
+      if (!sections[i]) continue;
+      const panel = sections[i].split('!')[0];
+      if (device.settings ? !/^\d+:[^:]*$/.test(panel) : !/^\d+,\d+:[^:]*:-?\d+:-?\d+:-?\d+$/.test(panel)) return { device: null };
     }
   }
+  return { device, deviceIndex: value.length - sections.slice(-5).join('#').length };
+};
 
-  if (hashCount !== 5) {
-    return { device: null, deviceIndex: null };
-  }
-
-  const deviceId = parseTitle(configurationValue, index + 1, [index]);
-  if (!deviceId) {
-    return { device: null, deviceIndex: null };
-  }
-
-  return deviceId
-    ? { device: deviceList.find(l => l.id === deviceId), deviceIndex: index + 1 }
-    : { device: null, deviceIndex: null };
-}
+const requiredNumber = (chars, delimiter, result) => {
+  if (chars[result[0]] !== delimiter) throw new Error('Invalid configuration field');
+  const value = parseNumber(chars, result[0] + 1, result);
+  if (value === null) throw new Error('Missing configuration value');
+  return value;
+};
 
 export default class Configuration {
 
   device = null;
   units = 0;
   timeFormat = 0;
-  separatorColor = 0;
+  showFooter = true;
+
+  setShowFooter = value => { this.showFooter = value; };
   globalFilterGroups = [];
   headlight = null;
   headlightModes = null;
@@ -561,7 +565,6 @@ export default class Configuration {
   headlightSettings = null;
   headlightForceSmartMode = false;
   headlightIconTapBehavior = null;
-  headlightIconColor = 1; /* Black/White */
   taillight = null;
   taillightModes = null;
   taillightFilterGroups = [];
@@ -570,7 +573,6 @@ export default class Configuration {
   taillightSettings = null;
   taillightForceSmartMode = false;
   taillightIconTapBehavior = null;
-  taillightIconColor = 1; /* Black/White */
   useIndividualNetwork = false;
   headlightDeviceNumber = null;
   taillightDeviceNumber = null;
@@ -588,6 +590,8 @@ export default class Configuration {
   }
 
   static parse(value, deviceList) {
+    if (typeof value !== 'string' || !value.startsWith('SBL1#')) return null;
+    value = value.slice(5);
     const { device, deviceIndex} = parseDevice(value, deviceList);
     if (!device) {
       return null;
@@ -598,15 +602,11 @@ export default class Configuration {
     configuration.globalFilterGroups = parseToFilterGroups(value, 0, false, filterResult);
 
     configuration.headlightModes = parseNumberArray(value, filterResult[0] + 1, filterResult);
-    configuration.headlightSerialNumber = value[filterResult[0]] === ':'
-      ? parseSerialNumber(value, filterResult[0] + 1, filterResult)
-      : null;
-    configuration.headlightIconColor = value[filterResult[0]] === ':'
-      ? parseNumber(value, filterResult[0] + 1, filterResult)
-      : 1;
-    configuration.headlightAdditionalModes = value[filterResult[0]] === ':'
-      ? parseNumberArray(value, filterResult[0] + 1, filterResult)
-      : null;
+    if (value[filterResult[0]] === ':') {
+      configuration.headlightSerialNumber = parseSerialNumber(value, filterResult[0] + 1, filterResult);
+      configuration.headlightAdditionalModes = parseNumberArray(value, filterResult[0] + 1, filterResult);
+    }
+
     let filterGroups = parseToFilterGroups(value, filterResult[0] + 1, true, filterResult);
     let defaultGroup;
     if (filterGroups.length) {
@@ -617,15 +617,11 @@ export default class Configuration {
     configuration.headlightFilterGroups = filterGroups;
 
     configuration.taillightModes = parseNumberArray(value, filterResult[0] + 1, filterResult);
-    configuration.taillightSerialNumber = value[filterResult[0]] === ':'
-      ? parseSerialNumber(value, filterResult[0] + 1, filterResult)
-      : null;
-    configuration.taillightIconColor = value[filterResult[0]] === ':'
-      ? parseNumber(value, filterResult[0] + 1, filterResult)
-      : 1;
-    configuration.taillightAdditionalModes = value[filterResult[0]] === ':'
-      ? parseNumberArray(value, filterResult[0] + 1, filterResult)
-      : null;
+    if (value[filterResult[0]] === ':') {
+      configuration.taillightSerialNumber = parseSerialNumber(value, filterResult[0] + 1, filterResult);
+      configuration.taillightAdditionalModes = parseNumberArray(value, filterResult[0] + 1, filterResult);
+    }
+
     filterGroups = parseToFilterGroups(value, filterResult[0] + 1, true, filterResult);
     if (filterGroups.length) {
       defaultGroup = filterGroups.splice(filterGroups.length - 1, 1)[0];
@@ -635,10 +631,6 @@ export default class Configuration {
     configuration.taillightFilterGroups = filterGroups;
 
     if (!device.highMemory) {
-      // Separator color
-      const separatorColor = parseNumber(value, filterResult[0] + 1, filterResult);
-      configuration.separatorColor = separatorColor || 0;
-
       return this.parseMetadataConfiguration(configuration, value, deviceList, deviceIndex, filterResult);
     }
 
@@ -658,10 +650,7 @@ export default class Configuration {
 
     // Parse individual network
     const useIndividualNetwork = parseNumber(value, filterResult[0] + 1, filterResult);
-    if (useIndividualNetwork === null) {
-      // Old configuration
-      return this.parseMetadataConfiguration(configuration, value, deviceList, deviceIndex, filterResult);
-    }
+    if (useIndividualNetwork === null) throw new Error('Missing configuration section');
 
     configuration.useIndividualNetwork = useIndividualNetwork === 1;
     configuration.headlightDeviceNumber = parseIndividualLightSettings(value, filterResult)[0];
@@ -669,37 +658,24 @@ export default class Configuration {
 
     // Parse force smart mode
     const headlightForceSmartMode = parseNumber(value, filterResult[0] + 1, filterResult);
-    if (headlightForceSmartMode === null) {
-      // Old configuration
-      return this.parseMetadataConfiguration(configuration, value, deviceList, deviceIndex, filterResult);
-    }
+    if (headlightForceSmartMode === null) throw new Error('Missing configuration section');
 
     configuration.headlightForceSmartMode = headlightForceSmartMode === 1;
     configuration.taillightForceSmartMode = parseNumber(value, filterResult[0] + 1, filterResult) === 1;
 
     // Parse light icon tap behavior
-    if (device.touchScreen && isDataField()) {
+    if (device.highMemory && isDataField()) {
       const headlightTapBehavior = parseLightIconTapBehavior(value, filterResult[0] + 1, filterResult);
-      if (headlightTapBehavior === null) {
-        // Old configuration
-        return this.parseMetadataConfiguration(configuration, value, deviceList, deviceIndex, filterResult);
-      }
+      if (headlightTapBehavior === null) throw new Error('Missing configuration section');
 
       configuration.headlightIconTapBehavior = headlightTapBehavior;
       configuration.taillightIconTapBehavior = parseLightIconTapBehavior(value, filterResult[0] + 1, filterResult);
     }
 
-    // Separator color
-    const separatorColor = parseNumber(value, filterResult[0] + 1, filterResult);
-    configuration.separatorColor = separatorColor || 0;
-
     // Parse remote controllers
-    if (separatorColor != null && isDataField() && device.highMemory) {
+    if (isDataField() && device.highMemory) {
       const remoteControllers = parseRemoteControllers(value, filterResult[0] + 1, filterResult);
-      if (remoteControllers === null) {
-        // Old configuration
-        return this.parseMetadataConfiguration(configuration, value, deviceList, deviceIndex, filterResult);
-      }
+      if (remoteControllers === null) throw new Error('Missing configuration section');
 
       configuration.remoteControllers = remoteControllers;
       const bikeRadarNumber = parseBikeRadarNumber(value, filterResult[0] + 1, filterResult);
@@ -710,6 +686,9 @@ export default class Configuration {
       }
     }
 
+    if (device.highMemory && isDataField()) {
+      configuration.showFooter = requiredNumber(value, '#', filterResult) === 1;
+    }
     return this.parseMetadataConfiguration(configuration, value, deviceList, deviceIndex, filterResult);
   }
 
@@ -727,21 +706,16 @@ export default class Configuration {
     const device = deviceList.find(l => l.id === this.device);
     const headlightData = getLight(false, this.headlight);
     const taillightData = getLight(true, this.taillight);
-    const validColors = device ? getLightIconColors(device) : [];
-    const separatorColors = device ? getSeparatorColors(device) : [];
     return device &&
       this.globalFilterGroups.every(g => g.isValid(device, null)) && (
         (this.headlight !== null || this.taillight !== null) &&
         this.isLightValid(headlightData, this.headlightFilterGroups, this.headlightDefaultMode, device) &&
         this.isLightValid(taillightData, this.taillightFilterGroups, this.taillightDefaultMode, device)
       ) &&
-      (this.headlight === null || validColors.some(o => o.id === this.headlightIconColor)) &&
-      (this.taillight === null || validColors.some(o => o.id === this.taillightIconColor)) &&
-      separatorColors.some(o => o.id === this.separatorColor) &&
       this.isItemValid(this.headlightPanel, headlightData, device.touchScreen) &&
       this.isItemValid(this.taillightPanel, taillightData, device.touchScreen) &&
-      this.isItemValid(this.headlightIconTapBehavior, headlightData, device.touchScreen) &&
-      this.isItemValid(this.taillightIconTapBehavior, taillightData, device.touchScreen) &&
+      (this.headlightIconTapBehavior === null || this.headlightIconTapBehavior.containsManualMode()) &&
+      (this.taillightIconTapBehavior === null || this.taillightIconTapBehavior.containsManualMode()) &&
       this.isItemValid(this.headlightSettings, headlightData, device.settings) &&
       this.isItemValid(this.taillightSettings, taillightData, device.settings) &&
       this.isIndividualNetworkValid(device) &&
@@ -785,19 +759,19 @@ export default class Configuration {
     const device = deviceList.find(l => l.id === this.device);
     const headlightData = getLight(false, this.headlight);
     const taillightData = getLight(true, this.taillight);
-    let config = this.getFilterGroupsConfigurationValue(this.globalFilterGroups, null);
-    config += `#${this.getLightInfo(this.headlight, this.headlightModes, this.headlightSerialNumber, this.headlightIconColor, this.headlightAdditionalModes)}`;
+    let config = 'SBL1#' + this.getFilterGroupsConfigurationValue(this.globalFilterGroups, null);
+    config += `#${this.getLightInfo(this.headlight, this.headlightModes, this.headlightSerialNumber, this.headlightAdditionalModes)}`;
     config += `#${this.headlight === null ? '' : this.getFilterGroupsConfigurationValue(this.headlightFilterGroups, this.headlightDefaultMode)}`;
-    config += `#${this.getLightInfo(this.taillight, this.taillightModes, this.taillightSerialNumber, this.taillightIconColor, this.taillightAdditionalModes)}`;
+    config += `#${this.getLightInfo(this.taillight, this.taillightModes, this.taillightSerialNumber, this.taillightAdditionalModes)}`;
     config += `#${this.taillight === null ? '' : this.getFilterGroupsConfigurationValue(this.taillightFilterGroups, this.taillightDefaultMode)}`;
     config += this.getLightPanelOrSettingsConfigurationValue(this.headlightPanel, this.headlightSettings, device);
     config += this.getLightPanelOrSettingsConfigurationValue(this.taillightPanel, this.taillightSettings, device);
     config += this.getIndividualNetworkConfigurationValue(device, headlightData, taillightData);
     config += this.getForceSmartModeConfigurationValue(device);
     config += this.getLightsTapBehaviorConfigurationValue(device);
-    config += this.getSeparatorColor(device);
     config += this.getRemoteControllersConfigrationValue(device);
     config += this.getBikeRadarNumberValue(device, headlightData, taillightData);
+    if (device.highMemory && isDataField()) config += `#${this.showFooter ? 1 : 0}`;
     config += `#${(this.device)}`;
     config += `#${(this.headlight === null ? '' : this.headlight)}`;
     config += `#${(this.taillight === null ? '' : this.taillight)}`;
@@ -807,7 +781,7 @@ export default class Configuration {
     return config;
   }
 
-  getLightInfo(light, lightModes, serialNumber, iconColor, additionalLightModes) {
+  getLightInfo(light, lightModes, serialNumber, additionalLightModes) {
     if (!light) {
       return '';
     }
@@ -818,7 +792,6 @@ export default class Configuration {
       config += `${long.shiftRight(31)},${long.and(0x7FFFFFFF)}`;
     }
 
-    config += `:${iconColor}`;
     config += `:${this.getNumberArray(additionalLightModes)}`;
 
     return config;
@@ -861,7 +834,7 @@ export default class Configuration {
   }
 
   getLightsTapBehaviorConfigurationValue(device) {
-    if (!device || !device.touchScreen || !isDataField()) {
+    if (!device || !device.highMemory || !isDataField()) {
       return '';
     }
 
@@ -871,14 +844,6 @@ export default class Configuration {
     config += this.getLightTapBehaviorConfigurationValue(this.taillight, this.taillightIconTapBehavior);
 
     return config;
-  }
-
-  getSeparatorColor(device) {
-    if (!device || !isDataField()) {
-      return '';
-    }
-
-    return `#${(this.separatorColor)}`;
   }
 
   getRemoteControllersConfigrationValue(device) {
@@ -993,11 +958,11 @@ export default class Configuration {
       return '';
     }
 
-    if (device.settings && lightSettings && lightSettings.buttons.length) {
+    if (device.settings && lightSettings) {
       return this.getLightSettingsConfigurationValue(lightSettings);
     }
 
-    if (device.touchScreen && lightPanel && lightPanel.buttonGroups.length) {
+    if (device.touchScreen && lightPanel) {
       return this.getLightPanelConfigurationValue(lightPanel);
     }
 
@@ -1029,7 +994,7 @@ export default class Configuration {
       buttonGroups += `!${buttons.length}`;
       for (let j = 0; j < buttons.length; j++) {
         let button = buttons[j];
-        buttonGroups += `,${(button.mode < 0 ? '' : button.mode === 0 ? button.name : serializeButtonGraphics(button))}:${button.mode}`;
+        buttonGroups += `,${serializeButtonGraphics(button)}:${button.mode}`;
       }
     }
 
@@ -1084,10 +1049,6 @@ export default class Configuration {
     this.timeFormat = value;
   }
 
-  setSeparatorColor = (value) => {
-    this.separatorColor = value;
-  }
-
   setHeadlight = (value) => {
     this.headlight = value;
   }
@@ -1114,10 +1075,6 @@ export default class Configuration {
 
   setHeadlightIconTapBehavior = (value) => {
     this.headlightIconTapBehavior = value;
-  }
-
-  setHeadlightIconColor = (value) => {
-    this.headlightIconColor = value;
   }
 
   setTaillight = (value) => {
@@ -1174,10 +1131,6 @@ export default class Configuration {
 
   setTaillightIconTapBehavior = (value) => {
     this.taillightIconTapBehavior = value;
-  }
-
-  setTaillightIconColor = (value) => {
-    this.taillightIconColor = value;
   }
 
   setBikeRadarNumber = (value) => {

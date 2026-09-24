@@ -20,7 +20,7 @@ const Root = styled('div')(({ theme }) => ({
   marginTop: theme.spacing(1)
 }));
 
-export default observer(({ buttonGroup, lightModes, index, moveGroup, addButton, removeButton }) => {
+export default observer(({ buttonGroup, lightModes, panelButtons, index, moveGroup, addButton, removeButton }) => {
   const ref = useRef(null);
   const [{ handlerId }, drop] = useDrop({
     accept: 'ButtonGroup',
@@ -94,15 +94,10 @@ export default observer(({ buttonGroup, lightModes, index, moveGroup, addButton,
         <Paper sx={{ padding: 2 }}>
           <Grid container spacing={3}>
             <Grid item xs={12} sm={12}>
-              <AppSelect required items={lightModes} label="Light mode" setter={button.setMode} value={button.mode} />
+              <AppSelect required items={panelButtons ? lightModes.filter(mode => mode.id === button.mode || !panelButtons.some(other => other !== button && other.mode === mode.id)) : lightModes} label="Light mode" setter={button.setMode} value={button.mode} />
             </Grid>
             <Grid item xs={12} sm={12}>
-              { button.mode >= 0
-              ? <AppTextInput required label="Button name" value={button.name} setter={button.setName} />
-              : button.mode === -2 ? <AppTextInput label="Button name" value="Configuration name" />
-              : button.mode === -3 ? <AppTextInput label="Button name" value="Battery" />
-              : <AppTextInput label="Button name" value="Smart / Manual / Network" />
-              }
+              <AppTextInput required label="Button name" value={button.name} setter={button.setName} />
             </Grid>
             {isGroup && button.mode > 0 && <>
               <Grid item xs={12} sm={6}>

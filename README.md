@@ -1,11 +1,11 @@
 Smart Bike Lights
 ===============
 
-Smart Bike Lights is a [data field](https://developer.garmin.com/connect-iq/connect-iq-basics/app-types/#datafields) IQ Connect application for Garmin devices, that displays and controls ANT+ lights. Garmin has a built-in `Auto` [Light mode](https://www8.garmin.com/manuals/webhelp/variabikelights/EN-US/GUID-73B08487-BA57-4EF0-A253-D226E229BC68.html) setting, which automatically adjusts the light intensity based on the ambient light or time of day. The issue with `Auto` mode is that is not configurable and that is why this application introduces a special `Smart` mode, which is fully configurable based on sunset, sunrise, speed, ... (check [supported filters](#filters)).
+Smart Bike Lights is a [data field](https://developer.garmin.com/connect-iq/connect-iq-basics/app-types/#datafields) IQ Connect application for Garmin devices, that displays and controls ANT+ lights. Garmin has a built-in `Auto` [Light mode](https://www8.garmin.com/manuals/webhelp/variabikelights/EN-US/GUID-73B08487-BA57-4EF0-A253-D226E229BC68.html) setting, which automatically adjusts the light intensity based on the ambient light or time of day. The issue with `Auto` mode is that is not configurable and that is why this application introduces a special `Smart` mode, which is fully configurable based on sunset, sunrise, speed, ... (check [supported conditions](#conditions)).
 
 
 ## Features
-- Smart mode that control lights based on the configured filters
+- Smart mode that control lights based on the configured smart rules
 - Records lights modes that are displayed in Garmin Connect
 - Configurable full screen light panel for fast switching modes (only for Edge devices with touch screen)
 - Edge 540/550 show the active headlight and taillight mode cards in one sufficiently large data field, with neutral Off cards and physical-button control through native menus
@@ -32,15 +32,17 @@ Smart Bike Lights is a [data field](https://developer.garmin.com/connect-iq/conn
 
 Enable **Settings → Light Diagnostics** (off by default) to inspect the existing light network while SBL continues controlling the lights. Available on Edge 1050, 850, 550, 1040, 840, 540 and Forerunner 965.
 
-The display shows one physical light per page with raw `TY`, `ID`, `LM`, `BS` and `CM` values, plus a shared network status and update count. Touchscreen Edges and the 965 have a Light Device button to cycle pages, Control to cycle S/N/M (Smart is skipped without filters), Mode to select a supported mode without sending, and Set Mode to apply it in Manual control. Controls use the existing headlight/taillight group; modes unsupported by that group are not sent. Edge 540/550 show the device label as text, cycle lights every three seconds, and use built-in settings for control changes. `MEM` shows used/total app memory in KB; `NET` counts network losses and subsequent recoveries, excluding the first connection. Each headlight/taillight control group keeps its latest `CMD`, resend count (`Retry`), and confirmation time from the initial send. A matching reported mode completes the timing; unrelated reports do not. Results can also be Waiting, Timeout, Disconnected, or Cancelled. Multiple lights controlled as one group share its command result. Counters and command records update while diagnostics is closed; memory is sampled when displaying it. Records reset when SBL restarts. Values come from the existing network, not Configurator labels. Turn the switch off to restore the normal display. Diagnostics appears only in a full-screen field; smaller fields retain their normal display. Tap the Settings button to open Settings on touchscreen Edge devices. Forerunner 965 and Edge 550/540 use Garmin’s physical-button app settings menu. The switch is also available in Garmin Connect/Express app settings.
+The display shows one physical light per page with raw `TY`, `ID`, `LM`, `BS` and `CM` values, plus a shared network status and update count. Touchscreen Edges and the 965 have a Light Device button to cycle pages, Control to cycle S/N/M (Smart is skipped without smart rules), Mode to select a supported mode without sending, and Set Mode to apply it in Manual control. Controls use the existing headlight/taillight group; modes unsupported by that group are not sent. Edge 540/550 show the device label as text, cycle lights every three seconds, and use built-in settings for control changes. `MEM` shows used/total app memory in KB; `NET` counts network losses and subsequent recoveries, excluding the first connection. Each headlight/taillight control group keeps its latest `CMD`, resend count (`Retry`), and confirmation time from the initial send. A matching reported mode completes the timing; unrelated reports do not. Results can also be Waiting, Timeout, Disconnected, or Cancelled. Multiple lights controlled as one group share its command result. Counters and command records update while diagnostics is closed; memory is sampled when displaying it. Records reset when SBL restarts. Values come from the existing network, not Configurator labels. Turn the switch off to restore the normal display. Diagnostics appears only in a full-screen field; smaller fields retain their normal display. Tap the Settings button to open Settings on touchscreen Edge devices. Forerunner 965 and Edge 550/540 use Garmin’s physical-button app settings menu. The switch is also available in Garmin Connect/Express app settings.
 
 ## Control modes
 
 | Name | Description |
 | :--- | :---------- |
-| Smart | Controlled by configured filters. |
+| Smart | Controlled by configured smart rules. |
 | Network | Controlled by Garmin's light-network mode. |
 | Manual | Controlled by your mode selection or the light's own buttons. |
+
+The Control mode button cycles through the modes selected in the configurator. Manual is mandatory; Smart and Network are optional. Smart is skipped when the light has no smart rules. Selecting a light-mode button, including Off, enters Manual. Control mode and Off always occupy a fixed first row, even with only Manual selected. These buttons and the configuration-switching footer are supplied by the device. Show Footer is enabled by default; turning it off hides the entire bottom section for both lights and gives that space to the mode buttons. The shared visibility flag is saved before the device metadata in the configuration string.
 
 ## Changing control modes
 
@@ -56,9 +58,10 @@ Current mode and control icons are documented with their source artwork in [butt
 
 ## Settings
 
-- **Theme:** Choose Blue (default), Violet, or Mint for selected panel buttons, brightness bars, the configuration switch, and separators configured to use the theme
+- **Theme:** Choose Blue (default), Violet, or Mint for selected panel buttons, brightness bars, and the configuration switch
 - **Record lights mode:** Whether to record connected lights modes that will be displayed in Garmin Connect
 - **Lights Configuration:** The configuration value generated by the [Lights Configurator](https://simas1.github.io/SmartBikeLights/). Devices with more than 32KB memory have two additional configuration inputs, where the current active is determined by **Current configuration** setting
+  Configuration strings must start with `SBL1#` and contain all fields written by this configurator. Earlier formats, omitted sections, and legacy group delimiters are rejected. Each selected light has a `<modes>:<serial number>:<additional modes>` section; an empty section means that light type is not configured. Optional values such as serial numbers may be empty, but their field positions remain present. Create new configurations with the updated configurator and use them with the updated device app.
 - **Invert lights:** Whether lights icons and their positions should be inverted
 - **Current configuration:** Used to select which `Lights Configuration` to use (only for devices with more than 32KB memory)
 
@@ -184,7 +187,7 @@ Check the following videos:
 - [Bontrager TransmitR Remote](https://www.youtube.com/watch?v=dX2CbmVO_LQ)
 - [Bontrager TransmitR MicroRemote](https://www.youtube.com/watch?v=D_vTVkWjrjI)
 
-## Filters
+## Conditions
 
 - Sunrise
 - Sunset
@@ -196,7 +199,7 @@ Check the following videos:
 - Timer state
 - Start location
 - Position (only for devices with more that 32KB memory)
-- Bike radar (only for devices with CIQ 3.0+. For devices with 32KB memory, the filter is available only when one light is paired)
+- Bike radar (only for devices with CIQ 3.0+. For devices with 32KB memory, the condition is available only when one light is paired)
 - Profile name (only for devices with CIQ 3.2+ that support multiple profiles)
 - Gradient (only for devices with more that 32KB memory that have a barometer)
 - Solar intensity (only for solar devices with more than 32KB memory)
@@ -206,7 +209,7 @@ Check the following videos:
 On high-memory devices, fields with enough space show the error code, affected
 component, and a short explanation. A full-screen field also shows available
 context and a suggested fix. For unsupported modes, context identifies the light,
-mode, and panel button or filter group. Individual light channel failures include
+mode, and panel button or smart rule. Individual light channel failures include
 the configured ANT device number; remote failures identify the controller/button.
 If the text does not fit, the field falls back to a compact explanation or the
 original `Error N` display. Low-memory devices retain the original display.
@@ -234,3 +237,5 @@ fake-light preview (defaults: AT1600 and Flare RT). Device arguments also includ
 `--lights at1600,varia-515,flare-rt` and saved JSON or Garmin `.SET` settings using
 `--settings PATH`. See [simulator instructions](Simulator/README.md) for shared
 files, device-specific profiles, and the complete workflow settings example.
+
+The light panel’s **Filter Light Mode** setting limits visible mode buttons and field-card tap cycling to selected modes, in layout order, followed by Off. It preserves the configured layout and leaves Smart rules free to use hidden modes. **All light modes** restores the full configured button list.

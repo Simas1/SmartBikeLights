@@ -159,11 +159,15 @@ def arguments():
     return args
 
 
-def menu_configuration(value):
+def menu_configuration(value, device_id=None, upstream=False):
     """Convert touchscreen panel sections to the non-touch settings-menu grammar."""
     if not value:
         return value
-    parts = value.split('#')
+    if not upstream and not value.startswith('SBL1#'):
+        raise ValueError('Expected an SBL1 configuration')
+    parts = (value if upstream else value[5:]).split('#')
+    if not upstream and len(parts) != 18:
+        raise ValueError('Incomplete SBL1 configuration')
     for index in (5, 6):
         if len(parts) <= index:
             continue
@@ -190,15 +194,21 @@ def menu_configuration(value):
                     raise ValueError('Malformed touchscreen light button')
                 mode = int(raw_mode)
                 parsed += 1
+                if not upstream and mode <= 0:
+                    raise ValueError("Editable buttons require a positive light mode")
                 if mode < 0:
                     continue  # Touch-only control/configuration buttons are not light modes.
-                lines = re.split(r'~br|~n', title)
-                title = ' '.join(line.strip() for line in lines if line.strip() and not line.strip().startswith('@'))
+                if upstream:
+                    lines = re.split(r'~br|~n', title)
+                    title = ' '.join(line.strip() for line in lines if line.strip() and not line.strip().startswith('@'))
                 buttons.append(f'{title}:{mode}')
         if parsed != total or len(buttons) > 20:
             raise ValueError('Unsupported touchscreen light panel button count')
-        parts[index] = f'{len(buttons)}:{fields[1]}' + ''.join('|' + button for button in buttons)
-    return '#'.join(parts)
+        parts[index] = f'{len(buttons)}:{fields[1]}' + ''.join(('|' if upstream else '!') + button for button in buttons)
+    if not upstream:
+        if device_id:
+            parts[-5] = device_id
+    return ('' if upstream else 'SBL1#') + '#'.join(parts)
 
 
 def settings_preview_id(app, namespace, source):
@@ -224,9 +234,10 @@ def prepare(args):
     values = read_settings(args.settings) if args.settings else {}
     app = getattr(args, 'app', APP)
     settings = validate_settings(values, app)
-    if args.profile.get('settingsFormat') == 'menu' or (args.source == 'upstream' and args.device in ('edge540', 'edge550', 'fr965')):
+    menu_devices = {'edge540': 'B4061', 'edge550': 'B4633', 'fr965': 'B4315'}
+    if args.profile.get('settingsFormat') == 'menu' or args.device in menu_devices:
         for key in ('LC', 'LC2', 'LC3'):
-            settings[key] = menu_configuration(settings[key])
+            settings[key] = menu_configuration(settings[key], menu_devices.get(args.device), args.source == 'upstream')
     output = ROOT / 'Build/simulator'
     output.mkdir(parents=True, exist_ok=True)
     work = Path(tempfile.mkdtemp(prefix=f'{args.device}-', dir=output))

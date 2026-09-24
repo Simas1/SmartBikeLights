@@ -2,16 +2,13 @@ import React from 'react';
 import { action } from 'mobx';
 import Grid from '@mui/material/Grid';
 import { observer } from 'mobx-react-lite';
-import { timeFormatList, unitList, getSeparatorColors } from '../constants';
+import { timeFormatList, unitList } from '../constants';
 import AppSelect from '../inputs/AppSelect';
 import DeviceConfiguration from './DeviceConfiguration';
 import ParseConfiguration from './ParseConfiguration';
 import UserConfigurations from './UserConfigurations';
-import { createMenuItemColorTemplateFunc } from './Templates';
 import { getDevice, deviceList } from '../dataFieldConstants';
 import { Alert, Link } from '@mui/material';
-
-const itemTemplate = createMenuItemColorTemplateFunc();
 
 export default observer(({ configuration, setConfiguration, currentUser }) => {
   const setNewConfiguration = action((newConfiguration) => {
@@ -37,14 +34,7 @@ export default observer(({ configuration, setConfiguration, currentUser }) => {
         </Grid>
       </Grid>
       { configuration.device ?
-        <div>
-          <Grid container spacing={2} sx={{ marginBottom: 2 }} justifyContent="left">
-            <Grid item xs={12} sm={4}>
-              <AppSelect required items={getSeparatorColors(getDevice(configuration.device))} label="Separator color" setter={configuration.setSeparatorColor} value={configuration.separatorColor} itemTemplateFunc={itemTemplate} />
-            </Grid>
-          </Grid>
-          <DeviceConfiguration configuration={configuration} device={getDevice(configuration.device)} deviceList={deviceList} />
-        </div>
+        <DeviceConfiguration configuration={configuration} device={getDevice(configuration.device)} deviceList={deviceList} />
         : null
       }
     </div>

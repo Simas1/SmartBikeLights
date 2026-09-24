@@ -8,7 +8,7 @@ module ErrorDisplay {
         switch (code) {
             case 1: return ["Light network", "Unsupported light type", "Only headlights and taillights are supported.", "Remove the unsupported light from Garmin Sensors."];
             case 2: return ["Light network", "Duplicate light type", "More than one light of the same type is connected.", "Keep one headlight and one taillight paired."];
-            case 3: return ["Light settings", "Unsupported mode", "A panel or filter uses a mode this light does not support.", "Choose a supported mode in the indicated panel or filter."];
+            case 3: return ["Light settings", "Unsupported mode", "A panel or smart rule uses a mode this light does not support.", "Choose a supported mode in the indicated panel or smart rule."];
             case 4: return ["Configuration", "Cannot load settings", "Configuration setup failed. The exact setting is unknown.", "Review or replace the active configuration in app settings."];
             case 5: return ["Light network", "No free ANT channel", "An individual light channel could not be allocated.", "Disable unused sensors in Garmin Sensors, then reload the data field."];
             case 6: return ["Light network", "Cannot open ANT channel", "An individual light channel could not be opened.", "Remove or disable these lights in Garmin Sensors, then reload the data field."];
