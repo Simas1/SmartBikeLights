@@ -177,7 +177,7 @@ const parseLightsModes = (chars, index, filterResult, hasOperator) => {
 
 const parseLightPanel = (chars, i, filterResult) => {
   const totalButtons = parseNumber(chars, i, filterResult);
-  if (!totalButtons) {
+  if (totalButtons === null) {
       return null;
   }
 
@@ -205,6 +205,7 @@ const parseLightPanel = (chars, i, filterResult) => {
             let lightButton = new LightButton();
             lightButton.loadPanelName(parseTitle(chars, filterResult[0] + 1, filterResult));
             lightButton.mode = parseNumber(chars, filterResult[0] + 1, filterResult);
+            if (lightButton.mode === -1 || lightButton.mode === 0) throw new Error("Control mode and Off are fixed buttons");
             lightButtonGroup.buttons.push(lightButton);
         }
 
@@ -369,6 +370,7 @@ const parseLightSettings = (totalButtons, chars, filterResult) => {
     let lightButton = new LightButton();
     lightButton.name = parseTitle(chars, filterResult[0] + 1, filterResult);
     lightButton.mode = parseNumber(chars, filterResult[0] + 1, filterResult);
+    if (lightButton.mode === -1 || lightButton.mode === 0) throw new Error("Control mode and Off are fixed buttons");
     settings.buttons.push(lightButton);
   }
 
@@ -948,11 +950,11 @@ export default class Configuration {
       return '';
     }
 
-    if (device.settings && lightSettings && lightSettings.buttons.length) {
+    if (device.settings && lightSettings) {
       return this.getLightSettingsConfigurationValue(lightSettings);
     }
 
-    if (device.touchScreen && lightPanel && lightPanel.buttonGroups.length) {
+    if (device.touchScreen && lightPanel) {
       return this.getLightPanelConfigurationValue(lightPanel);
     }
 
@@ -984,7 +986,7 @@ export default class Configuration {
       buttonGroups += `!${buttons.length}`;
       for (let j = 0; j < buttons.length; j++) {
         let button = buttons[j];
-        buttonGroups += `,${(button.mode < 0 ? '' : button.mode === 0 ? button.name : serializeButtonGraphics(button))}:${button.mode}`;
+        buttonGroups += `,${(button.mode < 0 ? '' : serializeButtonGraphics(button))}:${button.mode}`;
       }
     }
 

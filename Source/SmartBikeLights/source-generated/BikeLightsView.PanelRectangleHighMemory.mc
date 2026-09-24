@@ -1356,14 +1356,10 @@ class BikeLightsView extends  WatchUi.DataField  {
         }
 
         var modes = getLightModes(light, extraModes);
-        var data = new [2 * modes.size() + 1];
-        var dataIndex = 1;
-        data[0] = light.type == 0 /* LIGHT_TYPE_HEADLIGHT */ ? "Headlight" : "Taillight";
+        var data = [light.type == 0 /* LIGHT_TYPE_HEADLIGHT */ ? "Headlight" : "Taillight", "Off", 0];
         for (var i = 0; i < modes.size(); i++) {
             var mode = modes[i];
-            data[dataIndex] = mode == 0 ? "Off" : mode.toString();
-            data[dataIndex + 1] = mode;
-            dataIndex += 2;
+            if (mode != 0) { data.addAll([mode.toString(), mode]); }
         }
 
         return data;
@@ -1387,7 +1383,7 @@ class BikeLightsView extends  WatchUi.DataField  {
 
     private function panelMenuSettings(panel) {
         if (panel == null) { return null; }
-        var result = [panel[2]];
+        var result = [panel[2], "Off", 0];
         var index = 6;
         for (var g = 0; g < panel[1]; g++) {
             var count = panel[index];
@@ -1993,6 +1989,7 @@ class BikeLightsView extends  WatchUi.DataField  {
             expectDelimiter(chars, '!', filterResult);
             data[dataIndex] = parse(0 /* STRING */, chars, null, filterResult);
             data[dataIndex + 1] = requiredNumber(chars, ':', filterResult);
+            if (data[dataIndex + 1] <= 0) { throw new Lang.Exception(); }
             dataIndex += 2;
         }
 
@@ -2002,7 +1999,7 @@ class BikeLightsView extends  WatchUi.DataField  {
     // <TotalButtons>,<TotalButtonGroups>:<LightName>:<ButtonColor>:<ButtonTextColor>|[<ButtonGroup>| ...]
     // <ButtonGroup> := <ButtonsNumber>,[<Button>, ...]
     // <Button> := <ModeTitle>:<LightMode>
-    // Example: 7,6:Ion Pro RT|2,:-1,Off:0|1,High:1|1,Medium:2|1,Low:5|1,Night Flash:62|1,Day Flash:63
+    // Control mode and Off are supplied by the device, not serialized here.
     private function parseLightButtons(chars, i, filterResult) {
         var startCursor = filterResult[0];
         var totalButtons = parse(1 /* NUMBER */, chars, i, filterResult);
@@ -2048,6 +2045,7 @@ class BikeLightsView extends  WatchUi.DataField  {
                 for (var j = 0; j < numberOfButtons; j++) {
                     data[dataIndex + 1] = parse(0 /* STRING */, chars, null, filterResult);
                     data[dataIndex] = parse(1 /* NUMBER */, chars, null, filterResult);
+                    if (data[dataIndex] == -1 || data[dataIndex] == 0) { throw new Lang.Exception(); }
                     dataIndex += 2;
                 }
 
@@ -2373,7 +2371,7 @@ class BikeLightsView extends  WatchUi.DataField  {
                 isFloat = true;
             }
 
-            if (char == ':' || char == '|' || char == '!' || (type == 1 /* NUMBER */ && (char == '/' || char > 57 /* 9 */ || char < 45 /* - */))) {
+            if (char == '#' || char == ':' || char == '|' || char == '!' || (type == 1 /* NUMBER */ && (char == '/' || char > 57 /* 9 */ || char < 45 /* - */))) {
                 break;
             }
 

@@ -1,3 +1,6 @@
+import { headlightList, taillightList } from '../constants';
+import LightPanel from './LightPanel';
+import LightSettings from './LightSettings';
 import Configuration from './Configuration';
 import { deviceList } from '../dataFieldConstants';
 import exampleSettings from '../../../../Simulator/settings.example.json';
@@ -10,7 +13,7 @@ afterAll(() => {
 });
 
 const sample = exampleSettings.LC;
-const remoteSample = "SBL1#1,1!NIGHT:1Es1800,r0###0,73404416::#2,2!BREAK:1:7:1:0A[-30!:1:6:0:0D=1##5,4:Varia 510:0:16777215:-1!2,:-1,Off:0!1,Steady Beam:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#1|1:MicroRemote!1|1:3167:0!2|1:1::123!:123!!|2:1::,0=:!H]0#4321#B3843##2#0#0";
+const remoteSample = "SBL1#1,1!NIGHT:1Es1800,r0###0,73404416::#2,2!BREAK:1:7:1:0A[-30!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Steady Beam:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#1|1:MicroRemote!1|1:3167:0!2|1:1::123!:123!!|2:1::,0=:!H]0#4321#B3843##2#0#0";
 
 test.each(deviceList)('round trips the separator-free format for $name', (device) => {
   const configuration = Configuration.parse(sample, deviceList);
@@ -56,19 +59,19 @@ test('round trips automatic radar connection in the new format', () => {
 });
 
 const obsoleteFormats = [
-  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##5,4:Varia 510:0:16777215:-1!2,:-1,Off:0!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0:0#123!:123!#0##B3843##2#0#0",
-  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##5,4:Varia 510:0:16777215:-1!2,:-1,Off:0!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#123!:123!#0##B3843##2#0#0",
-  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##5,4:Varia 510:0:16777215:-1!2,:-1,Off:0!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#0##B3843##2#0#0",
-  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##5,4:Varia 510:0:16777215:-1!2,:-1,Off:0!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!##B3843##2#0#0",
-  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##5,4:Varia 510:0:16777215:-1!2,:-1,Off:0!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0#B3843##2#0#0",
-  "1,1!NIGHT:1Es1800,r0###0,73404416#1,1!:1:6:0:0D=1##5,4:Varia 510:0:16777215:-1!2,:-1,Off:0!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0",
-  "1,1!NIGHT:1Es1800,r0###0,73404416::1#1,1!:1:6:0:0D=1##5,4:Varia 510:0:16777215:-1!2,:-1,Off:0!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0",
-  "1,1!NIGHT:1Es1800,r0###0,73404416:::#1,1!:1:6:0:0D=1##5,4:Varia 510:0:16777215:-1!2,:-1,Off:0!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0",
-  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6D=1##5,4:Varia 510:0:16777215:-1!2,:-1,Off:0!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0",
-  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0D=1##5,4:Varia 510:0:16777215:-1!2,:-1,Off:0!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0",
-  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1|:1:6:0:0D=1##5,4:Varia 510:0:16777215:-1!2,:-1,Off:0!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0",
-  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##5,4:Varia 510:0:16777215:-1!2,:-1,Off:0!1,Solid:4!1,Day Flash:7!1,Night Flash:6#1:123:456#0:0#123!:123!#0##B3843##2#0#0",
-  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##5,4:Varia 510:0:16777215:-1!2,:-1,Off:0!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0#0##B3843##2#0#0",
+  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0:0#123!:123!#0##B3843##2#0#0",
+  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#123!:123!#0##B3843##2#0#0",
+  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#0##B3843##2#0#0",
+  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!##B3843##2#0#0",
+  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0#B3843##2#0#0",
+  "1,1!NIGHT:1Es1800,r0###0,73404416#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0",
+  "1,1!NIGHT:1Es1800,r0###0,73404416::1#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0",
+  "1,1!NIGHT:1Es1800,r0###0,73404416:::#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0",
+  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0",
+  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0",
+  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1|:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0",
+  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#1:123:456#0:0#123!:123!#0##B3843##2#0#0",
+  "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0#0##B3843##2#0#0",
   "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##5,4:Varia 510:0:16777215:-1|2,:-1,Off:0|1,Solid:4|1,Day Flash:7|1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0",
   "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##5,4:Varia 510!2,:-1,Off:0!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0",
   "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##5,4:Varia 510:0!2,:-1,Off:0!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0",
@@ -101,13 +104,13 @@ test.each(['LC', 'LC2', 'LC3'])('accepts the shipped %s example', (key) => {
 
 test.each(deviceList.filter(device => device.settings))('round trips native menus on $name', (device) => {
   const sections = remoteSample.slice(5).split('#');
-  sections[6] = '4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6';
+  sections[6] = '3:Varia 510!Solid:4!Day Flash:7!Night Flash:6';
   sections[sections.length - 5] = device.id;
   const parsed = Configuration.parse('SBL1#' + sections.join('#'), deviceList);
   expect(parsed).not.toBeNull();
-  expect(parsed.taillightSettings.buttons).toHaveLength(4);
+  expect(parsed.taillightSettings.buttons).toHaveLength(3);
   const restored = Configuration.parse(parsed.getConfigurationValue(deviceList), deviceList);
-  expect(restored.taillightSettings.buttons).toHaveLength(4);
+  expect(restored.taillightSettings.buttons).toHaveLength(3);
   expect(restored.remoteControllers).toHaveLength(1);
 });
 
@@ -154,4 +157,35 @@ test.each(deviceList)('preserves Manual-only control cycles on $name', (device) 
 
 test('rejects a panel cycle without Manual', () => {
   expect(Configuration.parse(sample.replace('123!:123!', '12!:123!'), deviceList)).toBeNull();
+});
+
+
+test.each([-1, 0])('rejects fixed button %s in an editable layout', (mode) => {
+  const sections = sample.slice(5).split('#');
+  sections[5] = `1,1:Front:0:16777215:-1!1,Fixed:${mode}`;
+  expect(() => Configuration.parse('SBL1#' + sections.join('#'), deviceList)).toThrow(/fixed buttons/);
+  sections[5] = `1:Front!Fixed:${mode}`;
+  sections[6] = '';
+  sections[12] = 'B4315';
+  expect(() => Configuration.parse('SBL1#' + sections.join('#'), deviceList)).toThrow(/fixed buttons/);
+});
+
+test.each(['B3843', 'B4315'])('preserves a layout with only fixed buttons on %s', deviceId => {
+  const sections = sample.slice(5).split('#');
+  sections[5] = deviceId === 'B3843' ? '0,0:Front:0:16777215:-1' : '0:Front';
+  sections[6] = '';
+  sections[12] = deviceId;
+  const parsed = Configuration.parse('SBL1#' + sections.join('#'), deviceList);
+  expect(parsed.getConfigurationValue(deviceList).slice(5).split('#')[5]).toBe(sections[5]);
+});
+
+
+test('catalog layouts contain only editable buttons', () => {
+  for (const light of [...headlightList, ...taillightList]) {
+    if (!light.defaultLightPanel) continue;
+    const panel = new LightPanel(light.defaultLightPanel);
+    const settings = new LightSettings(light.defaultLightPanel);
+    expect(panel.buttonGroups.flatMap(group => group.buttons).every(button => button.mode !== -1 && button.mode !== 0)).toBe(true);
+    expect(settings.buttons.every(button => button.mode > 0)).toBe(true);
+  }
 });

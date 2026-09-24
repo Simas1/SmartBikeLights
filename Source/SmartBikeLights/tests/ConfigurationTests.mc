@@ -61,7 +61,7 @@ function sunsetSunriseTest(logger) {
 
 (:test :touchScreen :noWatchPanel)
 function parseFreshTouchConfiguration(logger) {
-    var view = new TestBikeLightsView("SBL1#1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##5,4:Varia 510:0:16777215:-1!2,:-1,Off:0!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0");
+    var view = new TestBikeLightsView("SBL1#1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0");
     Test.assert(view.getErrorCode() == null);
     Test.assert(view.taillightData[15] == null); // Serial number is optional.
     Test.assert(view.remoteControllers.size() == 0);
@@ -71,7 +71,7 @@ function parseFreshTouchConfiguration(logger) {
 
 (:test :touchScreen :noWatchPanel)
 function parseFreshTouchRemoteAndRadar(logger) {
-    var view = new TestBikeLightsView("SBL1#1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##5,4:Varia 510:0:16777215:-1!2,:-1,Off:0!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#1|1:MicroRemote!1|1:3167:0!2|1:1::123!:123!!|2:1::,0=:!H]0#4321#B3843##2#0#0");
+    var view = new TestBikeLightsView("SBL1#1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#1|1:MicroRemote!1|1:3167:0!2|1:1::123!:123!!|2:1::,0=:!H]0#4321#B3843##2#0#0");
     Test.assert(view.getErrorCode() == null);
     Test.assert(view.remoteControllers.size() == 1);
     Test.assert(view.requiresBikeRadarConnection());
@@ -81,19 +81,19 @@ function parseFreshTouchRemoteAndRadar(logger) {
 (:test :touchScreen :noWatchPanel)
 function rejectShortenedTouchConfigurations(logger) {
     var values = [
-        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##5,4:Varia 510:0:16777215:-1!2,:-1,Off:0!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0:0#123!:123!#0##B3843##2#0#0",
-        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##5,4:Varia 510:0:16777215:-1!2,:-1,Off:0!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#123!:123!#0##B3843##2#0#0",
-        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##5,4:Varia 510:0:16777215:-1!2,:-1,Off:0!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#0##B3843##2#0#0",
-        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##5,4:Varia 510:0:16777215:-1!2,:-1,Off:0!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!##B3843##2#0#0",
-        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##5,4:Varia 510:0:16777215:-1!2,:-1,Off:0!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0#B3843##2#0#0",
-        "1,1!NIGHT:1Es1800,r0###0,73404416#1,1!:1:6:0:0D=1##5,4:Varia 510:0:16777215:-1!2,:-1,Off:0!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0",
-        "1,1!NIGHT:1Es1800,r0###0,73404416::1#1,1!:1:6:0:0D=1##5,4:Varia 510:0:16777215:-1!2,:-1,Off:0!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0",
-        "1,1!NIGHT:1Es1800,r0###0,73404416:::#1,1!:1:6:0:0D=1##5,4:Varia 510:0:16777215:-1!2,:-1,Off:0!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0",
-        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6D=1##5,4:Varia 510:0:16777215:-1!2,:-1,Off:0!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0",
-        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0D=1##5,4:Varia 510:0:16777215:-1!2,:-1,Off:0!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0",
-        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1|:1:6:0:0D=1##5,4:Varia 510:0:16777215:-1!2,:-1,Off:0!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0",
-        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##5,4:Varia 510:0:16777215:-1!2,:-1,Off:0!1,Solid:4!1,Day Flash:7!1,Night Flash:6#1:123:456#0:0#123!:123!#0##B3843##2#0#0",
-        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##5,4:Varia 510:0:16777215:-1!2,:-1,Off:0!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0#0##B3843##2#0#0",
+        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0:0#123!:123!#0##B3843##2#0#0",
+        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#123!:123!#0##B3843##2#0#0",
+        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#0##B3843##2#0#0",
+        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!##B3843##2#0#0",
+        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0#B3843##2#0#0",
+        "1,1!NIGHT:1Es1800,r0###0,73404416#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0",
+        "1,1!NIGHT:1Es1800,r0###0,73404416::1#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0",
+        "1,1!NIGHT:1Es1800,r0###0,73404416:::#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0",
+        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0",
+        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0",
+        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1|:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0",
+        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#1:123:456#0:0#123!:123!#0##B3843##2#0#0",
+        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##3,3:Varia 510:0:16777215:-1!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0#0##B3843##2#0#0",
         "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##5,4:Varia 510:0:16777215:-1|2,:-1,Off:0|1,Solid:4|1,Day Flash:7|1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0",
         "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##5,4:Varia 510!2,:-1,Off:0!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0",
         "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##5,4:Varia 510:0!2,:-1,Off:0!1,Solid:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##B3843##2#0#0",
@@ -108,7 +108,7 @@ function rejectShortenedTouchConfigurations(logger) {
 
 (:test :settings)
 function parseFreshSettingsConfiguration(logger) {
-    var view = new TestBikeLightsView("SBL1#1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#123!:123!#0##B4315##2#0#0");
+    var view = new TestBikeLightsView("SBL1#1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##3:Varia 510!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#123!:123!#0##B4315##2#0#0");
     Test.assert(view.getErrorCode() == null);
     Test.assert(view.taillightData[15] == null); // Serial number is optional.
     Test.assert(view.remoteControllers.size() == 0);
@@ -118,7 +118,7 @@ function parseFreshSettingsConfiguration(logger) {
 
 (:test :settings)
 function parseFreshSettingsRemoteAndRadar(logger) {
-    var view = new TestBikeLightsView("SBL1#1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#123!:123!#1|1:MicroRemote!1|1:3167:0!2|1:1::123!:123!!|2:1::,0=:!H]0#4321#B4315##2#0#0");
+    var view = new TestBikeLightsView("SBL1#1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##3:Varia 510!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#123!:123!#1|1:MicroRemote!1|1:3167:0!2|1:1::123!:123!!|2:1::,0=:!H]0#4321#B4315##2#0#0");
     Test.assert(view.getErrorCode() == null);
     Test.assert(view.remoteControllers.size() == 1);
     Test.assert(view.requiresBikeRadarConnection());
@@ -128,18 +128,18 @@ function parseFreshSettingsRemoteAndRadar(logger) {
 (:test :settings)
 function rejectShortenedSettingsConfigurations(logger) {
     var values = [
-        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0:0#123!:123!#0##B4315##2#0#0",
-        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0##B4315##2#0#0",
-        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0##B4315##2#0#0",
-        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#0#B4315##2#0#0",
-        "1,1!NIGHT:1Es1800,r0###0,73404416#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#123!:123!#0##B4315##2#0#0",
-        "1,1!NIGHT:1Es1800,r0###0,73404416::1#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#123!:123!#0##B4315##2#0#0",
-        "1,1!NIGHT:1Es1800,r0###0,73404416:::#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#123!:123!#0##B4315##2#0#0",
-        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#123!:123!#0##B4315##2#0#0",
-        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#123!:123!#0##B4315##2#0#0",
-        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1|:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#123!:123!#0##B4315##2#0#0",
-        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#1:123:456#0:0#123!:123!#0##B4315##2#0#0",
-        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#0#0##B4315##2#0#0",
+        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##3:Varia 510!Solid:4!Day Flash:7!Night Flash:6#0:0#123!:123!#0##B4315##2#0#0",
+        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##3:Varia 510!Solid:4!Day Flash:7!Night Flash:6#0::#0##B4315##2#0#0",
+        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##3:Varia 510!Solid:4!Day Flash:7!Night Flash:6#0::#0:0##B4315##2#0#0",
+        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##3:Varia 510!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#0#B4315##2#0#0",
+        "1,1!NIGHT:1Es1800,r0###0,73404416#1,1!:1:6:0:0D=1##3:Varia 510!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#123!:123!#0##B4315##2#0#0",
+        "1,1!NIGHT:1Es1800,r0###0,73404416::1#1,1!:1:6:0:0D=1##3:Varia 510!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#123!:123!#0##B4315##2#0#0",
+        "1,1!NIGHT:1Es1800,r0###0,73404416:::#1,1!:1:6:0:0D=1##3:Varia 510!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#123!:123!#0##B4315##2#0#0",
+        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6D=1##3:Varia 510!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#123!:123!#0##B4315##2#0#0",
+        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0D=1##3:Varia 510!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#123!:123!#0##B4315##2#0#0",
+        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1|:1:6:0:0D=1##3:Varia 510!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#123!:123!#0##B4315##2#0#0",
+        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##3:Varia 510!Solid:4!Day Flash:7!Night Flash:6#1:123:456#0:0#123!:123!#0##B4315##2#0#0",
+        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##3:Varia 510!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#0#0##B4315##2#0#0",
         "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##4:Varia 510|Off:0|Solid:4|Day Flash:7|Night Flash:6#0::#0:0#123!:123!#0##B4315##2#0#0"
     ];
     for (var i = 0; i < values.size(); i++) {
@@ -330,5 +330,29 @@ function panelControlCyclesSelectedModes(logger) {
     }
     var invalid = new PanelControlCycleTestView("SBL1##::######0::#0:0#12!:3!#0##B3843#14##0#0");
     Test.assert(invalid.getErrorCode() == 4);
+    return true;
+}
+
+(:test :touchScreen :noWatchPanel)
+function fixedPanelButtonsAreNotSerialized(logger) {
+    var panels = ["0,0:Front:0:16777215:-1", "1,1:Front:0:16777215:-1!1,Control:-1", "1,1:Front:0:16777215:-1!1,Off:0"];
+    for (var i = 0; i < panels.size(); i++) {
+        var view = new TestBikeLightsView("SBL1##::####" + panels[i] + "##0::#0:0#3!:3!#0##B3843#14##0#0");
+        Test.assert(i == 0 ? view.getErrorCode() == null : view.getErrorCode() != null);
+    }
+    return true;
+}
+
+(:test :settings)
+function fixedMenuButtonsAreNotSerialized(logger) {
+    var panels = ["0:Front", "1:Front!Control:-1", "1:Front!Off:0"];
+    for (var i = 0; i < panels.size(); i++) {
+        var view = new TestBikeLightsView("SBL1##::####" + panels[i] + "##0::#0:0#3!:3!#0##B4315#14##0#0");
+        Test.assert(i == 0 ? view.getErrorCode() == null : view.getErrorCode() != null);
+        if (i == 0) {
+            Test.assert(view.headlightSettings.size() == 3);
+            Test.assert(view.headlightSettings[1].equals("Off") && view.headlightSettings[2] == 0);
+        }
+    }
     return true;
 }

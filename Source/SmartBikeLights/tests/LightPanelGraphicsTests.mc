@@ -57,18 +57,16 @@ function graphicsBrightnessAndRuntimeTest(logger) {
 
 (:test, :touchScreen)
 function graphicsOptionalButtonsTest(logger) {
-    var original = [4,3,"Front",0,0,-1,2,-1,null,0,"Off",1,51,"Low",1,-2,null];
+    var original = [2,2,"Front",0,0,-1,1,51,"Low",1,-2,null];
     var result = LightPanelGraphics.panelSettings(original);
-    Test.assert(original[0] == 4); // Never mutate the saved configuration.
+    Test.assert(original[0] == 2); // Never mutate the saved configuration.
     Test.assert(result[0] == 3 && result[1] == 2);
     Test.assert(result[6] == 2 && result[7] == -1 && result[9] == 0);
-    result = LightPanelGraphics.panelSettings([1,1,"Front",0,0,-1,1,-2,null]);
-    Test.assert(result[0] == 1 && result[1] == 1 && result[7] == -1);
-    result = LightPanelGraphics.panelSettings([2,1,"Front",0,0,-1,2,-2,null,51,"Low"]);
-    Test.assert(result[0] == 2 && result[1] == 2 && result[7] == -1 && result[10] == 51);
-    result = LightPanelGraphics.panelSettings([1,1,"Front",0,0,-1,1,0,"Off"]);
+    Test.assert(result[12] == 51);
+    result = LightPanelGraphics.panelSettings([0,0,"Front",0,0,-1]);
     Test.assert(result[0] == 2 && result[1] == 1);
     Test.assert(result[6] == 2 && result[7] == -1 && result[9] == 0);
+    Test.assert(LightPanelGraphics.groupWeight(result, 6) == 0.5);
     result = LightPanelGraphics.panelSettings([1,1,"Front",0,0,2,1,51,"Low"]);
     Test.assert(result[5] == 2); // Preserve the configured automation-name font.
     return true;

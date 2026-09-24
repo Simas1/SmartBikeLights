@@ -6,13 +6,13 @@ import LightButtonGroup from '../models/LightButtonGroup';
 import LightButton from '../models/LightButton';
 import ButtonGroup from './ButtonGroup';
 import AddButton from './AddButton';
-import { controlMode, currentConfiguration, battery, groupNameVisibility } from '../constants';
+import { currentConfiguration, battery, groupNameVisibility } from '../constants';
 import AppTextInput from '../inputs/AppTextInput';
 import AppSelect from '../inputs/AppSelect';
 import Typography from '@mui/material/Typography';
 
 const getModes = (lightModes) => {
-  return [controlMode, currentConfiguration, battery].concat(lightModes);
+  return [currentConfiguration, battery].concat(lightModes.filter(mode => mode.id !== 0));
 };
 
 export default observer(({ lightPanel, lightModes }) => {
@@ -51,7 +51,7 @@ export default observer(({ lightPanel, lightModes }) => {
         </Grid>
         <Grid item xs={12} sm={8}>
           <Typography variant="body2">
-            Bold Blue uses icons for Control mode and Off. Control mode is always available; if omitted, it is added beside Off or in its own row. The footer switches configurations;
+            Control mode and Off always appear in a fixed first row. Only the remaining buttons are configured below. The footer switches configurations;
             Current configuration buttons are omitted from the grid. Set brightness and runtime
             on each mode to show graphical details.
           </Typography>

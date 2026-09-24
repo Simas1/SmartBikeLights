@@ -14,7 +14,7 @@ export default class LightSettings {
     this.lightName = data.shortName;
     data.buttonGroups.forEach(modeList => {
       modeList.forEach(mode => {
-        if (mode.id < 0) {
+        if (mode.id <= 0) {
           return;
         }
 

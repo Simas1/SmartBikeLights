@@ -34,7 +34,7 @@ export default observer(({ lightSettings, lightModes, }) => {
           <ButtonGroup
             key={button.id}
             buttonGroup={button}
-            lightModes={lightModes}
+            lightModes={lightModes.filter(mode => mode.id > 0)}
             index={index}
             moveGroup={moveButton}
             addButton={addButton}

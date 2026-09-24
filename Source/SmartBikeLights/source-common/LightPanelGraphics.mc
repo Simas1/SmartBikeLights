@@ -131,23 +131,19 @@ module LightPanelGraphics {
         return steps < 1 ? 1 : steps > 6 ? 6 : steps;
     }
 
-    // Move configuration switching out of the mode grid. Leave configured Off,
-    // control and battery buttons in place, including mixed button groups.
+    // Supply the fixed Control mode / Off row; configuration switching uses the footer.
     function panelSettings(settings) {
         var result = settings.slice(0, 6);
-        result[0] = 0;
-        result[1] = 0;
+        result[0] = 2;
+        result[1] = 1;
+        result.addAll([2, -1, null, 0, "Off"]);
         var index = 6;
-        var hasControl = false;
-        var offGroup = -1;
         for (var i = 0; i < settings[1]; i++) {
             var count = settings[index];
             var group = [0];
             for (var j = 0; j < count; j++) {
                 var k = index + 1 + j * 2;
                 if (settings[k] != -2) {
-                    if (settings[k] == -1) { hasControl = true; }
-                    if (settings[k] == 0) { offGroup = result.size(); }
                     group[0]++;
                     group.add(settings[k]);
                     group.add(settings[k + 1]);
@@ -160,29 +156,11 @@ module LightPanelGraphics {
             }
             index += 1 + count * 2;
         }
-        if (!hasControl) {
-            var insert = offGroup >= 0 ? offGroup : 6;
-            var tail = result.slice(insert, null);
-            result = result.slice(0, insert);
-            if (offGroup >= 0) {
-                result.addAll([tail[0] + 1, -1, null]);
-                result.addAll(tail.slice(1, null));
-            } else {
-                result.addAll([1, -1, null]);
-                result.addAll(tail);
-                result[1]++;
-            }
-            result[0]++;
-        }
         return result;
     }
 
     function groupWeight(settings, index) {
-        for (var i = 0; i < settings[index]; i++) {
-            var mode = settings[index + 1 + i * 2];
-            if (mode != -1 && mode != 0) { return 1.0; }
-        }
-        return 0.5;
+        return index == 6 ? 0.5 : 1.0;
     }
 
     // Each text-only light panel uses the largest font that fits every mode.

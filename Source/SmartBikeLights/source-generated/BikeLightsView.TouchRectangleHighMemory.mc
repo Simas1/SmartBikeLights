@@ -1585,14 +1585,10 @@ class BikeLightsView extends  WatchUi.DataField  {
         }
 
         var modes = getLightModes(light, extraModes);
-        var data = new [2 * modes.size() + 1];
-        var dataIndex = 1;
-        data[0] = light.type == 0 /* LIGHT_TYPE_HEADLIGHT */ ? "Headlight" : "Taillight";
+        var data = [light.type == 0 /* LIGHT_TYPE_HEADLIGHT */ ? "Headlight" : "Taillight", "Off", 0];
         for (var i = 0; i < modes.size(); i++) {
             var mode = modes[i];
-            data[dataIndex] = mode == 0 ? "Off" : mode.toString();
-            data[dataIndex + 1] = mode;
-            dataIndex += 2;
+            if (mode != 0) { data.addAll([mode.toString(), mode]); }
         }
 
         return data;
@@ -1802,25 +1798,13 @@ class BikeLightsView extends  WatchUi.DataField  {
     }
 
     private function getDefaultLightPanelSettings(lightType, capableModes) {
-        var totalButtonGroups = capableModes.size();
-        var data = [];
-        data.add(totalButtonGroups); // Total buttons
-        data.add(totalButtonGroups); // Total button groups
-        data.add(lightType == 0 /* LIGHT_TYPE_HEADLIGHT */ ? "Headlight" : "Taillight"); // Light name
-        data.add(0 /* Theme */); // Button color
-        data.add(0xFFFFFF /* White */); // Button text color
-        data.add(-1 /* Do not display */); // Display group name text size
-        for (var i = 0; i < totalButtonGroups; i++) {
+        var data = [0, 0, lightType == 0 ? "Headlight" : "Taillight", 0, 0xFFFFFF, -1];
+        for (var i = 0; i < capableModes.size(); i++) {
             var mode = capableModes[i];
-            var totalGroupButtons = mode == 0 /* Off */ ? 2 : 1; // Number of buttons;
-            data.add(totalGroupButtons); // Total buttons in the group
-            data.add(mode == 0 ? -1 : mode); // Light mode
-            data.add(mode == 0 ? null : mode.toString()); // Mode name
-            if (mode == 0 /* Off */) {
-                data[0]++;
-                data.add(mode);
-                data.add("Off");
-            }
+            if (mode == 0) { continue; }
+            data[0]++;
+            data[1]++;
+            data.addAll([1, mode, mode.toString()]);
         }
 
         return data;
@@ -2582,6 +2566,7 @@ class BikeLightsView extends  WatchUi.DataField  {
             expectDelimiter(chars, '!', filterResult);
             data[dataIndex] = parse(0 /* STRING */, chars, null, filterResult);
             data[dataIndex + 1] = requiredNumber(chars, ':', filterResult);
+            if (data[dataIndex + 1] <= 0) { throw new Lang.Exception(); }
             dataIndex += 2;
         }
 
@@ -2591,7 +2576,7 @@ class BikeLightsView extends  WatchUi.DataField  {
     // <TotalButtons>,<TotalButtonGroups>:<LightName>:<ButtonColor>:<ButtonTextColor>|[<ButtonGroup>| ...]
     // <ButtonGroup> := <ButtonsNumber>,[<Button>, ...]
     // <Button> := <ModeTitle>:<LightMode>
-    // Example: 7,6:Ion Pro RT|2,:-1,Off:0|1,High:1|1,Medium:2|1,Low:5|1,Night Flash:62|1,Day Flash:63
+    // Control mode and Off are supplied by the device, not serialized here.
     private function parseLightButtons(chars, i, filterResult) {
         var totalButtons = parse(1 /* NUMBER */, chars, i, filterResult);
         if (totalButtons == null) {
@@ -2625,6 +2610,7 @@ class BikeLightsView extends  WatchUi.DataField  {
                 for (var j = 0; j < numberOfButtons; j++) {
                     data[dataIndex + 1] = parse(0 /* STRING */, chars, null, filterResult);
                     data[dataIndex] = parse(1 /* NUMBER */, chars, null, filterResult);
+                    if (data[dataIndex] == -1 || data[dataIndex] == 0) { throw new Lang.Exception(); }
                     dataIndex += 2;
                 }
 
@@ -2950,7 +2936,7 @@ class BikeLightsView extends  WatchUi.DataField  {
                 isFloat = true;
             }
 
-            if (char == ':' || char == '|' || char == '!' || (type == 1 /* NUMBER */ && (char == '/' || char > 57 /* 9 */ || char < 45 /* - */))) {
+            if (char == '#' || char == ':' || char == '|' || char == '!' || (type == 1 /* NUMBER */ && (char == '/' || char > 57 /* 9 */ || char < 45 /* - */))) {
                 break;
             }
 

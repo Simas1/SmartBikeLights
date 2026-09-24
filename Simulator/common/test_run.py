@@ -273,8 +273,8 @@ class PreviewTests(unittest.TestCase):
             before, after = original[5:].split('#'), converted[5:].split('#')
             self.assertEqual(before[:5], after[:5])
             self.assertEqual(before[7:], after[7:])
-            self.assertTrue(after[5].startswith('4:AT 1600!Off:0!Low'))
-            self.assertTrue(after[6].startswith('5:Flare RT!Off:0!Night Flash'))
+            self.assertTrue(after[5].startswith('3:AT 1600!Low'))
+            self.assertTrue(after[6].startswith('4:Flare RT!Night Flash'))
             # Current menu labels preserve graphics metadata for the panel renderer.
             self.assertIn('~n200lm-12h', after[5])
             if '@headlight-low' in before[5]:
