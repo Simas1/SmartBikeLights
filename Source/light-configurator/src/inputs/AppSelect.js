@@ -8,7 +8,7 @@ import IconButton from '@mui/material/IconButton';
 import { observer } from "mobx-react-lite";
 import AppInputHelp from './AppInputHelp';
 
-export default observer(({ items, label, value, setter, required, help, multiple, itemTemplateFunc, disabled }) => {
+export default observer(({ items, label, value, setter, required, help, multiple, itemTemplateFunc, selectedItemTemplateFunc, disabled }) => {
   const id = nanoid();
   const defaultValue = multiple ? [] : '';
   const isDefault = (val) => multiple ? Array.isArray(val) && !val.length : val === '';
@@ -25,6 +25,14 @@ export default observer(({ items, label, value, setter, required, help, multiple
       return '';
     }
 
+    if (selectedItemTemplateFunc) {
+      return <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        {ids.map(id => {
+          const item = items.find(i => i.id === id);
+          return item ? <React.Fragment key={id}>{selectedItemTemplateFunc(item)}</React.Fragment> : null;
+        })}
+      </span>;
+    }
     return ids.map(id => items.find(i => i.id === id)?.name).join(', ')
   };
 
