@@ -112,7 +112,7 @@ export default observer(() => {
         <StyledAppBar position="relative">
           <Toolbar>
             <Typography variant="h6" color="inherit" noWrap sx={{ flexGrow: 1 }}>
-              Lights Configurator <br className={classes.hidden} /> ({appTitle})
+              Lights Configurator <br className={classes.hidden} /> ({appTitle} ☢ Simas Edition)
             </Typography>
             {
               SignIn ? <SignIn /> : null
