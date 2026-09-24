@@ -1084,10 +1084,6 @@ export default class Configuration {
     this.timeFormat = value;
   }
 
-  setSeparatorColor = (value) => {
-    this.separatorColor = value;
-  }
-
   setHeadlight = (value) => {
     this.headlight = value;
   }
