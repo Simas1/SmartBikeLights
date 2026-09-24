@@ -205,7 +205,7 @@ const parseLightPanel = (chars, i, filterResult) => {
             let lightButton = new LightButton();
             lightButton.loadPanelName(parseTitle(chars, filterResult[0] + 1, filterResult));
             lightButton.mode = parseNumber(chars, filterResult[0] + 1, filterResult);
-            if (lightButton.mode === -1 || lightButton.mode === 0) throw new Error("Control mode and Off are fixed buttons");
+            if (lightButton.mode === -2 || lightButton.mode === -1 || lightButton.mode === 0) throw new Error("Control mode, Off and configuration switching are fixed buttons");
             lightButtonGroup.buttons.push(lightButton);
         }
 
@@ -370,7 +370,7 @@ const parseLightSettings = (totalButtons, chars, filterResult) => {
     let lightButton = new LightButton();
     lightButton.name = parseTitle(chars, filterResult[0] + 1, filterResult);
     lightButton.mode = parseNumber(chars, filterResult[0] + 1, filterResult);
-    if (lightButton.mode === -1 || lightButton.mode === 0) throw new Error("Control mode and Off are fixed buttons");
+    if (lightButton.mode === -2 || lightButton.mode === -1 || lightButton.mode === 0) throw new Error("Control mode, Off and configuration switching are fixed buttons");
     settings.buttons.push(lightButton);
   }
 

@@ -42,7 +42,7 @@ The display shows one physical light per page with raw `TY`, `ID`, `LM`, `BS` an
 | Network | Controlled by Garmin's light-network mode. |
 | Manual | Controlled by your mode selection or the light's own buttons. |
 
-The Control mode button cycles through the modes selected in the configurator. Manual is mandatory; Smart and Network are optional. Smart is skipped when the light has no filters. Selecting a light-mode button, including Off, enters Manual. Control mode and Off always occupy a fixed first row, even with only Manual selected. These buttons are supplied by the device and are not part of the editable layout or configuration string.
+The Control mode button cycles through the modes selected in the configurator. Manual is mandatory; Smart and Network are optional. Smart is skipped when the light has no filters. Selecting a light-mode button, including Off, enters Manual. Control mode and Off always occupy a fixed first row, even with only Manual selected. These buttons and the configuration-switching footer are supplied by the device and are not part of the editable layout or configuration string.
 
 ## Changing control modes
 

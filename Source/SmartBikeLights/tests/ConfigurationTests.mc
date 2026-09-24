@@ -335,7 +335,7 @@ function panelControlCyclesSelectedModes(logger) {
 
 (:test :touchScreen :noWatchPanel)
 function fixedPanelButtonsAreNotSerialized(logger) {
-    var panels = ["0,0:Front:0:16777215:-1", "1,1:Front:0:16777215:-1!1,Control:-1", "1,1:Front:0:16777215:-1!1,Off:0"];
+    var panels = ["0,0:Front:0:16777215:-1", "1,1:Front:0:16777215:-1!1,Control:-1", "1,1:Front:0:16777215:-1!1,Off:0", "1,1:Front:0:16777215:-1!1,Config:-2"];
     for (var i = 0; i < panels.size(); i++) {
         var view = new TestBikeLightsView("SBL1##::####" + panels[i] + "##0::#0:0#3!:3!#0##B3843#14##0#0");
         Test.assert(i == 0 ? view.getErrorCode() == null : view.getErrorCode() != null);
@@ -345,7 +345,7 @@ function fixedPanelButtonsAreNotSerialized(logger) {
 
 (:test :settings)
 function fixedMenuButtonsAreNotSerialized(logger) {
-    var panels = ["0:Front", "1:Front!Control:-1", "1:Front!Off:0"];
+    var panels = ["0:Front", "1:Front!Control:-1", "1:Front!Off:0", "1:Front!Config:-2"];
     for (var i = 0; i < panels.size(); i++) {
         var view = new TestBikeLightsView("SBL1##::####" + panels[i] + "##0::#0:0#3!:3!#0##B4315#14##0#0");
         Test.assert(i == 0 ? view.getErrorCode() == null : view.getErrorCode() != null);

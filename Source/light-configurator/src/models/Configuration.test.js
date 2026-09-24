@@ -160,7 +160,7 @@ test('rejects a panel cycle without Manual', () => {
 });
 
 
-test.each([-1, 0])('rejects fixed button %s in an editable layout', (mode) => {
+test.each([-2, -1, 0])('rejects fixed button %s in an editable layout', (mode) => {
   const sections = sample.slice(5).split('#');
   sections[5] = `1,1:Front:0:16777215:-1!1,Fixed:${mode}`;
   expect(() => Configuration.parse('SBL1#' + sections.join('#'), deviceList)).toThrow(/fixed buttons/);
@@ -185,7 +185,7 @@ test('catalog layouts contain only editable buttons', () => {
     if (!light.defaultLightPanel) continue;
     const panel = new LightPanel(light.defaultLightPanel);
     const settings = new LightSettings(light.defaultLightPanel);
-    expect(panel.buttonGroups.flatMap(group => group.buttons).every(button => button.mode !== -1 && button.mode !== 0)).toBe(true);
+    expect(panel.buttonGroups.flatMap(group => group.buttons).every(button => button.mode !== -2 && button.mode !== -1 && button.mode !== 0)).toBe(true);
     expect(settings.buttons.every(button => button.mode > 0)).toBe(true);
   }
 });

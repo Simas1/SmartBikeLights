@@ -134,28 +134,10 @@ module LightPanelGraphics {
     // Supply the fixed Control mode / Off row; configuration switching uses the footer.
     function panelSettings(settings) {
         var result = settings.slice(0, 6);
-        result[0] = 2;
-        result[1] = 1;
+        result[0] += 2;
+        result[1]++;
         result.addAll([2, -1, null, 0, "Off"]);
-        var index = 6;
-        for (var i = 0; i < settings[1]; i++) {
-            var count = settings[index];
-            var group = [0];
-            for (var j = 0; j < count; j++) {
-                var k = index + 1 + j * 2;
-                if (settings[k] != -2) {
-                    group[0]++;
-                    group.add(settings[k]);
-                    group.add(settings[k + 1]);
-                }
-            }
-            if (group[0] > 0) {
-                result[0] += group[0];
-                result[1]++;
-                result.addAll(group);
-            }
-            index += 1 + count * 2;
-        }
+        result.addAll(settings.slice(6, null));
         return result;
     }
 

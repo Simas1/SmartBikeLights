@@ -1504,11 +1504,6 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
   // #endif
 
     protected function onLightPanelModeChange(lightData, lightType, lightMode, controlMode) {
-        if (lightMode == -2) {
-            cycleConfiguration();
-            return;
-        }
-
   // #if dataField
         var newControlMode = lightMode < 0 ? nextPanelControlMode(lightData, lightType, controlMode)
             : controlMode != 2 /* MANUAL */ ? 2 : null;
@@ -2288,11 +2283,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
                 }
 
                 var modeTitle;
-                if (mode == -2) {
-                    var currentConfig = getPropertyValue("CC");
-                    var currentConfigName = getPropertyValue("CN" + (currentConfig == null ? 1 : currentConfig));
-                    modeTitle = currentConfigName == null ? "" : currentConfigName;
-                } else if (mode < 0) {
+                if (mode < 0) {
                     modeTitle = "M";
                 } else {
                     modeTitle = panelSettings[modeIndex + 1];
@@ -3065,7 +3056,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
                 for (var j = 0; j < numberOfButtons; j++) {
                     data[dataIndex + 1] = parse(0 /* STRING */, chars, null, filterResult);
                     data[dataIndex] = parse(1 /* NUMBER */, chars, null, filterResult);
-                    if (data[dataIndex] == -1 || data[dataIndex] == 0) { throw new Lang.Exception(); }
+                    if (data[dataIndex] == -2 || data[dataIndex] == -1 || data[dataIndex] == 0) { throw new Lang.Exception(); }
                     dataIndex += 2;
                 }
 
