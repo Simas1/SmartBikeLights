@@ -94,7 +94,7 @@ function parseValidOld3ConfigurationForTouchScreen(logger) {
 
 (:test :touchScreen)
 function parseValidOld4ConfigurationForTouchScreen(logger) {
-    var view = new TestBikeLightsView("1,1!NIGHT:1Es1800,r0###0,73404416::1#2,2!BREAK:1:7:1:0A[-30!:1:6:0:0D=1##5,4:Varia 510:0!2,:-1,Off:0!1,Steady Beam:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0#B2713##2#0#0");
+    var view = new TestBikeLightsView("1,1!NIGHT:1Es1800,r0###0,73404416::1#2,2!BREAK:1:7:1:0A[-30!:1:6:0:0D=1##5,4:Varia 510:0!2,:-1,Off:0!1,Steady Beam:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#B2713##2#0#0");
     Test.assert(view.headlightPanelSettings == null);
     Test.assert(view.taillightPanelSettings != null);
     // Legacy tap sections must still parse without corrupting the light panel.
@@ -108,7 +108,7 @@ function parseValidOld4ConfigurationForTouchScreen(logger) {
 // Old configuration without remote controllers
 (:test :touchScreen)
 function parseValidOld5ConfigurationForTouchScreen(logger) {
-    var view = new TestBikeLightsView("1,1!NIGHT:1Es1800,r0###0,73404416::1#2,2!BREAK:1:7:1:0A[-30!:1:6:0:0D=1##5,4:Varia 510:0:16777215!2,:-1,Off:0!1,Steady Beam:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0#B2713##2#0#0");
+    var view = new TestBikeLightsView("1,1!NIGHT:1Es1800,r0###0,73404416::1#2,2!BREAK:1:7:1:0A[-30!:1:6:0:0D=1##5,4:Varia 510:0:16777215!2,:-1,Off:0!1,Steady Beam:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#B2713##2#0#0");
     Test.assert(view.headlightPanelSettings == null);
     Test.assert(view.taillightPanelSettings != null);
     // Legacy tap sections must still parse without corrupting the light panel.
@@ -122,7 +122,7 @@ function parseValidOld5ConfigurationForTouchScreen(logger) {
 // Old configuration without remote controllers
 (:test :touchScreen)
 function parseValidOld5ConfigurationWithInitialSpacesForTouchScreen(logger) {
-    var view = new TestBikeLightsView("   1,1!NIGHT:1Es1800,r0###0,73404416::1#2,2!BREAK:1:7:1:0A[-30!:1:6:0:0D=1##5,4:Varia 510:0!2,:-1,Off:0!1,Steady Beam:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0#B2713##2#0#0");
+    var view = new TestBikeLightsView("   1,1!NIGHT:1Es1800,r0###0,73404416::1#2,2!BREAK:1:7:1:0A[-30!:1:6:0:0D=1##5,4:Varia 510:0!2,:-1,Off:0!1,Steady Beam:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#B2713##2#0#0");
     Test.assert(view.headlightPanelSettings == null);
     Test.assert(view.taillightPanelSettings != null);
     // Legacy tap sections must still parse without corrupting the light panel.
@@ -135,7 +135,7 @@ function parseValidOld5ConfigurationWithInitialSpacesForTouchScreen(logger) {
 
 (:test :touchScreen)
 function parseValidConfigurationWithoutAdditionalLightModesForTouchScreen(logger) {
-    var view = new TestBikeLightsView("1,1!NIGHT:1Es1800,r0###0,73404416::1#2,2!BREAK:1:7:1:0A[-30!:1:6:0:0D=1##5,4:Varia 510:0:16777215!2,:-1,Off:0!1,Steady Beam:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0#0#B2713##2#0#0");
+    var view = new TestBikeLightsView("1,1!NIGHT:1Es1800,r0###0,73404416::1#2,2!BREAK:1:7:1:0A[-30!:1:6:0:0D=1##5,4:Varia 510:0:16777215!2,:-1,Off:0!1,Steady Beam:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0#B2713##2#0#0");
     Test.assert(view.headlightPanelSettings == null);
     Test.assert(view.taillightPanelSettings != null);
     // Legacy tap sections must still parse without corrupting the light panel.
@@ -148,7 +148,7 @@ function parseValidConfigurationWithoutAdditionalLightModesForTouchScreen(logger
 
 (:test :touchScreen)
 function parseValidConfigurationWithoutRadarNumberForTouchScreen(logger) {
-    var view = new TestBikeLightsView("1,1!NIGHT:1Es1800,r0###0,73404416::1:#2,2!BREAK:1:7:1:0A[-30!:1:6:0:0D=1##5,4:Varia 510:0:16777215!2,:-1,Off:0!1,Steady Beam:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0#0#B2713##2#0#0");
+    var view = new TestBikeLightsView("1,1!NIGHT:1Es1800,r0###0,73404416::1:#2,2!BREAK:1:7:1:0A[-30!:1:6:0:0D=1##5,4:Varia 510:0:16777215!2,:-1,Off:0!1,Steady Beam:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0#B2713##2#0#0");
     Test.assert(view.headlightPanelSettings == null);
     Test.assert(view.taillightPanelSettings != null);
     // Legacy tap sections must still parse without corrupting the light panel.
@@ -161,7 +161,7 @@ function parseValidConfigurationWithoutRadarNumberForTouchScreen(logger) {
 
 (:test :touchScreen)
 function parseValidConfigurationForTouchScreen(logger) {
-    var view = new TestBikeLightsView("1,1!NIGHT:1Es1800,r0###0,73404416::1:#2,2!BREAK:1:7:1:0A[-30!:1:6:0:0D=1##5,4:Varia 510:0:16777215:-1!2,:-1,Off:0!1,Steady Beam:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0#0##B2713##2#0#0");
+    var view = new TestBikeLightsView("1,1!NIGHT:1Es1800,r0###0,73404416::1:#2,2!BREAK:1:7:1:0A[-30!:1:6:0:0D=1##5,4:Varia 510:0:16777215:-1!2,:-1,Off:0!1,Steady Beam:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0##B2713##2#0#0");
     Test.assert(view.headlightPanelSettings == null);
     Test.assert(view.taillightPanelSettings != null);
     // Legacy tap sections must still parse without corrupting the light panel.
@@ -174,7 +174,7 @@ function parseValidConfigurationForTouchScreen(logger) {
 
 (:test :touchScreen)
 function parseValidConfigurationWithRemoteControllerForTouchScreen(logger) {
-    var view = new TestBikeLightsView("1,1!NIGHT:1Es1800,r0###0,73404416::1#2,2!BREAK:1:7:1:0A[-30!:1:6:0:0D=1##5,4:Varia 510:0:16777215!2,:-1,Off:0!1,Steady Beam:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#0#1|1:MicroRemote!1|1:3167:0!2|1:1::123!:123!!|2:1::,0=:!H]0#B2713##2#0#0");
+    var view = new TestBikeLightsView("1,1!NIGHT:1Es1800,r0###0,73404416::1#2,2!BREAK:1:7:1:0A[-30!:1:6:0:0D=1##5,4:Varia 510:0:16777215!2,:-1,Off:0!1,Steady Beam:4!1,Day Flash:7!1,Night Flash:6#0::#0:0#123!:123!#1|1:MicroRemote!1|1:3167:0!2|1:1::123!:123!!|2:1::,0=:!H]0#4321#B2713##2#0#0");
     Test.assert(view.headlightPanelSettings == null);
     Test.assert(view.taillightPanelSettings != null);
     // Legacy tap sections must still parse without corrupting the light panel.
@@ -182,6 +182,8 @@ function parseValidConfigurationWithRemoteControllerForTouchScreen(logger) {
     Test.assert(view.taillightPanelSettings[0] == 5);
     Test.assert(view.taillightPanelSettings[1] == 4);
     Test.assert(view.remoteControllers != null);
+    Test.assert(view.remoteControllers.size() == 1);
+    Test.assert(view.requiresBikeRadarConnection());
 
     return view.getErrorCode() == null;
 }
@@ -189,7 +191,7 @@ function parseValidConfigurationWithRemoteControllerForTouchScreen(logger) {
 // The watch combines native settings menus with the touchscreen config grammar.
 (:test :touchScreen :watchPanel)
 function parseLegacyMenuWithRemoteControllerForWatch(logger) {
-    var view = new TestBikeLightsView("1,1!NIGHT:1Es1800,r0###0,73404416::1#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#123!:123!#0#1|1:MicroRemote!1|1:32142:0!2|1:1::123!:123!!|2:1:10:,1=:!H]0#B3121##2#0#0");
+    var view = new TestBikeLightsView("1,1!NIGHT:1Es1800,r0###0,73404416::1#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#123!:123!#1|1:MicroRemote!1|1:32142:0!2|1:1::123!:123!!|2:1:10:,1=:!H]0#B3121##2#0#0");
     Test.assert(view.getErrorCode() == null);
     Test.assert(view.taillightSettings[0].equals("Varia 510"));
     Test.assert(view.taillightSettings[2] == 0);
@@ -222,7 +224,7 @@ function parseValidOld2ConfigurationForSettings(logger) {
 // Missing remote controllers
 (:test :settings)
 function parseValidOld3ConfigurationForSettings(logger) {
-    var view = new TestBikeLightsView("1,1!NIGHT:1Es1800,r0###0,73404416::1#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#0#B3121##2#0#0");
+    var view = new TestBikeLightsView("1,1!NIGHT:1Es1800,r0###0,73404416::1#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#B3121##2#0#0");
     Test.assert(view.headlightSettings == null);
     Test.assert(view.taillightSettings != null);
 
@@ -232,7 +234,7 @@ function parseValidOld3ConfigurationForSettings(logger) {
 // Missing remote controllers
 (:test :settings)
 function parseValidOld3ConfigurationWithInitialSpacesForSettings(logger) {
-    var view = new TestBikeLightsView("   1,1!NIGHT:1Es1800,r0###0,73404416::1#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#0#B3121##2#0#0");
+    var view = new TestBikeLightsView("   1,1!NIGHT:1Es1800,r0###0,73404416::1#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#B3121##2#0#0");
     Test.assert(view.headlightSettings == null);
     Test.assert(view.taillightSettings != null);
 
@@ -241,7 +243,7 @@ function parseValidOld3ConfigurationWithInitialSpacesForSettings(logger) {
 
 (:test :settings)
 function parseValidConfigurationWithoutAdditionalLightModesForSettings(logger) {
-    var view = new TestBikeLightsView("1,1!NIGHT:1Es1800,r0###0,73404416::1#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#0#0#B3121##2#0#0");
+    var view = new TestBikeLightsView("1,1!NIGHT:1Es1800,r0###0,73404416::1#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#0#B3121##2#0#0");
     Test.assert(view.headlightSettings == null);
     Test.assert(view.taillightSettings != null);
 
@@ -250,7 +252,7 @@ function parseValidConfigurationWithoutAdditionalLightModesForSettings(logger) {
 
 (:test :settings)
 function parseValidConfigurationWithoutRadarNumberForSettings(logger) {
-    var view = new TestBikeLightsView("1,1!NIGHT:1Es1800,r0###0,73404416::1:#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#0#0#B3121##2#0#0");
+    var view = new TestBikeLightsView("1,1!NIGHT:1Es1800,r0###0,73404416::1:#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#0#B3121##2#0#0");
     Test.assert(view.headlightSettings == null);
     Test.assert(view.taillightSettings != null);
 
@@ -259,16 +261,16 @@ function parseValidConfigurationWithoutRadarNumberForSettings(logger) {
 
 (:test :settings)
 function parseValidConfigurationForSettings(logger) {
-    var view = new TestBikeLightsView("1,1!NIGHT:1Es1800,r0###0,73404416::1:#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#0#0##B3121##2#0#0");
+    var view = new TestBikeLightsView("1,1!NIGHT:1Es1800,r0###0,73404416::1:#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#0##B3121##2#0#0");
     Test.assert(view.headlightSettings == null);
     Test.assert(view.taillightSettings != null);
 
     return view.getErrorCode() == null;
 }
 
-(:test :settings :noWatchPanel)
+(:test :settings)
 function parseValidConfigurationWithRemoteControllerForSettings(logger) {
-    var view = new TestBikeLightsView("1,1!NIGHT:1Es1800,r0###0,73404416::1#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#0#1|1:MicroRemote!1|1:32142:0!2|1:1::123!:123!!|2:1:10:,1=:!H]0#B3121##2#0#0");
+    var view = new TestBikeLightsView("1,1!NIGHT:1Es1800,r0###0,73404416::1#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#1|1:MicroRemote!1|1:32142:0!2|1:1::123!:123!!|2:1:10:,1=:!H]0#B3121##2#0#0");
     Test.assert(view.headlightSettings == null);
     Test.assert(view.taillightSettings != null);
     Test.assert(view.remoteControllers != null);

@@ -1485,13 +1485,6 @@ export const getDeviceLights = (device, lightsList, useIndividualNetwork) => {
   return device.highMemory && useIndividualNetwork ? lightsList : lightsList.filter(o => !o.individualNetworkOnly);
 };
 
-export const getSeparatorColors = (device) => {
-  var noSeparator = { id: -1, name: 'No separator' };
-  return device.highMemory && device.bitsPerPixel > 1 ? [noSeparator, { id: 0, name: 'Theme' }].concat(colors)
-    : device.bitsPerPixel === 1 ? [noSeparator, { id: 0, name: 'Black/White' }]
-    : [noSeparator].concat(colors.map(val => val.id !== 43775 /* Blue */ ? val : { id: 0, name: 'Blue' }));
-};
-
 export const getLightIconColors = (device) => {
   return device.bitsPerPixel === 1
     ? colors.filter(o => o.id === 1 /* Black/White */)

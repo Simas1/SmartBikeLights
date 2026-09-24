@@ -435,8 +435,8 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
             _globalFilters = configuration[0];
 // #if dataField
   // #if highMemory
-            remoteControllers = configuration[17];
-            _bikeRadarNumber = configuration[18];
+            remoteControllers = configuration[16];
+            _bikeRadarNumber = configuration[17];
             if (setupSensors) {
                 setupLightSensors();
                 setupBikeRadarSensor();
@@ -2847,11 +2847,8 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
 // #endif
 // #if dataField
   // #if highMemory
-            parseSeparatorColor(chars, null, filterResult),    // Separator color
             parseRemoteControllers(chars, null, filterResult), // Remote controllers
             parseBikeRadarNumber(chars, null, filterResult)    // Bike radar number
-  // #else
-            parse(1 /* NUMBER */, chars, null, filterResult)   // Separator color
   // #endif
 // #endif
         ]);
@@ -3037,9 +3034,16 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
 
   // #if dataField
     private function parseLightsTapBehavior(chars, i, filterResult) {
+        // Settings-only configurations proceed directly to the remote count.
+        // A tap section starts with control modes followed by '!'.
+        var probe = [filterResult[0]];
+        parse(1 /* NUMBER */, chars, i, probe);
+        if (probe[0] >= chars.size() || chars[probe[0]] != '!') {
+            return null;
+        }
         var headlightBehavior = parseLightTapBehavior(chars, i, filterResult);
         if (headlightBehavior == null) {
-            filterResult[0] = filterResult[0] - 1; // Avoid separatorColor from parsing the next value
+            filterResult[0] = filterResult[0] - 1; // Avoid parseRemoteControllers from parsing the next value
             return null;
         }
 
@@ -3177,16 +3181,6 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
         }
 
         return data;
-    }
-
-    private function parseSeparatorColor(chars, index, filterResult) {
-        var color = parse(1 /* NUMBER */, chars, index, filterResult);
-        if (color == null) { // Old configuration
-            filterResult[0] = filterResult[0] - 1; // Avoid parseRemoteControllers from parsing the next value
-            return null;
-        }
-
-        return color;
     }
 
     private function parseRemoteControllers(chars, index, filterResult) {

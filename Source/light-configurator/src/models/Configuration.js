@@ -9,7 +9,7 @@ import LightButton from './LightButton';
 import { serializeButtonGraphics } from './lightButtonGraphics';
 import LightSettings from './LightSettings';
 import LightModeCycleBehavior from './LightModeCycleBehavior';
-import { getLight, isDataField, getLightIconColors, getSeparatorColors } from '../constants';
+import { getLight, isDataField, getLightIconColors } from '../constants';
 import RemoteController from './RemoteController';
 import RemoteControllerButton from './RemoteControllerButton';
 import RemoteControllerButtonAction from './RemoteControllerButtonAction';
@@ -551,7 +551,6 @@ export default class Configuration {
   device = null;
   units = 0;
   timeFormat = 0;
-  separatorColor = 0;
   globalFilterGroups = [];
   headlight = null;
   headlightModes = null;
@@ -635,10 +634,6 @@ export default class Configuration {
     configuration.taillightFilterGroups = filterGroups;
 
     if (!device.highMemory) {
-      // Separator color
-      const separatorColor = parseNumber(value, filterResult[0] + 1, filterResult);
-      configuration.separatorColor = separatorColor || 0;
-
       return this.parseMetadataConfiguration(configuration, value, deviceList, deviceIndex, filterResult);
     }
 
@@ -689,12 +684,8 @@ export default class Configuration {
       configuration.taillightIconTapBehavior = parseLightIconTapBehavior(value, filterResult[0] + 1, filterResult);
     }
 
-    // Separator color
-    const separatorColor = parseNumber(value, filterResult[0] + 1, filterResult);
-    configuration.separatorColor = separatorColor || 0;
-
     // Parse remote controllers
-    if (separatorColor != null && isDataField() && device.highMemory) {
+    if (isDataField() && device.highMemory) {
       const remoteControllers = parseRemoteControllers(value, filterResult[0] + 1, filterResult);
       if (remoteControllers === null) {
         // Old configuration
@@ -728,7 +719,6 @@ export default class Configuration {
     const headlightData = getLight(false, this.headlight);
     const taillightData = getLight(true, this.taillight);
     const validColors = device ? getLightIconColors(device) : [];
-    const separatorColors = device ? getSeparatorColors(device) : [];
     return device &&
       this.globalFilterGroups.every(g => g.isValid(device, null)) && (
         (this.headlight !== null || this.taillight !== null) &&
@@ -737,7 +727,6 @@ export default class Configuration {
       ) &&
       (this.headlight === null || validColors.some(o => o.id === this.headlightIconColor)) &&
       (this.taillight === null || validColors.some(o => o.id === this.taillightIconColor)) &&
-      separatorColors.some(o => o.id === this.separatorColor) &&
       this.isItemValid(this.headlightPanel, headlightData, device.touchScreen) &&
       this.isItemValid(this.taillightPanel, taillightData, device.touchScreen) &&
       this.isItemValid(this.headlightIconTapBehavior, headlightData, device.touchScreen) &&
@@ -795,7 +784,6 @@ export default class Configuration {
     config += this.getIndividualNetworkConfigurationValue(device, headlightData, taillightData);
     config += this.getForceSmartModeConfigurationValue(device);
     config += this.getLightsTapBehaviorConfigurationValue(device);
-    config += this.getSeparatorColor(device);
     config += this.getRemoteControllersConfigrationValue(device);
     config += this.getBikeRadarNumberValue(device, headlightData, taillightData);
     config += `#${(this.device)}`;
@@ -871,14 +859,6 @@ export default class Configuration {
     config += this.getLightTapBehaviorConfigurationValue(this.taillight, this.taillightIconTapBehavior);
 
     return config;
-  }
-
-  getSeparatorColor(device) {
-    if (!device || !isDataField()) {
-      return '';
-    }
-
-    return `#${(this.separatorColor)}`;
   }
 
   getRemoteControllersConfigrationValue(device) {
