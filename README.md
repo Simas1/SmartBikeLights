@@ -42,6 +42,8 @@ The display shows one physical light per page with raw `TY`, `ID`, `LM`, `BS` an
 | Network | Controlled by Garmin's light-network mode. |
 | Manual | Controlled by your mode selection or the light's own buttons. |
 
+The Control mode button cycles through the modes selected in the configurator. Manual is mandatory; Smart and Network are optional. Smart is skipped when the light has no filters. Selecting a light-mode button, including Off, enters Manual. The control button stays present even with only Manual selected.
+
 ## Changing control modes
 
 Supported devices: **Edge 1050, 850, 550, 1040, 840, 540**, and **Forerunner 965** (including Solar variants where applicable).

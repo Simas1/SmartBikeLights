@@ -51,7 +51,7 @@ export default observer(({ lightPanel, lightModes }) => {
         </Grid>
         <Grid item xs={12} sm={8}>
           <Typography variant="body2">
-            Bold Blue uses icons for Control mode and Off. The footer switches configurations;
+            Bold Blue uses icons for Control mode and Off. Control mode is always available; if omitted, it is added beside Off or in its own row. The footer switches configurations;
             Current configuration buttons are omitted from the grid. Set brightness and runtime
             on each mode to show graphical details.
           </Typography>

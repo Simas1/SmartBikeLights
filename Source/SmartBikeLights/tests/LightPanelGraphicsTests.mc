@@ -63,9 +63,12 @@ function graphicsOptionalButtonsTest(logger) {
     Test.assert(result[0] == 3 && result[1] == 2);
     Test.assert(result[6] == 2 && result[7] == -1 && result[9] == 0);
     result = LightPanelGraphics.panelSettings([1,1,"Front",0,0,-1,1,-2,null]);
-    Test.assert(result[0] == 0 && result[1] == 0);
+    Test.assert(result[0] == 1 && result[1] == 1 && result[7] == -1);
     result = LightPanelGraphics.panelSettings([2,1,"Front",0,0,-1,2,-2,null,51,"Low"]);
-    Test.assert(result[0] == 1 && result[1] == 1 && result[6] == 1 && result[7] == 51);
+    Test.assert(result[0] == 2 && result[1] == 2 && result[7] == -1 && result[10] == 51);
+    result = LightPanelGraphics.panelSettings([1,1,"Front",0,0,-1,1,0,"Off"]);
+    Test.assert(result[0] == 2 && result[1] == 1);
+    Test.assert(result[6] == 2 && result[7] == -1 && result[9] == 0);
     result = LightPanelGraphics.panelSettings([1,1,"Front",0,0,2,1,51,"Low"]);
     Test.assert(result[5] == 2); // Preserve the configured automation-name font.
     return true;

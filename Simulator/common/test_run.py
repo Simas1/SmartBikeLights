@@ -272,7 +272,7 @@ class PreviewTests(unittest.TestCase):
             converted = preview.menu_configuration(original)
             before, after = original[5:].split('#'), converted[5:].split('#')
             self.assertEqual(before[:5], after[:5])
-            self.assertEqual(before[7:9] + before[10:], after[7:])
+            self.assertEqual(before[7:], after[7:])
             self.assertTrue(after[5].startswith('4:AT 1600!Off:0!Low'))
             self.assertTrue(after[6].startswith('5:Flare RT!Off:0!Night Flash'))
             # Current menu labels preserve graphics metadata for the panel renderer.

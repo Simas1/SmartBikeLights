@@ -232,18 +232,18 @@ export default observer(({
           : null
         }
         {
-          lightData && lightIconTapBehavior && device?.touchScreen
+          lightData && lightIconTapBehavior && device?.highMemory
           ? <React.Fragment>
               <ElementWithHelp
                 className={classes.sectionTitle}
-                element={<Typography variant="h5">Light icon tap behavior</Typography>}
+                element={<Typography variant="h5">Control mode button</Typography>}
                 help={
                   <Typography>
-                    Configure which control modes and light modes (for Manual mode) can be selected by tapping on the light icon.
+                    Choose the control modes the button cycles through. Manual is always included. Smart is used only when this light has filters. Selecting any light-mode button enters Manual.
                   </Typography>
                 }
               />
-              <LightIconTapBehavior lightIconTapBehavior={lightIconTapBehavior} lightModes={lightData.modes} />
+              <LightIconTapBehavior controlButton lightIconTapBehavior={lightIconTapBehavior} lightModes={lightData.modes} />
           </React.Fragment>
           : null
         }

@@ -86,7 +86,7 @@ export default observer(({ items, label, value, setter, required, help, multiple
       }}
     >
       {items.map((item) => (
-        <MenuItem key={item.id} value={item.id}>{itemTemplateFunc ? itemTemplateFunc(item) : item.name}</MenuItem>
+        <MenuItem key={item.id} value={item.id} disabled={item.disabled}>{itemTemplateFunc ? itemTemplateFunc(item) : item.name}</MenuItem>
       ))}
     </TextField>
   );

@@ -1490,6 +1490,19 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
         applyConfiguration(findNextConfiguration());
     }
 
+  // #if dataField
+    protected function nextPanelControlMode(lightData, lightType, current) {
+        var modes = _panelControlModes[lightType == 0 ? 0 : 1];
+        var index = modes.indexOf(current);
+        if (index == null) { index = -1; }
+        for (var step = 1; step <= modes.size(); step++) {
+            var mode = modes[(index + step) % modes.size()];
+            if (mode != 0 || (lightData[18] != null && lightData[18].size() > 0)) { return mode; }
+        }
+        return 2; // Manual is always available.
+    }
+  // #endif
+
     protected function onLightPanelModeChange(lightData, lightType, lightMode, controlMode) {
         if (lightMode == -2) {
             cycleConfiguration();
@@ -1497,9 +1510,13 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
         }
 
   // #if dataField
-        var newControlMode = lightMode < 0 ? controlMode != 0 /* SMART */ && lightData[18] /* Filters */ != null ? 0 : 1 /* NETWORK */
-            : controlMode != 2 /* MANUAL */ ? 2
-            : null;
+        var newControlMode = lightMode < 0 ? nextPanelControlMode(lightData, lightType, controlMode)
+            : controlMode != 2 /* MANUAL */ ? 2 : null;
+        if (lightMode < 0) {
+            if (newControlMode == controlMode) { return; }
+            // Enter Manual at the current/requested brightness; do not cycle light modes.
+            lightMode = lightData[7] != null ? lightData[7] : lightData[2];
+        }
   // #else
         var newControlMode = lightMode < 0 ? 1 /* NETWORK */
             : controlMode != 2 ? 2 /* MANUAL */
@@ -1848,7 +1865,17 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
     }
 // #endif
 
+    private var _panelControlModes = [[0, 1, 2], [0, 1, 2]];
+
+    function configuredControlModes(lightType) {
+        return _panelControlModes[lightType == 0 ? 0 : 1];
+    }
+
     private function setupHighMemoryConfiguration(configuration, setupSensors) {
+// #if dataField
+        var behavior = configuration[15];
+        _panelControlModes = behavior == null ? [[0, 1, 2], [0, 1, 2]] : [behavior[0][0], behavior[1][0]];
+// #endif
         _individualNetwork = configuration[13];
         if (setupSensors && (_individualNetwork != null /* Is enabled */ || _lightNetwork instanceof AntLightNetwork.IndividualLightNetwork)) {
             recreateLightNetwork();
@@ -2807,7 +2834,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
         }
         boundaries.add(chars.size());
 // #if highMemory
-  // #if touchScreen && !watchPanel && dataField
+  // #if dataField
         var sections = 17;
   // #else
         var sections = 16;
@@ -2880,7 +2907,7 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
             parseLightButtons(chars, null, filterResult),      // Taillight panel/settings buttons
             parseIndividualNetwork(chars, null, filterResult), // Individual network settings
             parseForceSmartMode(chars, null, filterResult),    // Force smart mode
-  // #if touchScreen && !watchPanel && dataField
+  // #if dataField
             parseLightsTapBehavior(chars, null, filterResult), // Light icons tap behavior
   // #else
             null,
@@ -3070,10 +3097,9 @@ class BikeLightsView extends /* #if dataField */ WatchUi.DataField /* #else */ W
         expectDelimiter(chars, '#', filterResult);
         var headlightBehavior = parseLightTapBehavior(chars, i, filterResult);
         expectDelimiter(chars, ':', filterResult);
-        return [
-            headlightBehavior,
-            parseLightTapBehavior(chars, i, filterResult)
-        ];
+        var taillightBehavior = parseLightTapBehavior(chars, i, filterResult);
+        if (headlightBehavior[0].indexOf(2) < 0 || taillightBehavior[0].indexOf(2) < 0) { throw new Lang.Exception(); }
+        return [headlightBehavior, taillightBehavior];
     }
   // #endif
 // #endif

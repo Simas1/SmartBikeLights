@@ -1306,15 +1306,30 @@ class BikeLightsView extends  WatchUi.DataField  {
         applyConfiguration(findNextConfiguration());
     }
 
+    protected function nextPanelControlMode(lightData, lightType, current) {
+        var modes = _panelControlModes[lightType == 0 ? 0 : 1];
+        var index = modes.indexOf(current);
+        if (index == null) { index = -1; }
+        for (var step = 1; step <= modes.size(); step++) {
+            var mode = modes[(index + step) % modes.size()];
+            if (mode != 0 || (lightData[18] != null && lightData[18].size() > 0)) { return mode; }
+        }
+        return 2; // Manual is always available.
+    }
+
     protected function onLightPanelModeChange(lightData, lightType, lightMode, controlMode) {
         if (lightMode == -2) {
             cycleConfiguration();
             return;
         }
 
-        var newControlMode = lightMode < 0 ? controlMode != 0 /* SMART */ && lightData[18] /* Filters */ != null ? 0 : 1 /* NETWORK */
-            : controlMode != 2 /* MANUAL */ ? 2
-            : null;
+        var newControlMode = lightMode < 0 ? nextPanelControlMode(lightData, lightType, controlMode)
+            : controlMode != 2 /* MANUAL */ ? 2 : null;
+        if (lightMode < 0) {
+            if (newControlMode == controlMode) { return; }
+            // Enter Manual at the current/requested brightness; do not cycle light modes.
+            lightMode = lightData[7] != null ? lightData[7] : lightData[2];
+        }
         setLightAndControlMode(lightData, lightType, lightMode, newControlMode);
     }
 
@@ -1602,7 +1617,15 @@ class BikeLightsView extends  WatchUi.DataField  {
     }
 
 
+    private var _panelControlModes = [[0, 1, 2], [0, 1, 2]];
+
+    function configuredControlModes(lightType) {
+        return _panelControlModes[lightType == 0 ? 0 : 1];
+    }
+
     private function setupHighMemoryConfiguration(configuration, setupSensors) {
+        var behavior = configuration[15];
+        _panelControlModes = behavior == null ? [[0, 1, 2], [0, 1, 2]] : [behavior[0][0], behavior[1][0]];
         _individualNetwork = configuration[13];
         if (setupSensors && (_individualNetwork != null /* Is enabled */ || _lightNetwork instanceof AntLightNetwork.IndividualLightNetwork)) {
             recreateLightNetwork();
@@ -2619,10 +2642,9 @@ class BikeLightsView extends  WatchUi.DataField  {
         expectDelimiter(chars, '#', filterResult);
         var headlightBehavior = parseLightTapBehavior(chars, i, filterResult);
         expectDelimiter(chars, ':', filterResult);
-        return [
-            headlightBehavior,
-            parseLightTapBehavior(chars, i, filterResult)
-        ];
+        var taillightBehavior = parseLightTapBehavior(chars, i, filterResult);
+        if (headlightBehavior[0].indexOf(2) < 0 || taillightBehavior[0].indexOf(2) < 0) { throw new Lang.Exception(); }
+        return [headlightBehavior, taillightBehavior];
     }
 
     // <TotalFilters>,<TotalGroups>|[<FilterGroup>| ...]

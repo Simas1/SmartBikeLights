@@ -514,7 +514,7 @@ const parseDevice = (value, deviceList) => {
   const device = deviceList.find(item => item.id === sections[sections.length - 5]);
   if (!device) return { device: null };
   const dataField = isDataField();
-  const total = device.highMemory ? (dataField ? (device.touchScreen ? 17 : 16) : 15) : 10;
+  const total = device.highMemory ? (dataField ? 17 : 15) : 10;
   if (sections.length !== total) return { device: null };
   // Light fields have fixed positions; serial number and additional modes may be empty.
   const pair = '(?:-?\\d+,-?\\d+)?';
@@ -524,7 +524,8 @@ const parseDevice = (value, deviceList) => {
   if (device.highMemory) {
     if (!/^(?:0::|1:(?:\d+(?:,\d+)*![01])?:(?:\d+(?:,\d+)*![01])?)$/.test(sections[7]) ||
         !/^[01]:[01]$/.test(sections[8])) return { device: null };
-    if (dataField && device.touchScreen && !/^[0-3]+!(?:\d+(?:,\d+)*)?:[0-3]+!(?:\d+(?:,\d+)*)?$/.test(sections[9])) return { device: null };
+    if (dataField && !/^[0-3]+!(?:\d+(?:,\d+)*)?:[0-3]+!(?:\d+(?:,\d+)*)?$/.test(sections[9])) return { device: null };
+    if (dataField && sections[9].split(':').some(cycle => !cycle.split('!')[0].includes('3'))) return { device: null };
     const radarIndex = total - 6;
     if (!/^\d*$/.test(sections[radarIndex])) return { device: null };
     if (dataField && !/^\d+(?:\||$)/.test(sections[radarIndex - 1])) return { device: null };
@@ -657,7 +658,7 @@ export default class Configuration {
     configuration.taillightForceSmartMode = parseNumber(value, filterResult[0] + 1, filterResult) === 1;
 
     // Parse light icon tap behavior
-    if (device.touchScreen && isDataField()) {
+    if (device.highMemory && isDataField()) {
       const headlightTapBehavior = parseLightIconTapBehavior(value, filterResult[0] + 1, filterResult);
       if (headlightTapBehavior === null) throw new Error('Missing configuration section');
 
@@ -704,8 +705,8 @@ export default class Configuration {
       ) &&
       this.isItemValid(this.headlightPanel, headlightData, device.touchScreen) &&
       this.isItemValid(this.taillightPanel, taillightData, device.touchScreen) &&
-      this.isItemValid(this.headlightIconTapBehavior, headlightData, device.touchScreen) &&
-      this.isItemValid(this.taillightIconTapBehavior, taillightData, device.touchScreen) &&
+      (this.headlightIconTapBehavior === null || this.headlightIconTapBehavior.containsManualMode()) &&
+      (this.taillightIconTapBehavior === null || this.taillightIconTapBehavior.containsManualMode()) &&
       this.isItemValid(this.headlightSettings, headlightData, device.settings) &&
       this.isItemValid(this.taillightSettings, taillightData, device.settings) &&
       this.isIndividualNetworkValid(device) &&
@@ -823,7 +824,7 @@ export default class Configuration {
   }
 
   getLightsTapBehaviorConfigurationValue(device) {
-    if (!device || !device.touchScreen || !isDataField()) {
+    if (!device || !device.highMemory || !isDataField()) {
       return '';
     }
 

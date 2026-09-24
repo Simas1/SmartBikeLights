@@ -1406,7 +1406,15 @@ class BikeLightsView extends  WatchUi.DataField  {
         return result;
     }
 
+    private var _panelControlModes = [[0, 1, 2], [0, 1, 2]];
+
+    function configuredControlModes(lightType) {
+        return _panelControlModes[lightType == 0 ? 0 : 1];
+    }
+
     private function setupHighMemoryConfiguration(configuration, setupSensors) {
+        var behavior = configuration[15];
+        _panelControlModes = behavior == null ? [[0, 1, 2], [0, 1, 2]] : [behavior[0][0], behavior[1][0]];
         _individualNetwork = configuration[13];
         if (setupSensors && (_individualNetwork != null /* Is enabled */ || _lightNetwork instanceof AntLightNetwork.IndividualLightNetwork)) {
             recreateLightNetwork();
@@ -1835,7 +1843,7 @@ class BikeLightsView extends  WatchUi.DataField  {
             if (chars[i] == '#') { boundaries.add(i); }
         }
         boundaries.add(chars.size());
-        var sections = 16;
+        var sections = 17;
         if (boundaries.size() != sections + 1) { throw new Lang.Exception(); }
         for (var section = 0; section < 7; section++) {
             var colons = 0;
@@ -1890,7 +1898,7 @@ class BikeLightsView extends  WatchUi.DataField  {
             parseLightButtons(chars, null, filterResult),      // Taillight panel/settings buttons
             parseIndividualNetwork(chars, null, filterResult), // Individual network settings
             parseForceSmartMode(chars, null, filterResult),    // Force smart mode
-            null,
+            parseLightsTapBehavior(chars, null, filterResult), // Light icons tap behavior
             parseRemoteControllers(chars, null, filterResult), // Remote controllers
             parseBikeRadarNumber(chars, null, filterResult)    // Bike radar number
         ]);
@@ -2057,10 +2065,9 @@ class BikeLightsView extends  WatchUi.DataField  {
         expectDelimiter(chars, '#', filterResult);
         var headlightBehavior = parseLightTapBehavior(chars, i, filterResult);
         expectDelimiter(chars, ':', filterResult);
-        return [
-            headlightBehavior,
-            parseLightTapBehavior(chars, i, filterResult)
-        ];
+        var taillightBehavior = parseLightTapBehavior(chars, i, filterResult);
+        if (headlightBehavior[0].indexOf(2) < 0 || taillightBehavior[0].indexOf(2) < 0) { throw new Lang.Exception(); }
+        return [headlightBehavior, taillightBehavior];
     }
 
     // <TotalFilters>,<TotalGroups>|[<FilterGroup>| ...]

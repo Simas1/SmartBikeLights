@@ -19,8 +19,8 @@ test.each(deviceList)('round trips the separator-free format for $name', (device
   configuration.bikeRadarNumber = 4321;
   const exported = configuration.getConfigurationValue(deviceList);
   const fields = exported.slice(5).split('#');
-  // Remote count and radar directly follow tap behavior (touch) or force-smart settings.
-  const remoteIndex = device.touchScreen ? 10 : 9;
+  // Remote count and radar directly follow the control-mode cycle on every device.
+  const remoteIndex = 10;
   expect(fields[remoteIndex]).toBe('0');
   expect(fields[remoteIndex + 1]).toBe('');
   expect(fields[remoteIndex + 2]).toBe(device.id);
@@ -102,7 +102,6 @@ test.each(['LC', 'LC2', 'LC3'])('accepts the shipped %s example', (key) => {
 test.each(deviceList.filter(device => device.settings))('round trips native menus on $name', (device) => {
   const sections = remoteSample.slice(5).split('#');
   sections[6] = '4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6';
-  sections.splice(9, 1);
   sections[sections.length - 5] = device.id;
   const parsed = Configuration.parse('SBL1#' + sections.join('#'), deviceList);
   expect(parsed).not.toBeNull();
@@ -139,4 +138,20 @@ test('rejects the removed icon-color column', () => {
   light.splice(2, 0, '1');
   fields[1] = light.join(':');
   expect(Configuration.parse('SBL1#' + fields.join('#'), deviceList)).toBeNull();
+});
+
+test.each(deviceList)('preserves Manual-only control cycles on $name', (device) => {
+  const configuration = Configuration.parse(sample, deviceList);
+  configuration.setDevice(device.id);
+  configuration.headlightIconTapBehavior.setControlModes([2], true);
+  configuration.taillightIconTapBehavior.setControlModes([1, 2], true);
+  const exported = configuration.getConfigurationValue(deviceList);
+  expect(exported.slice(5).split('#')[9]).toBe('3!:23!');
+  const restored = Configuration.parse(exported, deviceList);
+  expect(restored.headlightIconTapBehavior.controlModes).toEqual([2]);
+  expect(restored.taillightIconTapBehavior.controlModes).toEqual([1, 2]);
+});
+
+test('rejects a panel cycle without Manual', () => {
+  expect(Configuration.parse(sample.replace('123!:123!', '12!:123!'), deviceList)).toBeNull();
 });

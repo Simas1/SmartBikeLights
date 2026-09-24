@@ -108,7 +108,7 @@ function rejectShortenedTouchConfigurations(logger) {
 
 (:test :settings)
 function parseFreshSettingsConfiguration(logger) {
-    var view = new TestBikeLightsView("SBL1#1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#0##B4315##2#0#0");
+    var view = new TestBikeLightsView("SBL1#1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#123!:123!#0##B4315##2#0#0");
     Test.assert(view.getErrorCode() == null);
     Test.assert(view.taillightData[15] == null); // Serial number is optional.
     Test.assert(view.remoteControllers.size() == 0);
@@ -118,7 +118,7 @@ function parseFreshSettingsConfiguration(logger) {
 
 (:test :settings)
 function parseFreshSettingsRemoteAndRadar(logger) {
-    var view = new TestBikeLightsView("SBL1#1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#1|1:MicroRemote!1|1:3167:0!2|1:1::123!:123!!|2:1::,0=:!H]0#4321#B4315##2#0#0");
+    var view = new TestBikeLightsView("SBL1#1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#123!:123!#1|1:MicroRemote!1|1:3167:0!2|1:1::123!:123!!|2:1::,0=:!H]0#4321#B4315##2#0#0");
     Test.assert(view.getErrorCode() == null);
     Test.assert(view.remoteControllers.size() == 1);
     Test.assert(view.requiresBikeRadarConnection());
@@ -128,19 +128,19 @@ function parseFreshSettingsRemoteAndRadar(logger) {
 (:test :settings)
 function rejectShortenedSettingsConfigurations(logger) {
     var values = [
-        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0:0#0##B4315##2#0#0",
+        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0:0#123!:123!#0##B4315##2#0#0",
         "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0##B4315##2#0#0",
         "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0##B4315##2#0#0",
         "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#0#B4315##2#0#0",
-        "1,1!NIGHT:1Es1800,r0###0,73404416#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#0##B4315##2#0#0",
-        "1,1!NIGHT:1Es1800,r0###0,73404416::1#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#0##B4315##2#0#0",
-        "1,1!NIGHT:1Es1800,r0###0,73404416:::#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#0##B4315##2#0#0",
-        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#0##B4315##2#0#0",
-        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#0##B4315##2#0#0",
-        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1|:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#0##B4315##2#0#0",
-        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#1:123:456#0:0#0##B4315##2#0#0",
+        "1,1!NIGHT:1Es1800,r0###0,73404416#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#123!:123!#0##B4315##2#0#0",
+        "1,1!NIGHT:1Es1800,r0###0,73404416::1#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#123!:123!#0##B4315##2#0#0",
+        "1,1!NIGHT:1Es1800,r0###0,73404416:::#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#123!:123!#0##B4315##2#0#0",
+        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#123!:123!#0##B4315##2#0#0",
+        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#123!:123!#0##B4315##2#0#0",
+        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1|:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#123!:123!#0##B4315##2#0#0",
+        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#1:123:456#0:0#123!:123!#0##B4315##2#0#0",
         "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##4:Varia 510!Off:0!Solid:4!Day Flash:7!Night Flash:6#0::#0:0#0#0##B4315##2#0#0",
-        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##4:Varia 510|Off:0|Solid:4|Day Flash:7|Night Flash:6#0::#0:0#0##B4315##2#0#0"
+        "1,1!NIGHT:1Es1800,r0###0,73404416::#1,1!:1:6:0:0D=1##4:Varia 510|Off:0|Solid:4|Day Flash:7|Night Flash:6#0::#0:0#123!:123!#0##B4315##2#0#0"
     ];
     for (var i = 0; i < values.size(); i++) {
         var view = new TestBikeLightsView("SBL1#" + values[i]);
@@ -179,7 +179,7 @@ function configuredSettingsLightsUseSectionPresence(logger) {
         for (var t = 0; t < 2; t++) {
             // Check native and individual networks with empty optional light values.
             for (var network = 0; network < 2; network++) {
-                var value = "SBL1##" + sections[h] + "##" + sections[t] + "####" + network + "::#0:0#0##B4315#" + (h == 1 ? "14" : "") + "#" + (t == 1 ? "1" : "") + "#0#0";
+                var value = "SBL1##" + sections[h] + "##" + sections[t] + "####" + network + "::#0:0#123!:123!#0##B4315#" + (h == 1 ? "14" : "") + "#" + (t == 1 ? "1" : "") + "#0#0";
                 var view = new TestBikeLightsView(value);
                 Test.assert(view.getErrorCode() == null);
                 Test.assert(view.headlightData[16] == (h == 1));
@@ -190,7 +190,7 @@ function configuredSettingsLightsUseSectionPresence(logger) {
             }
         }
     }
-    var oldColor = new TestBikeLightsView("SBL1##0,1::1:######0::#0:0#0##B4315#14##0#0");
+    var oldColor = new TestBikeLightsView("SBL1##0,1::1:######0::#0:0#123!:123!#0##B4315#14##0#0");
     Test.assert(oldColor.getErrorCode() == 4);
     return true;
 }
@@ -276,5 +276,59 @@ function pendingLightModeDoesNotRestartConfirmation(logger) {
     view.requestMode(data, 2, null, true);
     Test.assert(light.modes.size() == 2);
     Test.assert(data[9] == 4);
+    return true;
+}
+
+(:test :touchScreen)
+class PanelControlCycleTestView extends TestBikeLightsView {
+    var requested = null;
+
+    function initialize(value) {
+        TestBikeLightsView.initialize(value);
+    }
+
+    function setLightAndControlMode(data, type, mode, control) {
+        requested = [mode, control];
+    }
+
+    function press(data, mode) {
+        requested = null;
+        onLightPanelModeChange(data, 0, mode, data[4]);
+    }
+}
+
+(:test :touchScreen)
+function panelControlCyclesSelectedModes(logger) {
+    var selections = ["123", "23", "13", "3", "321"];
+    var expectedWithFilters = [[1, 2, 0], [1, 2, 1], [2, 0, 0], [2, 2, 2], [2, 0, 1]];
+    var expectedWithoutFilters = [[1, 2, 1], [1, 2, 1], [2, 2, 2], [2, 2, 2], [2, 2, 1]];
+    for (var selection = 0; selection < selections.size(); selection++) {
+        var config = "SBL1##::######0::#0:0#" + selections[selection] + "!:3!#0##B3843#14##0#0";
+        var view = new PanelControlCycleTestView(config);
+        Test.assert(view.getErrorCode() == null);
+        for (var filters = 0; filters < 2; filters++) {
+            var data = new [19];
+            data[2] = 5;
+            data[7] = 7; // A pending brightness request must survive entering Manual.
+            data[18] = filters == 1 ? [1] : null;
+            for (var current = 0; current < 3; current++) {
+                data[4] = current;
+                var expected = filters == 1 ? expectedWithFilters[selection][current] : expectedWithoutFilters[selection][current];
+                view.press(data, -1);
+                if (expected == current) {
+                    Test.assert(view.requested == null);
+                } else {
+                    Test.assertMessage(view.requested[1] == expected, "selection=" + selection + " filters=" + filters + " current=" + current + " expected=" + expected + " actual=" + view.requested[1]);
+                    Test.assert(view.requested[0] == 7);
+                }
+                // A light-mode button always enters Manual, including Off.
+                view.press(data, 0);
+                Test.assert(view.requested[0] == 0);
+                Test.assert(view.requested[1] == (current == 2 ? null : 2));
+            }
+        }
+    }
+    var invalid = new PanelControlCycleTestView("SBL1##::######0::#0:0#12!:3!#0##B3843#14##0#0");
+    Test.assert(invalid.getErrorCode() == 4);
     return true;
 }

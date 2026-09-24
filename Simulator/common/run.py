@@ -166,7 +166,7 @@ def menu_configuration(value, device_id=None, upstream=False):
     if not upstream and not value.startswith('SBL1#'):
         raise ValueError('Expected an SBL1 configuration')
     parts = (value if upstream else value[5:]).split('#')
-    if not upstream and len(parts) not in (16, 17):
+    if not upstream and len(parts) != 17:
         raise ValueError('Incomplete SBL1 configuration')
     for index in (5, 6):
         if len(parts) <= index:
@@ -204,8 +204,6 @@ def menu_configuration(value, device_id=None, upstream=False):
             raise ValueError('Unsupported touchscreen light panel button count')
         parts[index] = f'{len(buttons)}:{fields[1]}' + ''.join(('|' if upstream else '!') + button for button in buttons)
     if not upstream:
-        if len(parts) == 17:
-            del parts[9]  # Settings devices have no light-icon tap section.
         if device_id:
             parts[-5] = device_id
     return ('' if upstream else 'SBL1#') + '#'.join(parts)

@@ -245,4 +245,4 @@ Connect IQ settings saves. The configurator converts pasted literal `\n` and
 actual newlines in names to `~br` when exporting. Legacy metadata separators
 must still be changed to `~n`.
 
-Local previews require `SBL1#` configuration strings. The shared example uses the touchscreen format; previews for Edge 540/550 and Forerunner 965 convert the controls to the current menu format, omit the touchscreen tap section, and set the target device ID. Upstream previews retain the upstream configuration format.
+Local previews require `SBL1#` configuration strings. The shared example uses the touchscreen format; previews for Edge 540/550 and Forerunner 965 convert the controls to the current menu format, preserve the control-mode cycle, and set the target device ID. Upstream previews retain the upstream configuration format.

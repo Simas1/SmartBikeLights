@@ -138,12 +138,16 @@ module LightPanelGraphics {
         result[0] = 0;
         result[1] = 0;
         var index = 6;
+        var hasControl = false;
+        var offGroup = -1;
         for (var i = 0; i < settings[1]; i++) {
             var count = settings[index];
             var group = [0];
             for (var j = 0; j < count; j++) {
                 var k = index + 1 + j * 2;
                 if (settings[k] != -2) {
+                    if (settings[k] == -1) { hasControl = true; }
+                    if (settings[k] == 0) { offGroup = result.size(); }
                     group[0]++;
                     group.add(settings[k]);
                     group.add(settings[k + 1]);
@@ -155,6 +159,20 @@ module LightPanelGraphics {
                 result.addAll(group);
             }
             index += 1 + count * 2;
+        }
+        if (!hasControl) {
+            var insert = offGroup >= 0 ? offGroup : 6;
+            var tail = result.slice(insert, null);
+            result = result.slice(0, insert);
+            if (offGroup >= 0) {
+                result.addAll([tail[0] + 1, -1, null]);
+                result.addAll(tail.slice(1, null));
+            } else {
+                result.addAll([1, -1, null]);
+                result.addAll(tail);
+                result[1]++;
+            }
+            result[0]++;
         }
         return result;
     }
