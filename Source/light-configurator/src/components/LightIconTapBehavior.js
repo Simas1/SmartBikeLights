@@ -1,18 +1,18 @@
 import React, { useEffect } from 'react';
 import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import PanToolIcon from '@mui/icons-material/PanTool';
-import WifiIcon from '@mui/icons-material/Wifi';
+import { ReactComponent as SmartIcon } from '../icons/control-modes/smart.svg';
+import { ReactComponent as ManualIcon } from '../icons/control-modes/manual.svg';
+import { ReactComponent as NetworkIcon } from '../icons/control-modes/network.svg';
 import { observer } from 'mobx-react-lite';
 import { controlModeList, manualModeBehaviorList } from '../constants';
 import AppSelect from '../inputs/AppSelect';
 
-const controlModeIcons = { 0: AutoAwesomeIcon, 1: WifiIcon, 2: PanToolIcon };
+const controlModeIcons = { 0: SmartIcon, 1: NetworkIcon, 2: ManualIcon };
 const renderControlMode = (item) => {
   const Icon = controlModeIcons[item.id];
   return <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75 }}>
-    <Icon fontSize="small" />{item.name}
+    <Icon width={24} height={24} aria-hidden="true" focusable="false" style={{ flexShrink: 0 }} />{item.name}
   </Box>;
 };
 
