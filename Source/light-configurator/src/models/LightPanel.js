@@ -29,7 +29,8 @@ export default class LightPanel {
   }
 
   isValid(lightData) {
-    return this.buttonGroups.every(g => g.isValid(lightData));
+    const modes = this.buttonGroups.flatMap(group => group.buttons.map(button => button.mode));
+    return new Set(modes).size === modes.length && this.buttonGroups.every(g => g.isValid(lightData));
   }
 
   setLightName = (value) => {

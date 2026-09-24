@@ -16,16 +16,27 @@ const getModes = (lightModes) => {
 
 export default observer(({ lightPanel, lightModes, lightModeFilter }) => {
   const modes = getModes(lightModes);
-  const panelModeIds = [...new Set(lightPanel.buttonGroups.flatMap(group =>
-    group.buttons.map(button => button.mode)))];
-  const filterModes = panelModeIds.map(id => modes.find(mode => mode.id === id)).filter(Boolean);
+  const panelButtons = lightPanel.buttonGroups.flatMap(group => group.buttons);
+  const filterModes = panelButtons
+    .filter((button, index) => modes.some(mode => mode.id === button.mode) &&
+      panelButtons.findIndex(other => other.mode === button.mode) === index)
+    .map(button => ({ id: button.mode, name: button.name || 'Unnamed button' }));
+  const previousModes = React.useRef({ panel: lightPanel, ids: filterModes.map(mode => mode.id) });
   const selectedModes = lightModeFilter?.lightModes;
   useEffect(() => {
-    if (selectedModes) {
-      const validModes = selectedModes.filter(id => filterModes.some(mode => mode.id === id));
-      if (validModes.length !== selectedModes.length) lightModeFilter.setLightModes(validModes);
+    const ids = filterModes.map(mode => mode.id);
+    if (lightModeFilter?.manualModeBehavior === 1) {
+      const added = previousModes.current.panel === lightPanel
+        ? ids.filter(id => !previousModes.current.ids.includes(id)) : [];
+      const validModes = (selectedModes || []).filter(id => ids.includes(id));
+      const nextModes = [...validModes, ...added.filter(id => !validModes.includes(id))];
+      if (nextModes.length !== (selectedModes || []).length ||
+          nextModes.some((id, index) => id !== selectedModes[index])) {
+        lightModeFilter.setLightModes(nextModes);
+      }
     }
-  }, [filterModes, selectedModes, lightModeFilter]);
+    previousModes.current = { panel: lightPanel, ids };
+  }, [filterModes, selectedModes, lightModeFilter, lightPanel]);
   const addButtonGroup = action(() => {
     const group = new LightButtonGroup();
     group.buttons.push(new LightButton());
@@ -74,6 +85,7 @@ export default observer(({ lightPanel, lightModes, lightModeFilter }) => {
             key={group.id}
             buttonGroup={group}
             lightModes={modes}
+            panelButtons={panelButtons}
             index={index}
             moveGroup={moveGroup}
             addButton={addButton}

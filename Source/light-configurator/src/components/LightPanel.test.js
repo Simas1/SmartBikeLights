@@ -50,6 +50,7 @@ test('filter choices follow unique panel modes and remove stale selections when 
   const buttons = [51, 53, 51].map(mode => {
     const button = new LightButton();
     button.setMode(mode);
+    button.setName(mode === 51 ? "Low button" : "High button");
     return button;
   });
   runInAction(() => {
@@ -66,13 +67,40 @@ test('filter choices follow unique panel modes and remove stale selections when 
     fireEvent.mouseDown(screen.getByLabelText(/^Light modes/, {selector: '[role="button"]'}));
     return within(screen.getByRole('listbox')).getAllByRole('option').map(option => option.textContent);
   };
-  expect(openChoices()).toEqual(['Low', 'High']);
+  expect(openChoices()).toEqual(['Low button', 'High button']);
   expect(filter.lightModes.slice()).toEqual([51, 53]);
   fireEvent.keyDown(screen.getByRole('listbox'), {key: 'Escape'});
   act(() => buttons[1].setMode(54));
-  expect(filter.lightModes.slice()).toEqual([51]);
-  expect(openChoices()).toEqual(['Low', 'Unused']);
+  expect(filter.lightModes.slice()).toEqual([51, 54]);
+  expect(openChoices()).toEqual(['Low button', 'High button']);
+  fireEvent.keyDown(screen.getByRole('listbox'), {key: 'Escape'});
+  act(() => buttons[1].setName('Renamed button'));
+  expect(openChoices()).toEqual(['Low button', 'Renamed button']);
+  fireEvent.keyDown(screen.getByRole('listbox'), {key: 'Escape'});
+  const added = new LightButton();
+  added.setMode(53);
+  added.setName('Added button');
+  act(() => runInAction(() => group.buttons.push(added)));
+  expect(openChoices()).toEqual(['Low button', 'Renamed button', 'Added button']);
+  expect(filter.lightModes.slice()).toEqual([51, 54, 53]);
   fireEvent.keyDown(screen.getByRole('listbox'), {key: 'Escape'});
   act(() => runInAction(() => panel.buttonGroups.clear()));
   expect(filter.lightModes.slice()).toEqual([]);
+});
+
+test('panel buttons cannot choose a mode already used by another button', () => {
+  const panel = new LightPanelModel();
+  const group = new LightButtonGroup();
+  const first = new LightButton();
+  first.setMode(51);
+  first.setName('Low');
+  const second = new LightButton();
+  runInAction(() => {
+    group.buttons.push(first, second);
+    panel.buttonGroups.push(group);
+  });
+  render(<LightPanel lightPanel={panel} lightModes={[{id: 51, name: 'Preset 1'}, {id: 52, name: 'Preset 2'}]} />);
+  fireEvent.mouseDown(screen.getAllByLabelText(/^Light mode\s*\*/, {selector: '[role="button"]'})[1]);
+  expect(within(screen.getByRole('listbox')).queryByRole('option', {name: 'Preset 1'})).toBeNull();
+  expect(within(screen.getByRole('listbox')).getByRole('option', {name: 'Preset 2'})).toBeTruthy();
 });
