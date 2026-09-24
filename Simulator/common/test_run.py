@@ -157,7 +157,7 @@ class PreviewTests(unittest.TestCase):
         self.assertEqual(set(actual), set(preview.settings_schema()[0]))
         preview.validate_settings(actual)
         for key in ('LC', 'LC2', 'LC3'):
-            blocks = actual[key].split('#')
+            blocks = actual[key][5:].split('#')
             for model, index in (('at1600', 1), ('flare-rt', 3)):
                 high, low = map(int, blocks[index].split(':')[1].split(','))
                 self.assertEqual(preview.CATALOG[model]['serial'], (high << 31) | low)
@@ -232,7 +232,7 @@ class PreviewTests(unittest.TestCase):
             original = json.loads((preview.SIMULATOR / 'settings.example.json').read_text())
             resolved = json.loads((work / 'preview.json').read_text())
             for key in ('LC', 'LC2', 'LC3'):
-                self.assertEqual(resolved['settings'][key], original[key])
+                self.assertEqual(resolved['settings'][key], preview.menu_configuration(original[key], 'B4315'))
         finally:
             shutil.rmtree(work)
 
@@ -270,12 +270,15 @@ class PreviewTests(unittest.TestCase):
         for key in ('LC', 'LC2', 'LC3'):
             original = settings[key]
             converted = preview.menu_configuration(original)
-            before, after = original.split('#'), converted.split('#')
+            before, after = original[5:].split('#'), converted[5:].split('#')
             self.assertEqual(before[:5], after[:5])
-            self.assertEqual(before[7:], after[7:])
-            self.assertTrue(after[5].startswith('4:AT 1600|Off:0|Low'))
-            self.assertTrue(after[6].startswith('5:Flare RT|Off:0|Night Flash'))
-            self.assertNotIn('@', after[5] + after[6])
+            self.assertEqual(before[7:9] + before[10:], after[7:])
+            self.assertTrue(after[5].startswith('4:AT 1600!Off:0!Low'))
+            self.assertTrue(after[6].startswith('5:Flare RT!Off:0!Night Flash'))
+            # Current menu labels preserve graphics metadata for the panel renderer.
+            self.assertIn('~n200lm-12h', after[5])
+            if '@headlight-low' in before[5]:
+                self.assertIn('@headlight-low', after[5])
             self.assertNotIn(':-1', after[5] + after[6])
             self.assertNotIn(':-2', after[5] + after[6])
             self.assertEqual(preview.menu_configuration(converted), converted)
@@ -288,7 +291,7 @@ class PreviewTests(unittest.TestCase):
             try:
                 resolved = json.loads((work / 'preview.json').read_text())['settings']
                 for key in ('LC', 'LC2', 'LC3'):
-                    self.assertEqual(resolved[key], settings[key])
+                    self.assertEqual(resolved[key], preview.menu_configuration(settings[key], {'edge540': 'B4061', 'edge550': 'B4633'}[device]))
             finally:
                 shutil.rmtree(work)
 
