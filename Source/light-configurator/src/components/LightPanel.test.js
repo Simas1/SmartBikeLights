@@ -5,6 +5,7 @@ import Configuration from '../models/Configuration';
 import LightModeCycleBehavior from '../models/LightModeCycleBehavior';
 import LightPanelModel from '../models/LightPanel';
 import LightPanel from './LightPanel';
+import LightFooter from './LightFooter';
 
 jest.mock('nanoid', () => { let id = 0; return { nanoid: () => `footer-test-${id++}` }; });
 jest.mock('react-dnd', () => ({ useDrag: () => [{}, value => value], useDrop: () => [{}, value => value] }));
@@ -13,7 +14,7 @@ test('footer checkbox defaults on and stays synchronized across both light panel
   const configuration = new Configuration();
   const panels = [new LightPanelModel(), new LightPanelModel()];
   const Editor = observer(() => <>{panels.map((panel, i) =>
-    <LightPanel key={i} lightPanel={panel} lightModes={[]} showFooter={configuration.showFooter} setShowFooter={configuration.setShowFooter} />
+    <LightFooter key={i} showFooter={configuration.showFooter} setShowFooter={configuration.setShowFooter} />
   )}</>);
   render(<Editor />);
   const controls = screen.getAllByRole('checkbox', {name: 'Show Footer'});

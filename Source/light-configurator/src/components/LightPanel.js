@@ -6,17 +6,15 @@ import LightButtonGroup from '../models/LightButtonGroup';
 import LightButton from '../models/LightButton';
 import ButtonGroup from './ButtonGroup';
 import AddButton from './AddButton';
-import { groupNameVisibility, manualModeBehaviorList } from '../constants';
+import { manualModeBehaviorList } from '../constants';
 import AppTextInput from '../inputs/AppTextInput';
 import AppSelect from '../inputs/AppSelect';
-import AppCheckbox from '../inputs/AppCheckbox';
-import ElementWithHelp from './ElementWithHelp';
 
 const getModes = (lightModes) => {
   return lightModes.filter(mode => mode.id > 0);
 };
 
-export default observer(({ lightPanel, lightModes, lightModeFilter, showFooter, setShowFooter }) => {
+export default observer(({ lightPanel, lightModes, lightModeFilter }) => {
   const [modes, setModes] = React.useState(getModes(lightModes));
   const addButtonGroup = action(() => {
     const group = new LightButtonGroup();
@@ -49,18 +47,6 @@ export default observer(({ lightPanel, lightModes, lightModeFilter, showFooter, 
       <Grid container spacing={3}>
         <Grid item xs={12} sm={4}>
           <AppTextInput label="Short light name" setter={lightPanel.setLightName} value={lightPanel.lightName} />
-        </Grid>
-        <Grid item xs={12} sm={8} />
-        <Grid item xs={12} sm={4}>
-          <AppSelect required items={groupNameVisibility} label="Header visibility"
-            help="Show the active filter group or Network mode above the light buttons."
-            setter={lightPanel.setGroupNameVisibility} value={lightPanel.groupNameVisibility} />
-        </Grid>
-        <Grid item xs={12} sm={4}>
-          <ElementWithHelp
-            element={<AppCheckbox label="Show Footer" value={showFooter} setter={setShowFooter} />}
-            help="Show the footer with the light name and battery status, plus controls to switch configurations and open Settings."
-          />
         </Grid>
         {lightModeFilter && <>
           <Grid item xs={12} />

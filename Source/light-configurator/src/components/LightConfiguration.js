@@ -12,6 +12,8 @@ import AppTextInput from '../inputs/AppTextInput';
 import AppCheckbox from '../inputs/AppCheckbox';
 import ElementWithHelp from './ElementWithHelp';
 import LightPanel from './LightPanel';
+import LightFooter from './LightFooter';
+import { groupNameVisibility } from '../constants';
 import LightIconTapBehavior from './LightIconTapBehavior';
 import LightSettings from './LightSettings';
 import LightPanelModel from '../models/LightPanel';
@@ -236,13 +238,20 @@ export default observer(({
           ? <React.Fragment>
               <ElementWithHelp
                 className={classes.sectionTitle}
-                element={<Typography variant="h5">Control mode button</Typography>}
+                element={<Typography variant="h5">Header</Typography>}
                 help={
                   <Typography>
                     Choose the control modes the button cycles through. Manual is always included. Smart is used only when this light has filters. Selecting any light-mode button enters Manual.
                   </Typography>
                 }
               />
+              {lightPanel && device?.touchScreen && <Grid container spacing={3} sx={{ marginBottom: 3 }}>
+                <Grid item xs={12} sm={4}>
+                  <AppSelect required items={groupNameVisibility} label="Header visibility"
+                    help="Show the active filter group or Network mode above the light buttons."
+                    setter={lightPanel.setGroupNameVisibility} value={lightPanel.groupNameVisibility} />
+                </Grid>
+              </Grid>}
               <LightIconTapBehavior controlButton lightIconTapBehavior={lightIconTapBehavior} lightModes={lightData.modes} />
           </React.Fragment>
           : null
@@ -255,13 +264,13 @@ export default observer(({
                 element={<Typography variant="h5">Light panel</Typography>}
                 help={
                   <Typography>
-                    The Light panel will be displayed only when putting the data field on a "1 Field Layout" data screen on your device. Here you can
-                    modify how the light panel will look like on the screen by renaming buttons, order them in a different way, remove those that won't be
-                    used, change to two buttons per row and change the short light name that will be displayed at the bottom of the screen.
+                    Fullscreen (1 Field Layout) shows your configured light-mode buttons. Rename, reorder, group, or remove buttons and choose their icons, brightness, and runtime details here.
+                    In Field view, the card shows the active light mode; tapping it cycles through the configured modes in button order, followed by Off, and enters Manual.
+                    Filter Light Mode limits the buttons shown full-screen and the modes included in field cycling, while Filter Groups can still use hidden modes. The short light name appears in the footer when enabled.
                   </Typography>
                 }
               />
-            <LightPanel lightPanel={lightPanel} lightModes={lightData.modes} lightModeFilter={lightIconTapBehavior} showFooter={showFooter} setShowFooter={setShowFooter} />
+            <LightPanel lightPanel={lightPanel} lightModes={lightData.modes} lightModeFilter={lightIconTapBehavior} />
           </React.Fragment>
           : null
         }
@@ -284,6 +293,8 @@ export default observer(({
           </React.Fragment>
           : null
         }
+        {lightData && lightPanel && device?.touchScreen &&
+          <LightFooter className={classes.sectionTitle} showFooter={showFooter} setShowFooter={setShowFooter} />}
       </CardContent>
     </StyledCard>
   );
