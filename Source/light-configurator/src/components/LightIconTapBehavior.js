@@ -29,7 +29,7 @@ export default observer(({ lightIconTapBehavior, lightModes, controlButton = fal
   return (
     <div>
       <Grid container spacing={3}>
-        <Grid item xs={12} sm={4}>
+        <Grid item xs={12} sm={controlButton ? 12 : 4}>
           <AppSelect required={controlButton} items={controlButton ? controlModeList.map(item => ({ ...item, disabled: item.id === 2 })) : controlModeList} label="Control modes" itemTemplateFunc={renderControlMode} selectedItemTemplateFunc={renderControlMode} setter={value => lightIconTapBehavior.setControlModes(value, controlButton)} value={lightIconTapBehavior.controlModes} multiple={true} />
         </Grid>
         {

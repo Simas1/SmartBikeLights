@@ -246,7 +246,7 @@ export default observer(({
                 }
               />
               {lightPanel && device?.touchScreen && <Grid container spacing={3} sx={{ marginBottom: 3 }}>
-                <Grid item xs={12} sm={4}>
+                <Grid item xs={12}>
                   <AppSelect required items={groupNameVisibility} label="Header visibility"
                     help="Show the active filter group or Network mode above the light buttons."
                     setter={lightPanel.setGroupNameVisibility} value={lightPanel.groupNameVisibility} />
