@@ -19,7 +19,7 @@ test('choosing each mode icon updates the selection without repeating the button
   render(<ButtonGroup buttonGroup={group} lightModes={[{id: 1, name: 'Low'}]} index={0}
     moveGroup={() => {}} addButton={() => {}} removeButton={() => {}} />);
   expect(screen.queryByLabelText('Light mode preview')).toBeNull();
-  for (const [label, id] of [['Sun', 'sun'], ['Headlight', 'headlight'], ['Taillight', 'taillight'], ['Night', 'moon'], ['Flash', 'lightning']]) {
+  for (const [label, id] of [['Sun', 'sun'], ['Headlight High', 'headlight-high'], ['Taillight High', 'taillight-high'], ['Night', 'moon'], ['Flash', 'lightning']]) {
     fireEvent.mouseDown(screen.getByLabelText(/Mode icon/, {selector: '[role="button"]'}));
     fireEvent.click(within(screen.getByRole('listbox')).getByText(label));
     await waitFor(() => expect(screen.queryByRole('listbox', {hidden: true})).toBeNull());
